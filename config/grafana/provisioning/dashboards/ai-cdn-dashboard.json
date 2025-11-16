@@ -1,0 +1,6 @@
+✓ Grafana dashboard saved to grafana-dashboard.json
+
+To import:
+1. Open Grafana
+2. Go to Dashboards > Import
+3. Upload grafana-dashboard.json

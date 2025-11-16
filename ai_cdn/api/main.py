@@ -9,7 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from ai_cdn.core.config import get_settings
 from ai_cdn.core.database import init_db, close_db
 from ai_cdn.core.llm_service import initialize_llm, shutdown_llm, warmup_llm
-from ai_cdn.api.routes import blueprints, conversation, ipr
+from ai_cdn.api.routes import blueprints, conversation, ipr, tools, templates, monitoring
+from ai_cdn.middleware.rate_limit import rate_limit_middleware
+from ai_cdn.middleware.metrics import metrics_middleware
 
 settings = get_settings()
 
@@ -62,6 +64,13 @@ app.add_middleware(
 app.include_router(blueprints.router, prefix=settings.api_prefix)
 app.include_router(conversation.router, prefix=settings.api_prefix)
 app.include_router(ipr.router, prefix=settings.api_prefix)
+app.include_router(tools.router, prefix=settings.api_prefix)
+app.include_router(templates.router, prefix=settings.api_prefix)
+app.include_router(monitoring.router, prefix=settings.api_prefix)
+
+# Add middleware
+app.middleware("http")(rate_limit_middleware)
+app.middleware("http")(metrics_middleware)
 
 
 @app.get("/")
@@ -88,3 +97,15 @@ async def health_check() -> dict[str, str]:
         Health status
     """
     return {"status": "healthy"}
+
+
+@app.get("/metrics")
+async def metrics_endpoint():
+    """
+    Prometheus metrics endpoint.
+    
+    Returns:
+        Prometheus-formatted metrics
+    """
+    from ai_cdn.middleware.metrics import get_prometheus_metrics
+    return get_prometheus_metrics()

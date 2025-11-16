@@ -38,6 +38,23 @@ class LLMInterface(ABC):
         """
         pass
 
+    async def stream_generate(
+        self, prompt: str, context: Optional[Dict[str, Any]] = None
+    ) -> Any:
+        """
+        Stream text generation from prompt (optional, falls back to generate).
+
+        Args:
+            prompt: Input prompt
+            context: Optional context information
+
+        Yields:
+            Text chunks
+        """
+        # Default implementation: return full response
+        response = await self.generate(prompt, context)
+        yield response
+
 
 class ConversationalOrchestrator:
     """

@@ -91,6 +91,70 @@ class Qwen3LLM(LLMInterface):
         except Exception as e:
             raise RuntimeError(f"Failed to initialize Qwen3 model: {e}")
 
+    async def stream_generate(
+        self, prompt: str, context: Optional[Dict[str, Any]] = None
+    ):
+        """
+        Stream text generation from prompt.
+
+        Args:
+            prompt: Input prompt
+            context: Optional context information
+
+        Yields:
+            Text chunks as they are generated
+        """
+        await self._initialize()
+
+        # Build messages
+        system_prompt = self._get_system_prompt()
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt},
+        ]
+
+        loop = asyncio.get_event_loop()
+
+        def _stream():
+            # Tokenize input
+            text = self.tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True,
+            )
+            inputs = self.tokenizer([text], return_tensors="pt").to(self.device)
+
+            # Generate with streaming
+            from transformers import TextIteratorStreamer
+            from threading import Thread
+
+            streamer = TextIteratorStreamer(
+                self.tokenizer,
+                skip_prompt=True,
+                skip_special_tokens=True
+            )
+
+            generation_kwargs = dict(
+                inputs,
+                streamer=streamer,
+                max_new_tokens=self.max_tokens,
+                do_sample=True,
+                temperature=0.7,
+                top_p=0.9,
+            )
+
+            thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
+            thread.start()
+
+            for text_chunk in streamer:
+                yield text_chunk
+
+            thread.join()
+
+        # Stream chunks
+        for chunk in await loop.run_in_executor(None, lambda: list(_stream())):
+            yield chunk
+
     async def generate(
         self, prompt: str, context: Optional[Dict[str, Any]] = None
     ) -> str:

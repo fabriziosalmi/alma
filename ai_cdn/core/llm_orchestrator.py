@@ -7,6 +7,7 @@ import re
 
 from ai_cdn.core.llm import LLMInterface, ConversationalOrchestrator
 from ai_cdn.core.prompts import InfrastructurePrompts
+from ai_cdn.core.tools import InfrastructureTools
 
 
 class EnhancedOrchestrator(ConversationalOrchestrator):
@@ -27,6 +28,61 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
         """
         super().__init__(llm)
         self.use_llm = use_llm and llm is not None
+        self.tools = InfrastructureTools()
+
+    async def execute_function_call(
+        self, user_input: str, context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Execute function call based on user input using LLM.
+
+        Args:
+            user_input: User's request
+            context: Optional context
+
+        Returns:
+            Function execution result
+        """
+        if not self.use_llm or self.llm is None:
+            return {
+                "success": False,
+                "error": "LLM not available for function calling"
+            }
+
+        # Get available tools
+        available_tools = self.tools.get_available_tools()
+
+        try:
+            # Ask LLM to select and call appropriate function
+            function_call = await self.llm.function_call(user_input, available_tools)
+
+            if not function_call or "function" not in function_call:
+                return {
+                    "success": False,
+                    "error": "LLM did not return valid function call"
+                }
+
+            # Execute the selected tool
+            tool_name = function_call.get("function")
+            arguments = function_call.get("arguments", {})
+
+            result = self.tools.execute_tool(tool_name, arguments, context)
+            return result
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Function call execution failed: {e}"
+            }
+
+    def get_available_tools(self) -> List[Dict[str, Any]]:
+        """
+        Get list of available tools for function calling.
+
+        Returns:
+            List of tool definitions
+        """
+        return self.tools.get_available_tools()
 
     async def parse_intent_with_llm(self, user_input: str) -> Dict[str, Any]:
         """

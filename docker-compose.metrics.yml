@@ -1,0 +1,80 @@
+# Docker Compose setup for metrics stack (Prometheus + Grafana)
+version: '3.8'
+
+services:
+  # AI-CDN API
+  ai-cdn:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://aicdn:aicdn@postgres:5432/aicdn
+      - API_CORS_ORIGINS=["http://localhost:3000"]
+    depends_on:
+      - postgres
+    networks:
+      - aicdn-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=aicdn
+      - POSTGRES_PASSWORD=aicdn
+      - POSTGRES_DB=aicdn
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - aicdn-network
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - aicdn-network
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - aicdn-network
+
+  # Redis (optional - for caching)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - aicdn-network
+
+volumes:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
+  redis-data:
+
+networks:
+  aicdn-network:
+    driver: bridge

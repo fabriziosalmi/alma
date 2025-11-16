@@ -2,7 +2,9 @@
 
 from typing import Dict, Any
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+import json
 
 from ai_cdn.core.llm_orchestrator import EnhancedOrchestrator
 from ai_cdn.core.llm_service import get_orchestrator
@@ -214,3 +216,142 @@ async def security_audit(
     """
     findings = await orchestrator.security_audit(request.blueprint)
     return {"findings": findings}
+
+
+@router.post("/chat-stream")
+async def chat_stream(
+    request: ConversationRequest,
+    orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
+):
+    """
+    Stream conversational responses in real-time.
+    
+    This endpoint streams the AI's response as it's generated,
+    providing better UX for long responses.
+
+    Args:
+        request: Conversation request
+        orchestrator: Orchestrator instance
+
+    Returns:
+        Streaming response with Server-Sent Events
+    """
+    async def generate_stream():
+        """Generate streaming response."""
+        # First, parse intent
+        intent_result = await orchestrator.parse_intent_with_llm(request.message)
+        
+        # Send intent as first event
+        yield f"data: {json.dumps({'type': 'intent', 'data': intent_result})}\\n\\n"
+        
+        # Generate streaming response based on intent
+        if intent_result["intent"] == "create_blueprint":
+            prompt = f"Generate infrastructure blueprint for: {request.message}"
+        elif intent_result["intent"] == "deploy":
+            prompt = f"Explain deployment process for: {request.message}"
+        elif intent_result["intent"] == "status":
+            prompt = f"Provide status information for: {request.message}"
+        else:
+            prompt = f"Respond to infrastructure query: {request.message}"
+        
+        # Stream LLM response
+        if orchestrator.use_llm and orchestrator.llm:
+            try:
+                async for chunk in orchestrator.llm.stream_generate(prompt):
+                    if chunk:
+                        yield f"data: {json.dumps({'type': 'text', 'data': chunk})}\\n\\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'type': 'error', 'data': str(e)})}\\n\\n"
+        else:
+            # Fallback to non-streaming
+            response = f"I understand you want to {intent_result['intent'].replace('_', ' ')}."
+            yield f"data: {json.dumps({'type': 'text', 'data': response})}\\n\\n"
+        
+        # Send completion event
+        yield f"data: {json.dumps({'type': 'done', 'data': 'complete'})}\\n\\n"
+    
+    return StreamingResponse(
+        generate_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
+
+@router.post("/generate-blueprint-stream")
+async def generate_blueprint_stream(
+    request: BlueprintGenerationRequest,
+    orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
+):
+    """
+    Stream blueprint generation in real-time.
+    
+    Shows the thinking process as the AI generates the blueprint.
+
+    Args:
+        request: Blueprint generation request
+        orchestrator: Orchestrator instance
+
+    Returns:
+        Streaming response
+    """
+    async def generate_stream():
+        """Generate streaming blueprint creation."""
+        yield f"data: {json.dumps({'type': 'status', 'data': 'Analyzing requirements...'})}\\n\\n"
+        
+        # Generate blueprint with streaming
+        if orchestrator.use_llm and orchestrator.llm:
+            from ai_cdn.core.prompts import InfrastructurePrompts
+            
+            prompt = InfrastructurePrompts.blueprint_generation(request.description)
+            
+            full_response = ""
+            yield f"data: {json.dumps({'type': 'status', 'data': 'Generating blueprint...'})}\\n\\n"
+            
+            try:
+                async for chunk in orchestrator.llm.stream_generate(prompt):
+                    if chunk:
+                        full_response += chunk
+                        yield f"data: {json.dumps({'type': 'text', 'data': chunk})}\\n\\n"
+                
+                # Try to extract YAML from full response
+                import yaml
+                try:
+                    # Extract YAML block
+                    if "```yaml" in full_response:
+                        yaml_start = full_response.find("```yaml") + 7
+                        yaml_end = full_response.find("```", yaml_start)
+                        yaml_content = full_response[yaml_start:yaml_end].strip()
+                        blueprint = yaml.safe_load(yaml_content)
+                    elif "```" in full_response:
+                        yaml_start = full_response.find("```") + 3
+                        yaml_end = full_response.find("```", yaml_start)
+                        yaml_content = full_response[yaml_start:yaml_end].strip()
+                        blueprint = yaml.safe_load(yaml_content)
+                    else:
+                        blueprint = yaml.safe_load(full_response)
+                    
+                    yield f"data: {json.dumps({'type': 'blueprint', 'data': blueprint})}\\n\\n"
+                except:
+                    yield f"data: {json.dumps({'type': 'warning', 'data': 'Could not parse as YAML'})}\\n\\n"
+                    
+            except Exception as e:
+                yield f"data: {json.dumps({'type': 'error', 'data': str(e)})}\\n\\n"
+        else:
+            # Fallback
+            blueprint = await orchestrator.natural_language_to_blueprint(request.description)
+            yield f"data: {json.dumps({'type': 'blueprint', 'data': blueprint})}\\n\\n"
+        
+        yield f"data: {json.dumps({'type': 'done', 'data': 'complete'})}\\n\\n"
+    
+    return StreamingResponse(
+        generate_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        }
+    )
