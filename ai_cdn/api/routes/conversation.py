@@ -1,15 +1,13 @@
 """API routes for conversational interface."""
 
 from typing import Dict, Any
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
-from ai_cdn.core.llm import ConversationalOrchestrator, MockLLM
+from ai_cdn.core.llm_orchestrator import EnhancedOrchestrator
+from ai_cdn.core.llm_service import get_orchestrator
 
 router = APIRouter(prefix="/conversation", tags=["conversation"])
-
-# Global orchestrator instance
-orchestrator = ConversationalOrchestrator(llm=MockLLM())
 
 
 class ConversationRequest(BaseModel):
@@ -52,18 +50,35 @@ class ImprovementResponse(BaseModel):
     suggestions: list[str]
 
 
+class ResourceSizingRequest(BaseModel):
+    """Request for resource sizing."""
+
+    workload: str
+    expected_load: str
+
+
+class SecurityAuditRequest(BaseModel):
+    """Request for security audit."""
+
+    blueprint: Dict[str, Any]
+
+
 @router.post("/chat", response_model=ConversationResponse)
-async def chat(request: ConversationRequest) -> ConversationResponse:
+async def chat(
+    request: ConversationRequest,
+    orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
+) -> ConversationResponse:
     """
     Chat with the AI about infrastructure.
 
     Args:
         request: Conversation request
+        orchestrator: Orchestrator instance
 
     Returns:
         Conversation response with intent and suggestions
     """
-    intent_result = await orchestrator.parse_intent(request.message)
+    intent_result = await orchestrator.parse_intent_with_llm(request.message)
 
     response_text = f"I understand you want to {intent_result['intent'].replace('_', ' ')}."
 
@@ -90,12 +105,16 @@ async def chat(request: ConversationRequest) -> ConversationResponse:
 
 
 @router.post("/generate-blueprint", response_model=Dict[str, Any])
-async def generate_blueprint(request: BlueprintGenerationRequest) -> Dict[str, Any]:
+async def generate_blueprint(
+    request: BlueprintGenerationRequest,
+    orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
+) -> Dict[str, Any]:
     """
     Generate a blueprint from natural language description.
 
     Args:
         request: Blueprint generation request
+        orchestrator: Orchestrator instance
 
     Returns:
         Generated blueprint
@@ -105,12 +124,16 @@ async def generate_blueprint(request: BlueprintGenerationRequest) -> Dict[str, A
 
 
 @router.post("/describe-blueprint", response_model=Dict[str, str])
-async def describe_blueprint(request: BlueprintDescriptionRequest) -> Dict[str, str]:
+async def describe_blueprint(
+    request: BlueprintDescriptionRequest,
+    orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
+) -> Dict[str, str]:
     """
     Convert blueprint to natural language description.
 
     Args:
         request: Blueprint description request
+        orchestrator: Orchestrator instance
 
     Returns:
         Natural language description
@@ -120,12 +143,16 @@ async def describe_blueprint(request: BlueprintDescriptionRequest) -> Dict[str, 
 
 
 @router.post("/suggest-improvements", response_model=ImprovementResponse)
-async def suggest_improvements(request: ImprovementRequest) -> ImprovementResponse:
+async def suggest_improvements(
+    request: ImprovementRequest,
+    orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
+) -> ImprovementResponse:
     """
     Get AI suggestions for improving a blueprint.
 
     Args:
         request: Improvement request
+        orchestrator: Orchestrator instance
 
     Returns:
         List of improvement suggestions
@@ -135,12 +162,55 @@ async def suggest_improvements(request: ImprovementRequest) -> ImprovementRespon
 
 
 @router.post("/clear-history")
-async def clear_history() -> Dict[str, str]:
+async def clear_history(
+    orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
+) -> Dict[str, str]:
     """
     Clear conversation history.
+
+    Args:
+        orchestrator: Orchestrator instance
 
     Returns:
         Success message
     """
     orchestrator.clear_history()
     return {"message": "Conversation history cleared"}
+
+
+@router.post("/resource-sizing", response_model=Dict[str, Any])
+async def resource_sizing(
+    request: ResourceSizingRequest,
+    orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
+) -> Dict[str, Any]:
+    """
+    Get AI-powered resource sizing recommendations.
+
+    Args:
+        request: Resource sizing request
+        orchestrator: Orchestrator instance
+
+    Returns:
+        Resource recommendations
+    """
+    sizing = await orchestrator.estimate_resources(request.workload, request.expected_load)
+    return sizing
+
+
+@router.post("/security-audit", response_model=Dict[str, Any])
+async def security_audit(
+    request: SecurityAuditRequest,
+    orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
+) -> Dict[str, Any]:
+    """
+    Perform AI-powered security audit of a blueprint.
+
+    Args:
+        request: Security audit request
+        orchestrator: Orchestrator instance
+
+    Returns:
+        Security findings
+    """
+    findings = await orchestrator.security_audit(request.blueprint)
+    return {"findings": findings}

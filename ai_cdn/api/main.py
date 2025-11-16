@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from ai_cdn.core.config import get_settings
 from ai_cdn.core.database import init_db, close_db
+from ai_cdn.core.llm_service import initialize_llm, shutdown_llm, warmup_llm
 from ai_cdn.api.routes import blueprints, conversation, ipr
 
 settings = get_settings()
@@ -23,9 +24,20 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     # Startup
     await init_db()
+
+    # Initialize LLM (optional - will use MockLLM if unavailable)
+    try:
+        await initialize_llm()
+        # Warmup LLM to reduce first-request latency
+        await warmup_llm()
+    except Exception as e:
+        print(f"LLM initialization skipped: {e}")
+
     yield
+
     # Shutdown
     await close_db()
+    await shutdown_llm()
 
 
 # Create FastAPI app

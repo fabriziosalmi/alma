@@ -1,0 +1,100 @@
+apiVersion: cdn-ng.io/v1
+kind: SystemBlueprint
+metadata:
+  name: example-cdn-pop-milan
+  description: Example CDN PoP deployment in Milan
+  version: v1
+  labels:
+    environment: development
+    location: milan
+    
+spec:
+  resources:
+    # Compute Nodes
+    - kind: ComputeNode
+      name: mil-cache-01
+      spec:
+        cpu: 4
+        memory: 8Gi
+        architecture: x86_64
+        os: ubuntu-22.04
+      engineSelector:
+        vendor: proxmox
+        type: lxc
+      connections:
+        networkInterfaces:
+          - name: eth0
+            linkTo: NetworkLink/vlan-mgmt
+          - name: eth1
+            linkTo: NetworkLink/vlan-public
+      metadata:
+        tags:
+          role: cache
+          tier: edge
+
+    - kind: ComputeNode
+      name: mil-cache-02
+      spec:
+        cpu: 4
+        memory: 8Gi
+        architecture: x86_64
+        os: ubuntu-22.04
+      engineSelector:
+        vendor: proxmox
+        type: lxc
+      connections:
+        networkInterfaces:
+          - name: eth0
+            linkTo: NetworkLink/vlan-mgmt
+          - name: eth1
+            linkTo: NetworkLink/vlan-public
+      metadata:
+        tags:
+          role: cache
+          tier: edge
+
+    # Network Links
+    - kind: NetworkLink
+      name: vlan-mgmt
+      spec:
+        domain: management
+        vlanId: 101
+        bandwidth: 1Gbps
+        mtu: 1500
+      engineSelector:
+        vendor: mikrotik
+
+    - kind: NetworkLink
+      name: vlan-public
+      spec:
+        domain: public-dmz
+        vlanId: 202
+        bandwidth: 10Gbps
+        mtu: 1500
+      engineSelector:
+        vendor: mikrotik
+
+    # Service Instances
+    - kind: ServiceInstance
+      name: varnish-cache-service
+      spec:
+        serviceDefinition: ServiceDefinition/varnish-7
+        replicas: 2
+        healthCheck:
+          path: /health
+          port: 6081
+          interval: 30
+        configuration:
+          backend_host: origin.example.com
+          backend_port: 80
+          cache_size: 4g
+          ttl_default: 3600
+      metadata:
+        targets:
+          - mil-cache-01
+          - mil-cache-02
+
+  variables:
+    origin_server: "https://origin.example.com"
+    cdn_domain: "cdn.example.com"
+    enable_ssl: true
