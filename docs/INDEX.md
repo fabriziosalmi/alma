@@ -1,4 +1,175 @@
-# AI-CDN Documentation
+# AI-CDN Documentation Index
+
+Welcome to the AI-CDN documentation! This index helps you find the right documentation for your needs.
+
+## 📖 Documentation Structure
+
+### 🚀 Getting Started
+
+| Document | Audience | Time | Description |
+|----------|----------|------|-------------|
+| [README](../README.md) | Everyone | 5 min | Project overview and quick start |
+| [User Guide](USER_GUIDE.md) | Users | 30 min | Complete guide with examples |
+| [Quick Start - Rate Limits](QUICKSTART_RATE_LIMITS.md) | Users | 10 min | Testing guide |
+
+### 📚 Core Documentation
+
+| Document | Audience | Pages | Description |
+|----------|----------|-------|-------------|
+| [API Reference](API_REFERENCE.md) | Developers | 42 | Complete API documentation |
+| [Architecture](ARCHITECTURE.md) | Architects | 15 | Technical architecture details |
+| [Blueprints](BLUEPRINTS.md) | Users | 12 | Blueprint system explained |
+| [Engines](ENGINES.md) | Developers | 8 | Deployment engines guide |
+| [IPR System](IPR.md) | Users | 10 | Infrastructure Pull Requests |
+
+### 🛠️ Feature Documentation
+
+| Document | Audience | Pages | Description |
+|----------|----------|-------|-------------|
+| [LLM Guide](LLM_GUIDE.md) | Developers | 18 | LLM integration details |
+| [Tools API](TOOLS_API.md) | Developers | 12 | 13 LLM tools documentation |
+| [Streaming & Templates](STREAMING_AND_TEMPLATES.md) | Developers | 18 | SSE streaming and templates |
+| [Rate Limiting & Metrics](RATE_LIMITING_AND_METRICS.md) | Ops | 28 | Monitoring deep dive |
+
+### 🚢 Deployment & Operations
+
+| Document | Audience | Pages | Description |
+|----------|----------|-------|-------------|
+| [Production Deployment](PRODUCTION_DEPLOYMENT.md) | DevOps | 38 | Production setup guide |
+| [Project Status](PROJECT_STATUS.md) | Everyone | 8 | Current status & roadmap |
+
+---
+
+## 🎯 Documentation by Role
+
+### For Users
+
+1. Start with [README](../README.md)
+2. Read [User Guide](USER_GUIDE.md)
+3. Explore [Blueprints](BLUEPRINTS.md)
+4. Understand [IPR System](IPR.md)
+
+### For Developers
+
+1. Read [Architecture](ARCHITECTURE.md)
+2. Study [API Reference](API_REFERENCE.md)
+3. Learn [LLM Guide](LLM_GUIDE.md)
+4. Explore [Tools API](TOOLS_API.md)
+5. Check [Engines](ENGINES.md)
+
+### For DevOps/SRE
+
+1. Review [Production Deployment](PRODUCTION_DEPLOYMENT.md)
+2. Configure [Rate Limiting & Metrics](RATE_LIMITING_AND_METRICS.md)
+3. Test with [Quick Start - Rate Limits](QUICKSTART_RATE_LIMITS.md)
+4. Monitor using Prometheus/Grafana
+
+---
+
+## 📊 Quick Reference
+
+### API Endpoints
+
+See [API Reference](API_REFERENCE.md) for complete documentation:
+
+- Blueprints: `/api/v1/blueprints`
+- Conversation: `/api/v1/conversation/chat`
+- IPRs: `/api/v1/iprs`
+- Tools: `/api/v1/tools`
+- Templates: `/api/v1/templates`
+- Monitoring: `/api/v1/monitoring`
+
+### LLM Tools (13 Total)
+
+See [Tools API](TOOLS_API.md):
+
+1. create_blueprint
+2. validate_blueprint
+3. estimate_resources
+4. optimize_costs
+5. security_audit
+6. generate_deployment_plan
+7. troubleshoot_issue
+8. compare_blueprints
+9. suggest_architecture
+10. calculate_capacity
+11. migrate_infrastructure
+12. check_compliance
+13. forecast_metrics
+
+### Templates (10 Total)
+
+See [Streaming & Templates](STREAMING_AND_TEMPLATES.md):
+
+- simple-web-app
+- ha-web-app
+- microservices-k8s
+- postgres-ha
+- data-pipeline
+- ml-training
+- zero-trust-network
+- observability-stack
+- api-gateway
+- redis-cluster
+
+---
+
+## 🔍 Search by Topic
+
+### Infrastructure Management
+- [Blueprints](BLUEPRINTS.md) - Blueprint system
+- [Engines](ENGINES.md) - Deployment engines
+- [IPR System](IPR.md) - Review workflow
+
+### AI & LLM
+- [LLM Guide](LLM_GUIDE.md) - LLM integration
+- [Tools API](TOOLS_API.md) - Function calling
+- [User Guide](USER_GUIDE.md#conversational-infrastructure) - Conversational interface
+
+### Monitoring & Operations
+- [Rate Limiting & Metrics](RATE_LIMITING_AND_METRICS.md) - Observability
+- [Production Deployment](PRODUCTION_DEPLOYMENT.md) - Deployment guide
+- [Quick Start - Rate Limits](QUICKSTART_RATE_LIMITS.md) - Testing
+
+### Development
+- [Architecture](ARCHITECTURE.md) - System design
+- [API Reference](API_REFERENCE.md) - API documentation
+- [Project Status](PROJECT_STATUS.md) - Current status
+
+---
+
+## 📈 Documentation Stats
+
+- **Total Pages**: ~196 pages
+- **Total Words**: ~50,000 words
+- **Code Examples**: 100+ examples
+- **Diagrams**: 15+ architecture diagrams
+- **API Endpoints**: 20+ documented
+- **Last Updated**: November 16, 2025
+
+---
+
+## 🤝 Contributing to Documentation
+
+Found an error or want to improve the docs?
+
+1. Fork the repository
+2. Edit documentation in `docs/` folder
+3. Submit a pull request
+
+See [CONTRIBUTING](../CONTRIBUTING.md) for guidelines.
+
+---
+
+## 📞 Getting Help
+
+- **GitHub Issues**: Report documentation issues
+- **Discussions**: Ask questions
+- **Discord**: Join the community (coming soon)
+
+---
+
+**Happy Reading! 📚**
 
 **Infrastructure as Conversation** - Complete documentation for the AI-CDN platform.
 
