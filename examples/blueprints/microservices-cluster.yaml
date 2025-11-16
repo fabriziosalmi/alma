@@ -1,0 +1,165 @@
+version: "1.0"
+name: "microservices-cluster"
+description: "Production-ready microservices cluster with monitoring and logging"
+
+resources:
+  # Application servers
+  - type: compute
+    name: api-gateway
+    provider: fake
+    specs:
+      cpu: 2
+      memory: 4GB
+      storage: 50GB
+    metadata:
+      service: gateway
+      tier: frontend
+
+  - type: compute
+    name: auth-service
+    provider: fake
+    specs:
+      cpu: 2
+      memory: 4GB
+      storage: 50GB
+    dependencies:
+      - postgres-db
+    metadata:
+      service: authentication
+      tier: backend
+
+  - type: compute
+    name: user-service
+    provider: fake
+    specs:
+      cpu: 4
+      memory: 8GB
+      storage: 100GB
+    dependencies:
+      - postgres-db
+      - redis-cache
+    metadata:
+      service: users
+      tier: backend
+
+  - type: compute
+    name: order-service
+    provider: fake
+    specs:
+      cpu: 4
+      memory: 8GB
+      storage: 100GB
+    dependencies:
+      - postgres-db
+      - message-queue
+    metadata:
+      service: orders
+      tier: backend
+
+  # Databases
+  - type: compute
+    name: postgres-db
+    provider: fake
+    specs:
+      cpu: 8
+      memory: 32GB
+      storage: 1TB
+    metadata:
+      database: postgresql
+      version: "15"
+      tier: data
+
+  - type: compute
+    name: redis-cache
+    provider: fake
+    specs:
+      cpu: 4
+      memory: 16GB
+      storage: 100GB
+    metadata:
+      database: redis
+      version: "7"
+      tier: cache
+
+  # Message queue
+  - type: service
+    name: message-queue
+    provider: fake
+    specs:
+      type: rabbitmq
+      queues:
+        - orders
+        - notifications
+        - analytics
+    metadata:
+      tier: messaging
+
+  # Monitoring and logging
+  - type: service
+    name: prometheus
+    provider: fake
+    specs:
+      type: monitoring
+      retention: 30d
+      scrape_interval: 15s
+    metadata:
+      tier: observability
+
+  - type: service
+    name: grafana
+    provider: fake
+    specs:
+      type: visualization
+      datasources:
+        - prometheus
+    dependencies:
+      - prometheus
+    metadata:
+      tier: observability
+
+  - type: service
+    name: elasticsearch
+    provider: fake
+    specs:
+      type: logging
+      nodes: 3
+      storage: 500GB
+    metadata:
+      tier: observability
+
+  # Networking
+  - type: network
+    name: public-lb
+    provider: fake
+    specs:
+      type: http
+      algorithm: least-connections
+      backends:
+        - api-gateway
+      ssl: true
+    dependencies:
+      - api-gateway
+    metadata:
+      public: true
+      tier: network
+
+  - type: network
+    name: internal-network
+    provider: fake
+    specs:
+      cidr: 10.0.0.0/16
+      subnets:
+        - 10.0.1.0/24  # frontend
+        - 10.0.2.0/24  # backend
+        - 10.0.3.0/24  # data
+    metadata:
+      tier: network
+
+metadata:
+  project: ecommerce-platform
+  environment: production
+  owner: platform-team
+  cost_center: engineering
+  sla: "99.9%"
+  backup_schedule: daily
+  disaster_recovery: true

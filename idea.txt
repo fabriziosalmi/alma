@@ -1,0 +1,102 @@
+Riassunto Esecutivo
+AI-CDN è una piattaforma di orchestrazione infrastrutturale che trasforma il paradigma da "Infrastructure as Code" a "Infrastructure as Conversation".
+
+Concetti Chiave:
+Astrazione Full-Stack: Gestione unificata di rete, hardware e servizi tramite un'interfaccia conversazionale AI
+
+Architettura a 4 Livelli:
+
+L4 Intent: CLI/UI conversazionale
+L3 Reasoning: LLM (Qwen2-0.5B) con function calling
+L2 Modeling: SystemBlueprint dichiarativi (YAML)
+L1 Execution: Controller + Engine a plugin
+Human-in-the-Loop: Sistema IPR (Infrastructure Pull Request) per revisione pre-deploy
+
+Motori Componibili: Plugin per ogni tecnologia (Proxmox, MikroTik, Ansible, Docker, etc.)
+
+Wow Features:
+Time Traveler: Rollback intelligente di configurazioni
+Infrastructure Synthesizer: Clonazione ambienti tra piattaforme diverse
+Observability-Driven: Auto-ottimizzazione basata su SLO
+🚀 Piano di Sviluppo Iniziale (Prime 2-3 Settimane)
+Week 1: Fondamenta e Setup
+Giorno 1-2: Project Scaffolding
+
+Tasks:
+
+ Inizializzare repo Git con struttura modular
+ Configurare pre-commit hooks (black, ruff, mypy, bandit)
+ Setup CI/CD base (GitHub Actions)
+ Creare struttura cartelle:
+Giorno 3-4: Database & Modelli Base
+
+ Setup PostgreSQL (o SQLite per dev)
+ Definire modelli Pydantic per:
+SystemBlueprint
+ResourceDefinition (base class)
+NetworkLink, ComputeNode, ServiceInstance
+ Schema DB con Alembic
+ CRUD base per Blueprint
+Giorno 5-7: Controller API & Engine Interface
+
+ Implementare FastAPI con endpoint:
+POST /blueprints (salva)
+GET /blueprints/{id}
+POST /blueprints/{id}/deploy (placeholder)
+ Definire ABC (Abstract Base Classes) per Engine:
+ Implementare FakeEngine per test
+ Test coverage > 80% su API e modelli
+Week 2: Primo Motore Reale (Docker Compose)
+Giorno 8-10: Sandbox Proxmox/LXC
+
+ Creare 2-4 LXC su Proxmox (o Docker containers per dev locale):
+mil-cache-01, mil-cache-02
+Ubuntu 22.04, Docker pre-installato
+SSH key-based auth
+IP statici documentati
+ Script di "seeding" per registrare nodi nel DB:
+Giorno 11-13: Engine Docker Compose
+
+ Implementare EngineDockerCompose:
+Genera docker-compose.yml da template Jinja2
+Deploy via docker-py o SSH + docker CLI
+ Creare template per stack CDN base:
+Nginx reverse proxy con cache
+Origin simulator (simple HTTP server)
+ Test end-to-end: Deploy stack su LXC
+Giorno 14: UI Minimale
+
+ Pagina HTML statica servita da FastAPI:
+Lista Blueprint con stato
+Bottoni Deploy/Destroy
+Auto-refresh ogni 5s
+ JavaScript vanilla per chiamate API
+Week 3: SDK Client & Documentation
+Giorno 15-17: SDK Python
+
+Giorno 18-19: Testing & Refinement
+
+ Integration tests completi
+ Load testing base (100+ Blueprint deploys)
+ Bug fixing e refactoring
+Giorno 20-21: Documentation
+
+ README con quickstart
+ Documentazione API (auto-generata da FastAPI)
+ Esempi di Blueprint YAML
+ Architecture decision records (ADR)
+📦 Deliverable Fine Week 3
+Al termine avrai:
+
+✅ Controller API funzionante con validazione robusta
+✅ Engine Docker Compose che deploya stack CDN reali
+✅ UI web minimale per visualizzare stato
+✅ SDK Python per automazione
+✅ Test coverage > 80%
+✅ CI/CD pipeline che blocca commit non validi
+✅ Demo funzionante: Deploy CDN su 2 nodi con 1 comando
+Questo è il Minimum Viable Product da cui partire per aggiungere:
+
+Fase successiva: AI Layer (LLM + IPR)
+Poi: Motori fisici (MikroTik, Supermicro IPMI)
+Infine: Autonomia e SLO-driven management

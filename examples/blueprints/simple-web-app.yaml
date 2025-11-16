@@ -1,0 +1,61 @@
+version: "1.0"
+name: "simple-web-app"
+description: "A simple web application infrastructure"
+
+resources:
+  # Web server
+  - type: compute
+    name: web-server-01
+    provider: fake
+    specs:
+      cpu: 4
+      memory: 8GB
+      storage: 100GB
+      os: ubuntu-22.04
+    metadata:
+      role: web
+      environment: production
+
+  # Database server
+  - type: compute
+    name: db-server-01
+    provider: fake
+    specs:
+      cpu: 8
+      memory: 16GB
+      storage: 500GB
+      os: ubuntu-22.04
+    metadata:
+      role: database
+      environment: production
+
+  # Load balancer
+  - type: network
+    name: load-balancer
+    provider: fake
+    specs:
+      type: http
+      algorithm: round-robin
+      backends:
+        - web-server-01
+    dependencies:
+      - web-server-01
+    metadata:
+      public: true
+
+  # Storage for backups
+  - type: storage
+    name: backup-storage
+    provider: fake
+    specs:
+      size: 1TB
+      type: block
+      encryption: true
+    metadata:
+      purpose: backups
+      retention: 30d
+
+metadata:
+  project: demo
+  owner: devops-team
+  cost_center: engineering
