@@ -147,3 +147,5 @@ models/
 *.onnx
 *.pt
 *.pth
+aicdn_demo.mp4
+demo.tape
