@@ -37,10 +37,10 @@ jobs:
         run: ruff check .
 
       - name: Run MyPy
-        run: mypy ai_cdn
+        run: mypy alma
 
       - name: Run Bandit
-        run: bandit -r ai_cdn -c pyproject.toml
+        run: bandit -r alma -c pyproject.toml
 
   test:
     runs-on: ubuntu-latest

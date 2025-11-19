@@ -259,7 +259,7 @@ async def test_end_to_end():
 async def main():
     """Run all tests."""
     print("\n" + "=" * 60)
-    print("  AI-CDN Rate Limiting & Metrics - Load Testing Suite")
+    print("  ALMA Rate Limiting & Metrics - Load Testing Suite")
     print("=" * 60)
     print("\n⚠️  Make sure the server is running: python run_server.py")
     print("\nPress Ctrl+C to stop\n")

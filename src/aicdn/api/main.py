@@ -11,7 +11,7 @@ from datetime import datetime
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="AI-CDN Controller API",
+    title="ALMA Controller API",
     description="Infrastructure as Conversation - Declarative infrastructure orchestration",
     version="0.1.0",
     docs_url="/docs",
@@ -27,7 +27,7 @@ fake_engine = FakeEngine()
 async def root():
     """Root endpoint with API information"""
     return {
-        "name": "AI-CDN Controller API",
+        "name": "ALMA Controller API",
         "version": "0.1.0",
         "status": "operational",
         "endpoints": {

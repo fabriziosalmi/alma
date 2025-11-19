@@ -7,9 +7,9 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 # Module to be tested
-from ai_cdn.core.state import diff_states, ResourceState
+from alma.core.state import diff_states, ResourceState
 # The real schemas that our state module is now designed to work with
-from ai_cdn.schemas.blueprint import SystemBlueprint, ResourceDefinition
+from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
 
 
 class TestStateDiffer(unittest.TestCase):

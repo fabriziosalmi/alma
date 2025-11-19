@@ -1,6 +1,6 @@
-# Production Deployment Guide - AI-CDN
+# Production Deployment Guide - ALMA
 
-Complete guide for deploying AI-CDN in production environments.
+Complete guide for deploying ALMA in production environments.
 
 ## Table of Contents
 
@@ -63,7 +63,7 @@ Complete guide for deploying AI-CDN in production environments.
                     ┌─────────┴─────────┐
                     │                   │
             ┌───────▼────┐      ┌───────▼────┐
-            │  AI-CDN    │      │  AI-CDN    │
+            │  ALMA    │      │  ALMA    │
             │  Server 1  │      │  Server 2  │
             └───────┬────┘      └───────┬────┘
                     │                   │
@@ -81,8 +81,8 @@ Complete guide for deploying AI-CDN in production environments.
 |------|---------|--------|---------|
 | 443 | HTTPS | Public | API access |
 | 80 | HTTP | Public | Redirect to HTTPS |
-| 5432 | PostgreSQL | AI-CDN servers | Database access |
-| 6379 | Redis | AI-CDN servers | Cache access |
+| 5432 | PostgreSQL | ALMA servers | Database access |
+| 6379 | Redis | ALMA servers | Cache access |
 | 9090 | Prometheus | Internal | Metrics collection |
 | 3000 | Grafana | Internal | Monitoring dashboards |
 
@@ -291,7 +291,7 @@ mkdir -p logs
 ```ini
 # /etc/systemd/system/aicdn.service
 [Unit]
-Description=AI-CDN API Server
+Description=ALMA API Server
 After=network.target postgresql.service redis.service
 
 [Service]
@@ -301,7 +301,7 @@ Group=aicdn
 WorkingDirectory=/home/aicdn/cdn-sdk
 Environment="PATH=/home/aicdn/cdn-sdk/venv/bin"
 Environment="DATABASE_URL=postgresql://aicdn:password@localhost/aicdn"
-ExecStart=/home/aicdn/cdn-sdk/venv/bin/gunicorn ai_cdn.api.main:app \
+ExecStart=/home/aicdn/cdn-sdk/venv/bin/gunicorn alma.api.main:app \
     --workers 4 \
     --worker-class uvicorn.workers.UvicornWorker \
     --bind 0.0.0.0:8000 \
@@ -547,7 +547,7 @@ psql -U aicdn -d aicdn -c "\dt"
 ### 1. API Key Authentication
 
 ```python
-# ai_cdn/core/security.py
+# alma/core/security.py
 from fastapi import Security, HTTPException
 from fastapi.security import APIKeyHeader
 
@@ -948,6 +948,6 @@ LIMIT 10;
 ## Support
 
 For production support:
-- Enterprise support: enterprise@ai-cdn.dev
-- Security issues: security@ai-cdn.dev
+- Enterprise support: enterprise@ALMA.dev
+- Security issues: security@ALMA.dev
 - GitHub: https://github.com/fabriziosalmi/cdn-sdk/issues

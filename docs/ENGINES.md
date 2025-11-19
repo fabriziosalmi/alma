@@ -4,7 +4,7 @@ Engines are pluggable modules that interface with infrastructure providers to de
 
 ## Overview
 
-AI-CDN uses a **plugin architecture** for infrastructure providers. Each engine implements a common interface, allowing the core system to work with any provider.
+ALMA uses a **plugin architecture** for infrastructure providers. Each engine implements a common interface, allowing the core system to work with any provider.
 
 ## Available Engines
 
@@ -22,7 +22,7 @@ AI-CDN uses a **plugin architecture** for infrastructure providers. Each engine 
 All engines must implement the `Engine` abstract base class:
 
 ```python
-from ai_cdn.engines.base import Engine, DeploymentResult, ResourceState
+from alma.engines.base import Engine, DeploymentResult, ResourceState
 
 class MyEngine(Engine):
     async def validate_blueprint(self, blueprint: Dict[str, Any]) -> bool:
@@ -58,7 +58,7 @@ class MyEngine(Engine):
 
 **Purpose**: Testing and development
 
-**Location**: `ai_cdn/engines/fake.py`
+**Location**: `alma/engines/fake.py`
 
 **Features**:
 - Simulates all infrastructure operations
@@ -75,7 +75,7 @@ engine = FakeEngine(config={
 
 **Example**:
 ```python
-from ai_cdn.engines.fake import FakeEngine
+from alma.engines.fake import FakeEngine
 
 engine = FakeEngine()
 
@@ -95,7 +95,7 @@ print(f"Resources: {result.resources_created}")
 
 **Purpose**: Proxmox Virtual Environment integration
 
-**Location**: `ai_cdn/engines/proxmox.py`
+**Location**: `alma/engines/proxmox.py`
 
 **Status**: 🚧 In Development
 
@@ -141,8 +141,8 @@ resources:
 ### 1. Create Engine Class
 
 ```python
-# ai_cdn/engines/myengine.py
-from ai_cdn.engines.base import Engine, DeploymentResult, DeploymentStatus
+# alma/engines/myengine.py
+from alma.engines.base import Engine, DeploymentResult, DeploymentStatus
 
 class MyEngine(Engine):
     def __init__(self, config: Optional[Dict[str, Any]] = None):
@@ -174,10 +174,10 @@ class MyEngine(Engine):
 
 ### 2. Register Engine
 
-Add to `ai_cdn/engines/__init__.py`:
+Add to `alma/engines/__init__.py`:
 
 ```python
-from ai_cdn.engines.myengine import MyEngine
+from alma.engines.myengine import MyEngine
 
 __all__ = ["Engine", "FakeEngine", "ProxmoxEngine", "MyEngine"]
 ```
@@ -187,7 +187,7 @@ __all__ = ["Engine", "FakeEngine", "ProxmoxEngine", "MyEngine"]
 ```python
 # tests/unit/test_myengine.py
 import pytest
-from ai_cdn.engines.myengine import MyEngine
+from alma.engines.myengine import MyEngine
 
 @pytest.fixture
 def engine():
@@ -313,7 +313,7 @@ async def test_full_deployment():
 ### Mock Tests
 
 ```python
-@patch("ai_cdn.engines.myengine.ProviderAPI")
+@patch("alma.engines.myengine.ProviderAPI")
 async def test_deploy_mocked(mock_api):
     mock_api.create_vm.return_value = {"id": "vm-123"}
 

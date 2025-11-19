@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-This guide will help you get started with AI-CDN in 5 minutes.
+This guide will help you get started with ALMA in 5 minutes.
 
 ## Installation
 
@@ -31,10 +31,10 @@ pre-commit install
 
 ```bash
 # Start the development server
-ai-cdn serve --reload
+ALMA serve --reload
 
 # Or using uvicorn directly
-uvicorn ai_cdn.api.main:app --reload
+uvicorn alma.api.main:app --reload
 ```
 
 The API will be available at `http://localhost:8000`
@@ -46,14 +46,14 @@ API documentation: `http://localhost:8000/docs`
 
 ```bash
 # Create a new project
-ai-cdn init my-infrastructure
+ALMA init my-infrastructure
 
 # Deploy the example blueprint
 cd my-infrastructure
-ai-cdn deploy blueprints/example.yaml
+ALMA deploy blueprints/example.yaml
 
 # Dry-run (validation only)
-ai-cdn deploy blueprints/example.yaml --dry-run
+ALMA deploy blueprints/example.yaml --dry-run
 ```
 
 ### Using the API
@@ -77,7 +77,7 @@ Create a file `my-blueprint.yaml`:
 ```yaml
 version: "1.0"
 name: "my-first-infrastructure"
-description: "My first AI-CDN blueprint"
+description: "My first ALMA blueprint"
 
 resources:
   - type: compute
@@ -102,14 +102,14 @@ resources:
 Deploy it:
 
 ```bash
-ai-cdn deploy my-blueprint.yaml
+ALMA deploy my-blueprint.yaml
 ```
 
 ## Check Infrastructure Status
 
 ```bash
 # Using CLI
-ai-cdn status
+ALMA status
 
 # Using API
 curl http://localhost:8000/api/v1/blueprints/
@@ -143,10 +143,10 @@ If you encounter database issues, try:
 
 ```bash
 # Remove the database file
-rm ai_cdn.db
+rm alma.db
 
 # Restart the API server
-ai-cdn serve --reload
+ALMA serve --reload
 ```
 
 ### Import Errors
@@ -168,7 +168,7 @@ pre-commit run --all-files
 # Run specific hook
 black .
 ruff check .
-mypy ai_cdn
+mypy alma
 ```
 
 ## Getting Help

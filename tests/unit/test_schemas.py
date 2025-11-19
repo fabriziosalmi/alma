@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from ai_cdn.schemas.blueprint import (
+from alma.schemas.blueprint import (
     ResourceDefinition,
     SystemBlueprintCreate,
     SystemBlueprintUpdate,

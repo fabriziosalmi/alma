@@ -10,8 +10,8 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 # Import your models' Base here
-from ai_cdn.models.blueprint import Base
-from ai_cdn.core.config import get_settings
+from alma.models.blueprint import Base
+from alma.core.config import get_settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -1,4 +1,4 @@
-"""Grafana dashboard configuration for AI-CDN metrics."""
+"""Grafana dashboard configuration for ALMA metrics."""
 
 import json
 from typing import Dict, Any
@@ -6,15 +6,15 @@ from typing import Dict, Any
 
 def generate_grafana_dashboard() -> Dict[str, Any]:
     """
-    Generate Grafana dashboard JSON for AI-CDN.
+    Generate Grafana dashboard JSON for ALMA.
     
     Returns:
         Grafana dashboard configuration
     """
     return {
         "dashboard": {
-            "title": "AI-CDN Metrics Dashboard",
-            "tags": ["ai-cdn", "infrastructure", "llm"],
+            "title": "ALMA Metrics Dashboard",
+            "tags": ["ALMA", "infrastructure", "llm"],
             "timezone": "browser",
             "schemaVersion": 16,
             "version": 0,

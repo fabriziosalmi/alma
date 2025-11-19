@@ -1,1 +1,1 @@
-"""Test suite for AI-CDN."""
+"""Test suite for ALMA."""

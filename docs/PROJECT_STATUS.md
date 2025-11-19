@@ -1,6 +1,6 @@
 # 📋 Project Status & Documentation Index
 
-**AI-CDN: Infrastructure as Conversation**  
+**ALMA: Infrastructure as Conversation**  
 *Last Updated: November 16, 2025*
 
 ---
@@ -11,11 +11,11 @@
 
 | Feature | Status | Impact | Files Created |
 |---------|--------|--------|---------------|
-| Enhanced Function Calling | ✅ Complete | 95% | `ai_cdn/core/tools.py` (650 lines, 13 tools) |
-| Streaming Responses | ✅ Complete | 90% | `ai_cdn/core/llm_qwen.py`, SSE endpoints |
-| Blueprint Templates | ✅ Complete | 85% | `ai_cdn/core/templates.py` (950 lines, 10 templates) |
-| Rate Limiting | ✅ Complete | 80% | `ai_cdn/middleware/rate_limit.py` (350 lines) |
-| Metrics Collection | ✅ Complete | 80% | `ai_cdn/middleware/metrics.py` (400 lines) |
+| Enhanced Function Calling | ✅ Complete | 95% | `alma/core/tools.py` (650 lines, 13 tools) |
+| Streaming Responses | ✅ Complete | 90% | `alma/core/llm_qwen.py`, SSE endpoints |
+| Blueprint Templates | ✅ Complete | 85% | `alma/core/templates.py` (950 lines, 10 templates) |
+| Rate Limiting | ✅ Complete | 80% | `alma/middleware/rate_limit.py` (350 lines) |
+| Metrics Collection | ✅ Complete | 80% | `alma/middleware/metrics.py` (400 lines) |
 
 **Total Lines of Code Added**: ~3,500 lines  
 **Documentation Created**: ~15,000 lines
@@ -213,7 +213,7 @@ docker-compose -f docker-compose.metrics.yml up -d
 ```
 
 **Includes**:
-- AI-CDN API server
+- ALMA API server
 - PostgreSQL 15
 - Redis 7
 - Prometheus

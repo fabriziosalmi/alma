@@ -3,8 +3,8 @@
 import pytest
 from unittest.mock import AsyncMock, patch
 
-from ai_cdn.engines.proxmox import ProxmoxEngine
-from ai_cdn.engines.base import DeploymentStatus
+from alma.engines.proxmox import ProxmoxEngine
+from alma.engines.base import DeploymentStatus
 
 
 @pytest.fixture

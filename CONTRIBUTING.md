@@ -1,6 +1,6 @@
-# Contributing to AI-CDN
+# Contributing to ALMA
 
-Thank you for your interest in contributing to AI-CDN! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to ALMA! This document provides guidelines and instructions for contributing.
 
 ## Code of Conduct
 
@@ -54,8 +54,8 @@ Thank you for your interest in contributing to AI-CDN! This document provides gu
    ```bash
    black .
    ruff check .
-   mypy ai_cdn
-   bandit -r ai_cdn
+   mypy alma
+   bandit -r alma
    ```
 
 5. Commit your changes:
@@ -167,7 +167,7 @@ async def test_deploy_success(self, engine: FakeEngine, sample_blueprint: dict) 
 pytest
 
 # Run with coverage
-pytest --cov=ai_cdn --cov-report=html
+pytest --cov=alma --cov-report=html
 
 # Run specific test
 pytest tests/unit/test_fake_engine.py::TestFakeEngine::test_deploy_success
@@ -180,9 +180,9 @@ pytest -n auto
 
 To add support for a new infrastructure provider:
 
-1. Create a new file in `ai_cdn/engines/`:
+1. Create a new file in `alma/engines/`:
    ```python
-   from ai_cdn.engines.base import Engine, DeploymentResult
+   from alma.engines.base import Engine, DeploymentResult
 
    class MyEngine(Engine):
        async def deploy(self, blueprint: Dict[str, Any]) -> DeploymentResult:
@@ -196,7 +196,7 @@ To add support for a new infrastructure provider:
 
 4. Update documentation
 
-5. Add configuration options to `ai_cdn/core/config.py`
+5. Add configuration options to `alma/core/config.py`
 
 ## Pull Request Process
 
@@ -221,7 +221,7 @@ When creating a PR, please include:
 ## Project Structure
 
 ```
-ai_cdn/
+alma/
 ├── api/          # FastAPI endpoints
 ├── core/         # Core business logic
 ├── engines/      # Infrastructure engine plugins
@@ -249,4 +249,4 @@ tests/
 - Join our Discord (coming soon)
 - Check existing issues and PRs
 
-Thank you for contributing to AI-CDN!
+Thank you for contributing to ALMA!

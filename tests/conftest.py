@@ -4,7 +4,7 @@ import pytest
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
-from ai_cdn.models.blueprint import Base
+from alma.models.blueprint import Base
 
 
 @pytest.fixture

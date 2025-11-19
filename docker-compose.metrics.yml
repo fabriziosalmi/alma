@@ -2,8 +2,8 @@
 version: '3.8'
 
 services:
-  # AI-CDN API
-  ai-cdn:
+  # ALMA API
+  ALMA:
     build: .
     ports:
       - "8000:8000"

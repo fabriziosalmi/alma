@@ -2,7 +2,7 @@
 
 ## 🌊 Streaming Responses
 
-AI-CDN now supports **real-time streaming** of LLM responses using Server-Sent Events (SSE). This dramatically improves perceived performance and user experience.
+ALMA now supports **real-time streaming** of LLM responses using Server-Sent Events (SSE). This dramatically improves perceived performance and user experience.
 
 ### Benefits
 
@@ -132,7 +132,7 @@ The `-N` flag disables buffering for real-time streaming.
 
 ## 📚 Blueprint Templates Library
 
-AI-CDN includes **10 production-ready templates** for common infrastructure patterns. Templates follow best practices and can be customized.
+ALMA includes **10 production-ready templates** for common infrastructure patterns. Templates follow best practices and can be customized.
 
 ### Available Templates
 
@@ -339,7 +339,7 @@ metadata:
 
 To add your own templates to the library:
 
-1. Create template method in `ai_cdn/core/templates.py`
+1. Create template method in `alma/core/templates.py`
 2. Add to `get_all_templates()` metadata list
 3. Add to `get_template()` mapping
 4. Follow existing template structure
@@ -437,4 +437,4 @@ python examples/template_browser.py
 ✅ **Easy Customization**: Scale and modify templates instantly
 ✅ **Production Ready**: All templates follow best practices
 
-These features make AI-CDN significantly more user-friendly and practical for real-world use!
+These features make ALMA significantly more user-friendly and practical for real-world use!

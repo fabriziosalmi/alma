@@ -1,6 +1,6 @@
-# AI-CDN Cognitive Engine Guide 🧠
+# ALMA Cognitive Engine Guide 🧠
 
-The **Cognitive Engine** is what makes AI-CDN "sentient". Unlike standard CLI tools, it tracks your emotional state, understands context shifts, and protects you from risky operations.
+The **Cognitive Engine** is what makes ALMA "sentient". Unlike standard CLI tools, it tracks your emotional state, understands context shifts, and protects you from risky operations.
 
 ## How it Works
 
@@ -35,7 +35,7 @@ The AI changes its "hat" based on the task.
 > "I see a 503 error. Let's check the ingress controller first. Logs show..."
 
 ### 3. Context Shifting
-AI-CDN remembers what you are working on.
+ALMA remembers what you are working on.
 
 **Example Flow:**
 1. User: "Deploy `web-app-01`" -> *Context set to `web-app-01`*

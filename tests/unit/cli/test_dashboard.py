@@ -9,7 +9,7 @@ import httpx
 import pytest
 from rich.layout import Layout
 
-from ai_cdn.cli.dashboard import DashboardApp, MAX_CONSECUTIVE_ERRORS
+from alma.cli.dashboard import DashboardApp, MAX_CONSECUTIVE_ERRORS
 
 # --- Fixtures ---
 
@@ -60,7 +60,7 @@ async def test_update_api_connection_failure_increments_counter(mock_client_cons
     assert app.api_status == "Disconnected"
 
 @pytest.mark.asyncio
-@patch("ai_cdn.cli.dashboard.DashboardApp.run_recovery_wizard")
+@patch("alma.cli.dashboard.DashboardApp.run_recovery_wizard")
 async def test_run_loop_exits_and_calls_wizard(mock_run_wizard, app: DashboardApp):
     """Verify the main loop exits after MAX_CONSECUTIVE_ERRORS and then calls the recovery wizard."""
     with patch.object(app, "update_data", new_callable=AsyncMock) as mock_update:
@@ -69,7 +69,7 @@ async def test_run_loop_exits_and_calls_wizard(mock_run_wizard, app: DashboardAp
         
         mock_update.side_effect = fail_and_increment_error
 
-        with patch("ai_cdn.cli.dashboard.Live"):
+        with patch("alma.cli.dashboard.Live"):
             await app.run()
 
     assert app.consecutive_errors == MAX_CONSECUTIVE_ERRORS
@@ -80,10 +80,10 @@ async def test_run_loop_exits_and_calls_wizard(mock_run_wizard, app: DashboardAp
 def test_recovery_wizard_saves_to_env(app: DashboardApp):
     """Test the recovery wizard's data collection and saving logic."""
     # Patch targets must be where the objects are LOOKED UP, not where they are defined.
-    with patch("ai_cdn.cli.dashboard.Prompt.ask") as mock_prompt, \
-         patch("ai_cdn.cli.dashboard.Confirm.ask") as mock_confirm, \
-         patch("ai_cdn.cli.dashboard.find_dotenv") as mock_find_dotenv, \
-         patch("ai_cdn.cli.dashboard.set_key") as mock_set_key:
+    with patch("alma.cli.dashboard.Prompt.ask") as mock_prompt, \
+         patch("alma.cli.dashboard.Confirm.ask") as mock_confirm, \
+         patch("alma.cli.dashboard.find_dotenv") as mock_find_dotenv, \
+         patch("alma.cli.dashboard.set_key") as mock_set_key:
 
         # Simulate user input and file system behavior
         mock_prompt.side_effect = ["1", "sk-ollama-key"]
@@ -98,10 +98,10 @@ def test_recovery_wizard_saves_to_env(app: DashboardApp):
 
 def test_recovery_wizard_handles_custom_url(app: DashboardApp):
     """Test the wizard correctly prompts for a custom URL when '4' is selected."""
-    with patch("ai_cdn.cli.dashboard.Prompt.ask") as mock_prompt, \
-         patch("ai_cdn.cli.dashboard.Confirm.ask") as mock_confirm, \
-         patch("ai_cdn.cli.dashboard.find_dotenv") as mock_find_dotenv, \
-         patch("ai_cdn.cli.dashboard.set_key") as mock_set_key:
+    with patch("alma.cli.dashboard.Prompt.ask") as mock_prompt, \
+         patch("alma.cli.dashboard.Confirm.ask") as mock_confirm, \
+         patch("alma.cli.dashboard.find_dotenv") as mock_find_dotenv, \
+         patch("alma.cli.dashboard.set_key") as mock_set_key:
 
         mock_prompt.side_effect = ["4", "http://my.custom.endpoint/v1", "custom_api_key"]
         mock_confirm.return_value = True

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to AI-CDN will be documented in this file.
+All notable changes to ALMA will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -14,7 +14,7 @@ Major update adding production-ready features and comprehensive documentation.
 ### Added
 
 #### Enhanced Function Calling
-- **13 LLM Tools** for infrastructure operations (`ai_cdn/core/tools.py`)
+- **13 LLM Tools** for infrastructure operations (`alma/core/tools.py`)
   - `create_blueprint` - Generate infrastructure blueprints
   - `validate_blueprint` - Syntax and semantic validation
   - `estimate_resources` - Resource requirement calculation
@@ -37,7 +37,7 @@ Major update adding production-ready features and comprehensive documentation.
   - Progressive rendering for better UX
 
 #### Blueprint Templates
-- **10 Production-Ready Templates** (`ai_cdn/core/templates.py`)
+- **10 Production-Ready Templates** (`alma/core/templates.py`)
   - `simple-web-app` - Basic web application ($100-200/month)
   - `ha-web-app` - High availability web app ($300-500/month)
   - `microservices-k8s` - Kubernetes microservices ($800-1500/month)
@@ -52,7 +52,7 @@ Major update adding production-ready features and comprehensive documentation.
 - Complexity tiers (low/medium/high)
 
 #### Rate Limiting
-- **Token Bucket Algorithm** (`ai_cdn/middleware/rate_limit.py`)
+- **Token Bucket Algorithm** (`alma/middleware/rate_limit.py`)
   - Per-IP rate limiting (60 RPM global default)
   - Per-endpoint custom limits:
     - Chat streaming: 20 RPM (LLM intensive)
@@ -66,7 +66,7 @@ Major update adding production-ready features and comprehensive documentation.
   - <1ms performance overhead
 
 #### Metrics Collection
-- **Prometheus Integration** (`ai_cdn/middleware/metrics.py`)
+- **Prometheus Integration** (`alma/middleware/metrics.py`)
   - 15+ metric types:
     - HTTP metrics (requests, duration, sizes)
     - LLM metrics (requests, tokens, duration)

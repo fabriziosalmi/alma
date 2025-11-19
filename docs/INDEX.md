@@ -1,6 +1,6 @@
-# AI-CDN Documentation Index
+# ALMA Documentation Index
 
-Welcome to the AI-CDN documentation! This index helps you find the right documentation for your needs.
+Welcome to the ALMA documentation! This index helps you find the right documentation for your needs.
 
 ## 📖 Documentation Structure
 
@@ -171,7 +171,7 @@ See [CONTRIBUTING](../CONTRIBUTING.md) for guidelines.
 
 **Happy Reading! 📚**
 
-**Infrastructure as Conversation** - Complete documentation for the AI-CDN platform.
+**Infrastructure as Conversation** - Complete documentation for the ALMA platform.
 
 ## 📚 Table of Contents
 
@@ -209,8 +209,8 @@ See [CONTRIBUTING](../CONTRIBUTING.md) for guidelines.
 ## 🎯 Quick Links
 
 ### For Users
-- [What is AI-CDN?](#what-is-ai-cdn)
-- [Why use AI-CDN?](#why-use-ai-cdn)
+- [What is ALMA?](#what-is-ALMA)
+- [Why use ALMA?](#why-use-ALMA)
 - [Quick Start](QUICKSTART.md)
 - [Examples](../examples/)
 
@@ -224,9 +224,9 @@ See [CONTRIBUTING](../CONTRIBUTING.md) for guidelines.
 - [Monitoring](MONITORING.md)
 - [Security](SECURITY.md)
 
-## What is AI-CDN?
+## What is ALMA?
 
-AI-CDN is an **infrastructure orchestration platform** that transforms the traditional "Infrastructure as Code" paradigm into "Infrastructure as Conversation". It uses AI to help you design, deploy, and manage infrastructure through natural language interactions.
+ALMA is an **infrastructure orchestration platform** that transforms the traditional "Infrastructure as Code" paradigm into "Infrastructure as Conversation". It uses AI to help you design, deploy, and manage infrastructure through natural language interactions.
 
 ### Key Features
 
@@ -254,7 +254,7 @@ AI-CDN is an **infrastructure orchestration platform** that transforms the tradi
 - **Python SDK**: Programmatic access
 - **Extensible**: Plugin architecture for custom engines
 
-## Why Use AI-CDN?
+## Why Use ALMA?
 
 ### Traditional Infrastructure Management
 ```yaml
@@ -272,12 +272,12 @@ resource "proxmox_vm" "web" {
 }
 ```
 
-### With AI-CDN
+### With ALMA
 ```bash
 # Just describe what you need
-ai-cdn generate "I need a high-availability web application"
+ALMA generate "I need a high-availability web application"
 
-# AI-CDN will:
+# ALMA will:
 # ✓ Design optimal architecture
 # ✓ Configure security
 # ✓ Add redundancy
@@ -314,7 +314,7 @@ See [Architecture](ARCHITECTURE.md) for detailed explanation.
 ## Project Structure
 
 ```
-ai_cdn/
+alma/
 ├── api/                    # FastAPI application
 │   ├── routes/            # API endpoints
 │   └── main.py            # App initialization
@@ -344,25 +344,25 @@ ai_cdn/
 
 ### 1. Development Environments
 ```bash
-ai-cdn generate "Create a development environment for a Django app"
+ALMA generate "Create a development environment for a Django app"
 # → Complete stack with PostgreSQL, Redis, and Django container
 ```
 
 ### 2. Production Deployments
 ```bash
-ai-cdn deploy production.yaml --review
+ALMA deploy production.yaml --review
 # → Creates IPR for team review before deployment
 ```
 
 ### 3. Infrastructure Audits
 ```bash
-ai-cdn audit my-infrastructure.yaml
+ALMA audit my-infrastructure.yaml
 # → AI-powered security and best practices analysis
 ```
 
 ### 4. Migration Planning
 ```bash
-ai-cdn migrate --from aws --to proxmox current-infra.yaml
+ALMA migrate --from aws --to proxmox current-infra.yaml
 # → Generates migration plan and new blueprint
 ```
 
@@ -379,9 +379,9 @@ ai-cdn migrate --from aws --to proxmox current-infra.yaml
 - Discord: Real-time chat (coming soon)
 
 ### Support
-- 📧 Email: support@ai-cdn.io
-- 💬 Discord: [Join server](https://discord.gg/ai-cdn)
-- 🐛 Issues: [GitHub Issues](https://github.com/ai-cdn/ai-cdn/issues)
+- 📧 Email: support@ALMA.io
+- 💬 Discord: [Join server](https://discord.gg/ALMA)
+- 🐛 Issues: [GitHub Issues](https://github.com/ALMA/ALMA/issues)
 
 ## Next Steps
 
@@ -413,5 +413,5 @@ See [CHANGELOG.md](../CHANGELOG.md) for version history.
 
 ---
 
-**AI-CDN** - Infrastructure as Conversation
-Made with ❤️ by the AI-CDN Team
+**ALMA** - Infrastructure as Conversation
+Made with ❤️ by the ALMA Team

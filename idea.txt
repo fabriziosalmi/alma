@@ -1,5 +1,5 @@
 Riassunto Esecutivo
-AI-CDN è una piattaforma di orchestrazione infrastrutturale che trasforma il paradigma da "Infrastructure as Code" a "Infrastructure as Conversation".
+ALMA è una piattaforma di orchestrazione infrastrutturale che trasforma il paradigma da "Infrastructure as Code" a "Infrastructure as Conversation".
 
 Concetti Chiave:
 Astrazione Full-Stack: Gestione unificata di rete, hardware e servizi tramite un'interfaccia conversazionale AI

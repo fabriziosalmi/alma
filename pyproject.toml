@@ -3,14 +3,14 @@ requires = ["setuptools>=68.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ai-cdn"
+name = "alma"
 version = "0.1.0"
-description = "AI-CDN: Infrastructure as Conversation platform"
+description = "ALMA: The Soul of Your Infrastructure."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
-    {name = "AI-CDN Team"}
+    {name = "ALMA Team"}
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -60,11 +60,11 @@ llm = [
 ]
 
 [project.scripts]
-ai-cdn = "ai_cdn.cli.main:app"
+alma = "alma.cli.main:app"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["ai_cdn*"]
+include = ["alma*"]
 
 [tool.black]
 line-length = 100
@@ -91,7 +91,7 @@ ignore = [
 
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["F401"]
-"ai_cdn/cli/main.py" = ["B904"]
+"alma/cli/main.py" = ["B904"]
 
 [tool.mypy]
 python_version = "3.10"
@@ -117,7 +117,7 @@ testpaths = ["tests"]
 pythonpath = ["."]
 asyncio_mode = "auto"
 addopts = [
-    "--cov=ai_cdn",
+    "--cov=alma",
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-fail-under=80",
@@ -128,7 +128,7 @@ exclude_dirs = ["tests", "scripts"]
 skips = ["B101"]
 
 [tool.coverage.run]
-source = ["ai_cdn"]
+source = ["alma"]
 omit = ["*/tests/*", "*/migrations/*"]
 
 [tool.coverage.report]

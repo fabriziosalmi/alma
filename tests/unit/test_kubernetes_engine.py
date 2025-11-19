@@ -12,16 +12,16 @@ from kubernetes_asyncio.client import (
     V1LabelSelector, V1ServicePort
 )
 
-from ai_cdn.engines.kubernetes import KubernetesEngine
-from ai_cdn.core.state import Plan, ResourceState
-from ai_cdn.schemas.blueprint import SystemBlueprint, ResourceDefinition
+from alma.engines.kubernetes import KubernetesEngine
+from alma.core.state import Plan, ResourceState
+from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
 
 pytestmark = pytest.mark.asyncio
 
 @pytest.fixture
 def k8s_engine():
     """Fixture to provide a mocked KubernetesEngine."""
-    with patch('ai_cdn.engines.kubernetes.config') as mock_k8s_config:
+    with patch('alma.engines.kubernetes.config') as mock_k8s_config:
         engine = KubernetesEngine(config_dict={"namespace": "test-ns"})
         
         # Mock the entire client so we don't need a real cluster
@@ -53,7 +53,7 @@ async def test_get_state_empty(k8s_engine, test_blueprint):
     
     assert state == []
     mock_apps_v1.list_namespaced_deployment.assert_called_with(
-        namespace="test-ns", label_selector="ai-cdn-blueprint=test-bp"
+        namespace="test-ns", label_selector="ALMA-blueprint=test-bp"
     )
 
 async def test_get_state_with_deployment(k8s_engine, test_blueprint):

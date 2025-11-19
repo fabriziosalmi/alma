@@ -1,10 +1,10 @@
-# User Guide - AI-CDN
+# User Guide - ALMA
 
-Welcome to AI-CDN! This guide will help you get started with Infrastructure as Conversation.
+Welcome to ALMA! This guide will help you get started with Infrastructure as Conversation.
 
 ## Table of Contents
 
-1. [What is AI-CDN?](#what-is-ai-cdn)
+1. [What is ALMA?](#what-is-ALMA)
 2. [Quick Start](#quick-start)
 3. [Core Concepts](#core-concepts)
 4. [Common Use Cases](#common-use-cases)
@@ -13,9 +13,9 @@ Welcome to AI-CDN! This guide will help you get started with Infrastructure as C
 
 ---
 
-## What is AI-CDN?
+## What is ALMA?
 
-AI-CDN transforms infrastructure management from code-based IaC (Infrastructure as Code) to **conversation-based infrastructure**. Instead of writing YAML/Terraform, you describe what you need in natural language.
+ALMA transforms infrastructure management from code-based IaC (Infrastructure as Code) to **conversation-based infrastructure**. Instead of writing YAML/Terraform, you describe what you need in natural language.
 
 ### Key Benefits
 
@@ -649,8 +649,8 @@ python run_server.py
 Create your own LLM tools:
 
 ```python
-# ai_cdn/core/custom_tools.py
-from ai_cdn.core.tools import InfrastructureTools
+# alma/core/custom_tools.py
+from alma.core.tools import InfrastructureTools
 
 class CustomTools(InfrastructureTools):
     def _my_custom_tool(self, params: dict) -> dict:
@@ -720,7 +720,7 @@ histogram_quantile(0.95, http_request_duration_seconds)
 2. **Try Templates**: `curl http://localhost:8000/api/v1/templates`
 3. **Read Architecture**: [docs/ARCHITECTURE.md](ARCHITECTURE.md)
 4. **Production Deploy**: [docs/PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md)
-5. **Join Community**: https://discord.gg/ai-cdn
+5. **Join Community**: https://discord.gg/ALMA
 
 ---
 
@@ -729,6 +729,6 @@ histogram_quantile(0.95, http_request_duration_seconds)
 - **Documentation**: All docs in `docs/` folder
 - **GitHub Issues**: Report bugs or request features
 - **Discord**: Community support and discussions
-- **Email**: support@ai-cdn.dev (for enterprise customers)
+- **Email**: support@ALMA.dev (for enterprise customers)
 
 Happy infrastructure management! 🚀

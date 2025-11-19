@@ -5,10 +5,10 @@ import asyncio
 from unittest.mock import Mock, AsyncMock
 from fastapi import Request
 from fastapi.testclient import TestClient
-from ai_cdn.api.main import app
-from ai_cdn.middleware.rate_limit import RateLimiter, EndpointRateLimiter
-from ai_cdn.middleware.metrics import MetricsCollector, get_metrics_collector
-from ai_cdn.middleware.metrics import (
+from alma.api.main import app
+from alma.middleware.rate_limit import RateLimiter, EndpointRateLimiter
+from alma.middleware.metrics import MetricsCollector, get_metrics_collector
+from alma.middleware.metrics import (
     http_requests_total,
     llm_requests_total,
     llm_tokens_generated,
@@ -183,7 +183,7 @@ class TestMetricsCollector:
         collector = MetricsCollector()
         
         # Get histogram before recording
-        from ai_cdn.middleware.metrics import http_request_duration_seconds
+        from alma.middleware.metrics import http_request_duration_seconds
         
         # Record multiple durations
         collector.record_http_request("POST", "/api", 201, 0.15, 500, 1000)
@@ -294,7 +294,7 @@ class TestMetricsCollector:
         collector.record_llm_request("chat", "qwen", 1.5, 300, "success")
         
         # Get Prometheus format
-        from ai_cdn.middleware.metrics import get_prometheus_metrics
+        from alma.middleware.metrics import get_prometheus_metrics
         response = get_prometheus_metrics()
         metrics_output = response.body.decode('utf-8')
         

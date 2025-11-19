@@ -3,8 +3,8 @@
 import unittest
 from datetime import datetime
 
-from ai_cdn.core.exporters.terraform import TerraformExporter
-from ai_cdn.schemas.blueprint import SystemBlueprint, ResourceDefinition
+from alma.core.exporters.terraform import TerraformExporter
+from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
 
 
 class TestTerraformExporter(unittest.TestCase):

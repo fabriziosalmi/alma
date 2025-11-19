@@ -1,6 +1,6 @@
-# AI-CDN Architecture
+# ALMA Architecture
 
-This document provides a comprehensive overview of AI-CDN's architecture, design principles, and implementation details.
+This document provides a comprehensive overview of ALMA's architecture, design principles, and implementation details.
 
 ## Table of Contents
 
@@ -13,7 +13,7 @@ This document provides a comprehensive overview of AI-CDN's architecture, design
 
 ## Overview
 
-AI-CDN follows a **4-layer architecture** that separates concerns and enables clean abstractions:
+ALMA follows a **4-layer architecture** that separates concerns and enables clean abstractions:
 
 ```
 ┌───────────────────────────────────────────────────────────┐
@@ -67,8 +67,8 @@ AI-CDN follows a **4-layer architecture** that separates concerns and enables cl
 **Purpose**: User interaction and interface management
 
 **Components**:
-- **CLI** (`ai_cdn/cli/`): Command-line interface using Typer
-- **REST API** (`ai_cdn/api/`): FastAPI-based HTTP API
+- **CLI** (`alma/cli/`): Command-line interface using Typer
+- **REST API** (`alma/api/`): FastAPI-based HTTP API
 - **Web UI** (Future): Browser-based interface
 
 **Key Features**:
@@ -79,10 +79,10 @@ AI-CDN follows a **4-layer architecture** that separates concerns and enables cl
 
 **Example CLI Commands**:
 ```bash
-ai-cdn deploy blueprint.yaml
-ai-cdn generate "web app with database"
-ai-cdn status
-ai-cdn rollback deployment-123
+ALMA deploy blueprint.yaml
+ALMA generate "web app with database"
+ALMA status
+ALMA rollback deployment-123
 ```
 
 **Example API Calls**:
@@ -97,7 +97,7 @@ GET /api/v1/blueprints/{id}/deploy
 
 **Purpose**: Acts as a middleware between raw user intent and LLM execution. It provides safety, context, and personality.
 
-**Component**: `ai_cdn/core/cognitive.py`
+**Component**: `alma/core/cognitive.py`
 
 **Key Sub-Systems:**
 
@@ -124,10 +124,10 @@ GET /api/v1/blueprints/{id}/deploy
 **Purpose**: AI-powered intelligence and decision making
 
 **Components**:
-- **LLM Engine** (`ai_cdn/core/llm_qwen.py`): Qwen3 model integration
-- **Orchestrator** (`ai_cdn/core/llm_orchestrator.py`): Conversation management
-- **Prompts** (`ai_cdn/core/prompts.py`): Specialized prompt templates
-- **Service** (`ai_cdn/core/llm_service.py`): LLM lifecycle management
+- **LLM Engine** (`alma/core/llm_qwen.py`): Qwen3 model integration
+- **Orchestrator** (`alma/core/llm_orchestrator.py`): Conversation management
+- **Prompts** (`alma/core/prompts.py`): Specialized prompt templates
+- **Service** (`alma/core/llm_service.py`): LLM lifecycle management
 
 **Capabilities**:
 1. **Intent Classification**: Understand what the user wants
@@ -160,8 +160,8 @@ Generated Blueprint:
 **Purpose**: Declarative infrastructure representation
 
 **Components**:
-- **Schemas** (`ai_cdn/schemas/`): Pydantic models for validation
-- **Database Models** (`ai_cdn/models/`): SQLAlchemy ORM models
+- **Schemas** (`alma/schemas/`): Pydantic models for validation
+- **Database Models** (`alma/models/`): SQLAlchemy ORM models
 - **Blueprint Parser**: YAML ↔ Python object conversion
 
 **Blueprint Structure**:
@@ -197,7 +197,7 @@ metadata:
 **Purpose**: Actual infrastructure provisioning and management
 
 **Components**:
-- **Engine Interface** (`ai_cdn/engines/base.py`): Abstract base class
+- **Engine Interface** (`alma/engines/base.py`): Abstract base class
 - **Engine Plugins**: Provider-specific implementations
   - FakeEngine: Testing and development
   - ProxmoxEngine: Proxmox VE integration

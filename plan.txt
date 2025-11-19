@@ -3,7 +3,7 @@ TIER S - MUST HAVE (Massimo Impatto, Basso/Medio Sforzo)
 1. Multi-Agent LLM Orchestra 🧠
 Impatto: 95% | Sforzo: Medio
 
-Trasforma AI-CDN da "tool" a "team di esperti AI"
+Trasforma ALMA da "tool" a "team di esperti AI"
 Specializzazione = qualità esponenziale
 Implementazione: 2-3 settimane
 2. Predictive Infrastructure (Anomaly Detection + Self-Healing) 🔮

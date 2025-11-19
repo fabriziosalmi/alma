@@ -6,14 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import yaml
 from pathlib import Path
 
-from ai_cdn.api.main import app
-from ai_cdn.engines.fake import FakeEngine
+from alma.api.main import app
+from alma.engines.fake import FakeEngine
 
 
 @pytest.fixture
 async def client(test_db_session: AsyncSession) -> AsyncClient:
     """Create test client with database session override."""
-    from ai_cdn.core.database import get_session
+    from alma.core.database import get_session
 
     async def override_get_session():
         yield test_db_session

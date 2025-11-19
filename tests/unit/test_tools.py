@@ -1,7 +1,7 @@
 """Tests for enhanced function calling tools."""
 
 import pytest
-from ai_cdn.core.tools import InfrastructureTools
+from alma.core.tools import InfrastructureTools
 
 
 def test_get_available_tools():
@@ -312,8 +312,8 @@ def test_tool_execution_error():
 @pytest.mark.asyncio
 async def test_orchestrator_integration():
     """Test integration with orchestrator."""
-    from ai_cdn.core.llm_orchestrator import EnhancedOrchestrator
-    from ai_cdn.core.llm import MockLLM
+    from alma.core.llm_orchestrator import EnhancedOrchestrator
+    from alma.core.llm import MockLLM
     
     llm = MockLLM()
     orchestrator = EnhancedOrchestrator(llm=llm, use_llm=True)

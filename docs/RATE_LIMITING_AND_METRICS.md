@@ -2,7 +2,7 @@
 
 ## Overview
 
-AI-CDN now includes production-grade rate limiting and comprehensive metrics collection. These features provide abuse prevention, fair usage enforcement, and deep observability into system behavior.
+ALMA now includes production-grade rate limiting and comprehensive metrics collection. These features provide abuse prevention, fair usage enforcement, and deep observability into system behavior.
 
 ---
 
@@ -19,7 +19,7 @@ Token bucket algorithm with per-client and per-endpoint tracking:
 
 ### Configuration
 
-Default limits in `ai_cdn/middleware/rate_limit.py`:
+Default limits in `alma/middleware/rate_limit.py`:
 
 ```python
 # Global defaults
@@ -56,7 +56,7 @@ Retry-After: 30  # Seconds until next token available
 Modify limits in code or via environment variables:
 
 ```python
-# In ai_cdn/middleware/rate_limit.py
+# In alma/middleware/rate_limit.py
 rate_limiter = RateLimiter(
     requests_per_minute=120,  # Double the default
     burst_size=20             # Larger burst allowance
@@ -99,7 +99,7 @@ Response:
 
 ### Prometheus Integration
 
-AI-CDN exposes Prometheus-compatible metrics at `/metrics`:
+ALMA exposes Prometheus-compatible metrics at `/metrics`:
 
 ```bash
 curl http://localhost:8000/metrics
@@ -198,11 +198,11 @@ docker-compose -f docker-compose.metrics.yml up -d
 ```
 
 Services:
-- AI-CDN API: `http://localhost:8000`
+- ALMA API: `http://localhost:8000`
 - Prometheus: `http://localhost:9090`
 - Grafana: `http://localhost:3000` (admin/admin)
 
-2. **Dashboard auto-loads** at Grafana → Dashboards → AI-CDN Metrics
+2. **Dashboard auto-loads** at Grafana → Dashboards → ALMA Metrics
 
 ### Dashboard Panels
 
@@ -244,11 +244,11 @@ topk(5, rate(rate_limit_hits_total[5m]))
 
 ### Prometheus Alerts
 
-Create `config/alerts/ai-cdn.yml`:
+Create `config/alerts/ALMA.yml`:
 
 ```yaml
 groups:
-  - name: ai-cdn
+  - name: ALMA
     interval: 30s
     rules:
       # High error rate
@@ -343,7 +343,7 @@ Set thresholds directly in dashboard panels:
 
 ### Rate Limiting Not Working
 
-1. Check middleware order in `ai_cdn/api/main.py`:
+1. Check middleware order in `alma/api/main.py`:
    ```python
    app.middleware("http")(metrics_middleware)  # First
    app.middleware("http")(rate_limit_middleware)  # Second
@@ -371,7 +371,7 @@ Set thresholds directly in dashboard panels:
 
 2. Verify Prometheus scraping:
    - Open `http://localhost:9090/targets`
-   - `ai-cdn-api` should be "UP"
+   - `ALMA-api` should be "UP"
 
 3. Check Grafana data source:
    - Settings → Data Sources → Prometheus
@@ -399,7 +399,7 @@ Set thresholds directly in dashboard panels:
 
 1. **Custom Metrics**: Add application-specific metrics
    ```python
-   from ai_cdn.middleware.metrics import get_metrics_collector
+   from alma.middleware.metrics import get_metrics_collector
    
    metrics = get_metrics_collector()
    metrics.custom_counter.labels(operation="my_feature").inc()

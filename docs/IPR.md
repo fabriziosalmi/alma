@@ -33,7 +33,7 @@ Human-in-the-loop approval system for infrastructure changes.
 ### Via CLI
 ```bash
 # Create IPR from blueprint
-ai-cdn ipr create my-blueprint.yaml \
+ALMA ipr create my-blueprint.yaml \
   --title "Add production database" \
   --description "PostgreSQL cluster for user data"
 ```
@@ -55,11 +55,11 @@ curl -X POST http://localhost:8000/api/v1/ipr/ \
 ### Via CLI
 ```bash
 # Approve
-ai-cdn ipr review 42 --approve \
+ALMA ipr review 42 --approve \
   --comment "LGTM, approved"
 
 # Reject
-ai-cdn ipr review 42 --reject \
+ALMA ipr review 42 --reject \
   --comment "Needs more CPU"
 ```
 
@@ -80,7 +80,7 @@ Only approved IPRs can be deployed:
 
 ```bash
 # Deploy approved IPR
-ai-cdn ipr deploy 42
+ALMA ipr deploy 42
 ```
 
 ## IPR States

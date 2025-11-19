@@ -1,10 +1,10 @@
-# AI-CDN LLM Integration Guide
+# ALMA LLM Integration Guide
 
-This guide explains how to use the Qwen3 LLM integration in AI-CDN for conversational infrastructure management.
+This guide explains how to use the Qwen3 LLM integration in ALMA for conversational infrastructure management.
 
 ## Overview
 
-AI-CDN uses Qwen3-0.6B, a small but powerful language model, to provide:
+ALMA uses Qwen3-0.6B, a small but powerful language model, to provide:
 - **Natural language to infrastructure** - Describe what you want, get a blueprint
 - **Infrastructure to natural language** - Understand what your blueprints do
 - **AI-powered suggestions** - Get recommendations for improvements
@@ -17,7 +17,7 @@ AI-CDN uses Qwen3-0.6B, a small but powerful language model, to provide:
 ### Prerequisites
 
 ```bash
-# Install AI-CDN with LLM support
+# Install ALMA with LLM support
 pip install -e ".[dev,llm]"
 
 # This installs:
@@ -240,8 +240,8 @@ curl -X POST http://localhost:8000/api/v1/conversation/security-audit \
 ### Basic Usage
 
 ```python
-from ai_cdn.core.llm_qwen import Qwen3LLM
-from ai_cdn.core.llm_orchestrator import EnhancedOrchestrator
+from alma.core.llm_qwen import Qwen3LLM
+from alma.core.llm_orchestrator import EnhancedOrchestrator
 
 # Initialize LLM
 llm = Qwen3LLM(
@@ -268,7 +268,7 @@ await llm.close()
 ### Using Service Layer
 
 ```python
-from ai_cdn.core.llm_service import get_orchestrator
+from alma.core.llm_service import get_orchestrator
 
 # Get singleton orchestrator (automatically manages LLM lifecycle)
 orchestrator = await get_orchestrator()
@@ -285,7 +285,7 @@ The CLI automatically uses the LLM for intelligent interactions:
 
 ```bash
 # Generate blueprint from natural language
-ai-cdn generate "I need a Kubernetes cluster with 3 nodes"
+ALMA generate "I need a Kubernetes cluster with 3 nodes"
 
 # This will:
 # 1. Use LLM to understand your intent
@@ -316,20 +316,20 @@ ai-cdn generate "I need a Kubernetes cluster with 3 nodes"
 
 ## Fallback Behavior
 
-If LLM initialization fails (missing dependencies, insufficient RAM, etc.), AI-CDN automatically falls back to rule-based processing:
+If LLM initialization fails (missing dependencies, insufficient RAM, etc.), ALMA automatically falls back to rule-based processing:
 
 - Blueprint generation uses keyword matching
 - Suggestions use predefined rules
 - Descriptions use templates
 
-This ensures AI-CDN always works, even without LLM support.
+This ensures ALMA always works, even without LLM support.
 
 ## Advanced: Custom Prompts
 
 You can customize prompts for specific use cases:
 
 ```python
-from ai_cdn.core.prompts import InfrastructurePrompts
+from alma.core.prompts import InfrastructurePrompts
 
 # Use custom prompt for blueprint generation
 custom_prompt = f"""

@@ -1,8 +1,8 @@
 """Unit tests for FakeEngine."""
 
 import pytest
-from ai_cdn.engines.fake import FakeEngine
-from ai_cdn.engines.base import DeploymentStatus, ResourceStatus
+from alma.engines.fake import FakeEngine
+from alma.engines.base import DeploymentStatus, ResourceStatus
 
 
 @pytest.fixture

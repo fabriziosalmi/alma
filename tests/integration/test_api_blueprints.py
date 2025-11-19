@@ -7,8 +7,8 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ai_cdn.api.main import app
-from ai_cdn.models.blueprint import SystemBlueprintModel
+from alma.api.main import app
+from alma.models.blueprint import SystemBlueprintModel
 
 # Keep the original client fixture
 @pytest.fixture
@@ -22,7 +22,7 @@ async def client() -> AsyncClient:
 @pytest.fixture
 async def db_client(test_db_session: AsyncSession) -> AsyncClient:
     """Create test client with database session override."""
-    from ai_cdn.core.database import get_session
+    from alma.core.database import get_session
 
     async def override_get_session():
         yield test_db_session
@@ -129,7 +129,7 @@ class TestBlueprintAPI:
 
     # --- REFACTORED DEPLOYMENT TESTS ---
 
-    @patch("ai_cdn.api.routes.blueprints.FakeEngine")
+    @patch("alma.api.routes.blueprints.FakeEngine")
     async def test_deploy_blueprint_dry_run(
         self, MockFakeEngine, db_client: AsyncClient, test_db_session: AsyncSession, sample_blueprint_data: dict
     ) -> None:
@@ -154,7 +154,7 @@ class TestBlueprintAPI:
         assert data["deployment_id"] == "dry-run"
         assert "1 to create" in data["plan_summary"] # Check the plan is returned
 
-    @patch("ai_cdn.api.routes.blueprints.FakeEngine")
+    @patch("alma.api.routes.blueprints.FakeEngine")
     async def test_deploy_blueprint_actual(
         self, MockFakeEngine, db_client: AsyncClient, test_db_session: AsyncSession, sample_blueprint_data: dict
     ) -> None:
@@ -181,13 +181,13 @@ class TestBlueprintAPI:
         mock_engine_instance.apply.assert_called_once()
         mock_engine_instance.destroy.assert_called_once()
 
-    @patch("ai_cdn.api.routes.blueprints.FakeEngine")
+    @patch("alma.api.routes.blueprints.FakeEngine")
     async def test_deploy_no_changes(
         self, MockFakeEngine, db_client: AsyncClient, test_db_session: AsyncSession, sample_blueprint_data: dict
     ) -> None:
         """Test deploying a blueprint that is already up-to-date."""
         # Mock engine to return a state that matches the blueprint
-        from ai_cdn.core.state import ResourceState
+        from alma.core.state import ResourceState
         mock_engine_instance = MockFakeEngine.return_value
         mock_engine_instance.get_state = AsyncMock(return_value=[
             ResourceState(

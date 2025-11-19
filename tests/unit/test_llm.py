@@ -2,7 +2,7 @@
 
 import pytest
 
-from ai_cdn.core.llm import ConversationalOrchestrator, MockLLM
+from alma.core.llm import ConversationalOrchestrator, MockLLM
 
 
 @pytest.fixture

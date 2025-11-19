@@ -14,7 +14,7 @@ def test_root_endpoint():
     response = client.get("/")
     assert response.status_code == 200
     data = response.json()
-    assert data["name"] == "AI-CDN Controller API"
+    assert data["name"] == "ALMA Controller API"
     assert data["status"] == "operational"
 
 

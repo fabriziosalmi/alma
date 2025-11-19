@@ -139,7 +139,7 @@ Thumbs.db
 alembic.ini
 logs/
 data/
-.ai_cdn/
+.alma/
 
 # LLM models
 models/

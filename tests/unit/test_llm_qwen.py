@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from ai_cdn.core.llm_qwen import Qwen3LLM
+from alma.core.llm_qwen import Qwen3LLM
 
 
 @pytest.fixture

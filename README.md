@@ -1,22 +1,22 @@
-# AI-CDN: Infrastructure as Conversation 🧠
+# ALMA: Infrastructure as Conversation 🧠
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Status](https://img.shields.io/badge/Status-Sentient_Beta-purple.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Stop writing YAML. Start conversing.**
-AI-CDN is the first **Cognitive Infrastructure Platform**. It doesn't just execute commands; it understands context, assesses risk, and adapts its persona to your emotional state.
+ALMA is the first **Cognitive Infrastructure Platform**. It doesn't just execute commands; it understands context, assesses risk, and adapts its persona to your emotional state.
 
 ## ✨ The "Wow" Factors
 
 ### 🧠 Cognitive Engine (New!)
-AI-CDN is not a stateless chatbot. It has a "Brain":
+ALMA is not a stateless chatbot. It has a "Brain":
 - **Risk Assessment**: Detects frustration + high-risk commands (e.g., "DELETE DB") and activates safety overrides.
 - **Context Awareness**: Understands if you are shifting topics (e.g., from Network to Storage) and adjusts focus.
 - **Adaptive Persona**: Switches dynamically between **Architect** (Creative), **Operator** (Precise), and **Medic** (Troubleshooter) based on your intent.
 
 ### 🖥️ TUI Dashboard (New!)
-Real-time terminal UI (`ai-cdn monitor`) featuring:
+Real-time terminal UI (`ALMA monitor`) featuring:
 - **Live Neural Status**: Watch the LLM think in real-time.
 - **Deployment Tracking**: Progress bars for your infrastructure rollouts.
 - **System Health**: API latency, tokens/sec, and resource usage.
@@ -68,16 +68,16 @@ python run_server.py
 
 Open the Dashboard (New terminal):
 ```bash
-python -m ai_cdn.cli.dashboard
+python -m alma.cli.dashboard
 ```
 
 ### Interact
 ```bash
 # Ask for a design (Architect Persona activates)
-ai-cdn chat "Design a high-availability redis cluster"
+ALMA chat "Design a high-availability redis cluster"
 
 # Execute a risky command (Risk Guard activates)
-ai-cdn chat "DESTROY THE PRODUCTION DATABASE NOW"
+ALMA chat "DESTROY THE PRODUCTION DATABASE NOW"
 # Response: "🛑 CRITICAL RISK: High frustration detected. Operation blocked."
 ```
 

@@ -1,6 +1,6 @@
-# API Reference - AI-CDN
+# API Reference - ALMA
 
-Complete API documentation for AI-CDN Infrastructure as Conversation platform.
+Complete API documentation for ALMA Infrastructure as Conversation platform.
 
 ## Base URL
 
@@ -10,7 +10,7 @@ http://localhost:8000/api/v1
 
 ## Authentication
 
-Currently, AI-CDN uses IP-based rate limiting. Future versions will include:
+Currently, ALMA uses IP-based rate limiting. Future versions will include:
 - API Key authentication
 - OAuth2 / JWT tokens
 - Role-based access control (RBAC)
@@ -204,7 +204,7 @@ POST /api/v1/blueprints/generate-blueprint
   "description": "High availability web application infrastructure",
   "resources": [...],
   "metadata": {
-    "generated_by": "ai-cdn-llm",
+    "generated_by": "ALMA-llm",
     "estimated_cost": 450,
     "complexity_score": 7.5
   }
@@ -878,7 +878,7 @@ Future versions will maintain backward compatibility for at least 12 months.
 
 ## Support
 
-- **Documentation**: https://docs.ai-cdn.dev
+- **Documentation**: https://docs.ALMA.dev
 - **GitHub**: https://github.com/fabriziosalmi/cdn-sdk
 - **Issues**: https://github.com/fabriziosalmi/cdn-sdk/issues
-- **Discord**: https://discord.gg/ai-cdn
+- **Discord**: https://discord.gg/ALMA

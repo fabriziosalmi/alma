@@ -1,6 +1,6 @@
 # API Reference
 
-Complete REST API documentation for AI-CDN.
+Complete REST API documentation for ALMA.
 
 ## Base URL
 

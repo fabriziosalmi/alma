@@ -3,7 +3,7 @@ Unit tests for the AdvancedCognitiveEngine and its components.
 """
 import unittest
 
-from ai_cdn.core.cognitive import (
+from alma.core.cognitive import (
     AdvancedCognitiveEngine,
     FocusContext,
     RiskProfile,

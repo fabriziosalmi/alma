@@ -1,6 +1,6 @@
 # Enhanced Function Calling Tools API
 
-AI-CDN now includes a comprehensive set of **13 intelligent tools** that can be called by the LLM to perform infrastructure operations. This dramatically expands the capabilities beyond simple blueprint generation.
+ALMA now includes a comprehensive set of **13 intelligent tools** that can be called by the LLM to perform infrastructure operations. This dramatically expands the capabilities beyond simple blueprint generation.
 
 ## Overview
 
@@ -283,8 +283,8 @@ POST /api/v1/tools/security-audit
 ### Example 1: Natural Language Tool Selection
 
 ```python
-from ai_cdn.core.llm_orchestrator import EnhancedOrchestrator
-from ai_cdn.core.llm_qwen import Qwen3LLM
+from alma.core.llm_orchestrator import EnhancedOrchestrator
+from alma.core.llm_qwen import Qwen3LLM
 
 llm = Qwen3LLM()
 orchestrator = EnhancedOrchestrator(llm=llm, use_llm=True)
@@ -300,7 +300,7 @@ print(result)
 ### Example 2: Direct Tool Execution
 
 ```python
-from ai_cdn.core.tools import InfrastructureTools
+from alma.core.tools import InfrastructureTools
 
 tools = InfrastructureTools()
 

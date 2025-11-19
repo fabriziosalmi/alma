@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Quick start script to run the AI-CDN API server
+Quick start script to run the ALMA API server
 """
 import uvicorn
 import sys
@@ -13,7 +13,7 @@ sys.path.insert(0, str(src_path))
 
 def main():
     """Run the API server"""
-    print("🚀 Starting AI-CDN Controller API...")
+    print("🚀 Starting ALMA Controller API...")
     print("📖 API Documentation: http://localhost:8000/docs")
     print("🔍 ReDoc: http://localhost:8000/redoc")
     print("")

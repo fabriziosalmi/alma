@@ -3,8 +3,8 @@
 import pytest
 from unittest.mock import AsyncMock
 
-from ai_cdn.core.llm_orchestrator import EnhancedOrchestrator
-from ai_cdn.core.llm import MockLLM
+from alma.core.llm_orchestrator import EnhancedOrchestrator
+from alma.core.llm import MockLLM
 
 
 @pytest.fixture

@@ -14,7 +14,7 @@ async def stream_chat():
         "context": {}
     }
     
-    print("🤖 AI-CDN Streaming Chat Demo\n")
+    print("🤖 ALMA Streaming Chat Demo\n")
     print(f"User: {data['message']}\n")
     print("Assistant: ", end="", flush=True)
     
@@ -57,7 +57,7 @@ async def stream_blueprint_generation():
     }
     
     print("\n" + "="*80)
-    print("🏗️  AI-CDN Streaming Blueprint Generation Demo\n")
+    print("🏗️  ALMA Streaming Blueprint Generation Demo\n")
     print(f"Description: {data['description']}\n")
     
     async with httpx.AsyncClient(timeout=120.0) as client:
@@ -144,7 +144,7 @@ async def compare_streaming_vs_blocking():
 async def interactive_chat():
     """Interactive streaming chat session."""
     print("\n" + "="*80)
-    print("💬 Interactive AI-CDN Chat (Streaming)")
+    print("💬 Interactive ALMA Chat (Streaming)")
     print("Type 'quit' to exit\n")
     
     while True:
@@ -184,7 +184,7 @@ async def main():
     """Run all examples."""
     print("""
 ╔════════════════════════════════════════════════════════════════════════════╗
-║                    AI-CDN Streaming API Examples                          ║
+║                    ALMA Streaming API Examples                          ║
 ╚════════════════════════════════════════════════════════════════════════════╝
     """)
     

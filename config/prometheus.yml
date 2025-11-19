@@ -1,18 +1,18 @@
-# Prometheus configuration for AI-CDN metrics
+# Prometheus configuration for ALMA metrics
 
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    cluster: 'ai-cdn-local'
+    cluster: 'ALMA-local'
     environment: 'development'
 
 # Scrape configurations
 scrape_configs:
-  # AI-CDN API metrics
-  - job_name: 'ai-cdn-api'
+  # ALMA API metrics
+  - job_name: 'ALMA-api'
     static_configs:
-      - targets: ['ai-cdn:8000']
+      - targets: ['ALMA:8000']
     metrics_path: '/metrics'
     scrape_interval: 10s
 
