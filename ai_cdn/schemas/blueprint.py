@@ -88,6 +88,7 @@ class DeploymentResponse(BaseModel):
     deployment_id: str
     status: str
     message: str
+    plan_summary: Optional[str] = None
     resources_created: List[str] = []
     resources_failed: List[str] = []
     metadata: Dict[str, Any] = {}

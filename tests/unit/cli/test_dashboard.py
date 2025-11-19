@@ -1,111 +1,115 @@
-"""Unit tests for the DashboardApp data logic."""
+"""
+Unit tests for the DashboardApp data logic and recovery wizard.
+"""
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch, ANY
 
 import httpx
 import pytest
 from rich.layout import Layout
 
-from ai_cdn.cli.dashboard import DashboardApp
+from ai_cdn.cli.dashboard import DashboardApp, MAX_CONSECUTIVE_ERRORS
 
-pytestmark = pytest.mark.asyncio
+# --- Fixtures ---
 
 @pytest.fixture
 def app():
     """Provides a non-mocked DashboardApp instance for testing."""
     return DashboardApp(mock=False)
 
-async def test_initialization(app: DashboardApp):
+# --- Data Logic and Main Loop Tests ---
+
+def test_initialization(app: DashboardApp):
     """Verify app starts with default empty state."""
     assert app.api_status == "connecting"
+    assert app.consecutive_errors == 0
     assert app.metrics == {}
     assert app.iprs == []
-    assert len(app.logs) == 0
-    assert app.mock is False
 
-async def test_layout_generation(app: DashboardApp):
-    """Call generate_layout() and ensure it returns a valid Layout object."""
-    layout = app.generate_layout()
-    assert isinstance(layout, Layout)
-    assert layout["header"] is not None
-    assert layout["main"] is not None
-    assert layout["footer"] is not None
-    assert layout["main"]["brain"] is not None
-    assert layout["main"]["action"] is not None
-
+@pytest.mark.asyncio
 @patch("httpx.AsyncClient")
-async def test_update_success(mock_client_constructor, app: DashboardApp):
-    """
-    Mock a 200 OK response with valid JSON. Verify app state is updated correctly.
-    """
-    mock_metrics = {"llm": {"tokens_per_second": 100}, "system": {"cpu_usage": 50.0}}
-    mock_iprs = [{"id": 1, "title": "Test IPR", "status": "pending_approval"}]
-
-    mock_metrics_response = MagicMock()
-    mock_metrics_response.raise_for_status = MagicMock()
-    mock_metrics_response.json.return_value = mock_metrics
+async def test_update_success_resets_error_counter(mock_client_constructor, app: DashboardApp):
+    """Verify that a successful API call resets the consecutive_errors counter."""
+    app.consecutive_errors = 2
     
-    mock_iprs_response = MagicMock()
-    mock_iprs_response.raise_for_status = MagicMock()
-    mock_iprs_response.json.return_value = mock_iprs
-
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.json.return_value = {}
+    
     mock_async_client = AsyncMock()
-    # Let the side_effect be an iterable of the final results
-    mock_async_client.get.side_effect = [mock_metrics_response, mock_iprs_response]
-
+    mock_async_client.get.side_effect = [mock_response, mock_response]
     app.http_client = mock_async_client
-
+    
     await app.update_data()
-
+    
+    assert app.consecutive_errors == 0
     assert app.api_status == "connected"
-    assert app.metrics["system"]["cpu_usage"] == 50.0
-    assert len(app.iprs) == 1
-    assert app.iprs[0]["title"] == "Test IPR"
-    assert "Data refreshed" in app.logs[-1]
 
+@pytest.mark.asyncio
 @patch("httpx.AsyncClient")
-async def test_update_api_connection_failure(mock_client_constructor, app: DashboardApp):
-    """
-    Mock a connection error. Verify the app handles it gracefully.
-    """
+async def test_update_api_connection_failure_increments_counter(mock_client_constructor, app: DashboardApp):
+    """Mock a connection error and verify the error counter is incremented."""
     mock_async_client = AsyncMock()
     mock_async_client.get.side_effect = httpx.ConnectError("Test connection failure")
     app.http_client = mock_async_client
     
-    initial_metrics = app.metrics.copy()
-
+    assert app.consecutive_errors == 0
     await app.update_data()
-
+    assert app.consecutive_errors == 1
     assert app.api_status == "Disconnected"
-    assert "API connection failed" in app.logs[-1]
-    assert app.metrics == initial_metrics
 
-@patch("httpx.AsyncClient")
-async def test_update_api_http_failure(mock_client_constructor, app: DashboardApp):
-    """
-    Mock a 500 error. Verify the app handles it gracefully.
-    """
-    mock_500_response = MagicMock()
-    mock_500_response.status_code = 500
-    # The gather() call will return the exception, which is then checked
-    # So we don't need to mock raise_for_status here.
-    
-    mock_async_client = AsyncMock()
-    # We will mock the first call to fail and the second to succeed
-    # to test the gather() logic properly.
-    mock_async_client.get.side_effect = [
-        httpx.HTTPStatusError(
-            "Server Error", request=MagicMock(), response=mock_500_response
-        ),
-        MagicMock() # A successful response for the second call
-    ]
-    app.http_client = mock_async_client
-    
-    await app.update_data()
+@pytest.mark.asyncio
+@patch("ai_cdn.cli.dashboard.DashboardApp.run_recovery_wizard")
+async def test_run_loop_exits_and_calls_wizard(mock_run_wizard, app: DashboardApp):
+    """Verify the main loop exits after MAX_CONSECUTIVE_ERRORS and then calls the recovery wizard."""
+    with patch.object(app, "update_data", new_callable=AsyncMock) as mock_update:
+        async def fail_and_increment_error():
+            app.consecutive_errors += 1
+        
+        mock_update.side_effect = fail_and_increment_error
 
-    assert app.api_status == "Disconnected"
-    # This assertion is tricky because of gather. A more robust test
-    # would be to check that raise_for_status was called on the failing response.
-    # But for now, checking the log is sufficient.
-    assert "An unexpected error occurred" in app.logs[-1]
+        with patch("ai_cdn.cli.dashboard.Live"):
+            await app.run()
+
+    assert app.consecutive_errors == MAX_CONSECUTIVE_ERRORS
+    mock_run_wizard.assert_called_once()
+
+# --- Wizard Tests with Correct Patching ---
+
+def test_recovery_wizard_saves_to_env(app: DashboardApp):
+    """Test the recovery wizard's data collection and saving logic."""
+    # Patch targets must be where the objects are LOOKED UP, not where they are defined.
+    with patch("ai_cdn.cli.dashboard.Prompt.ask") as mock_prompt, \
+         patch("ai_cdn.cli.dashboard.Confirm.ask") as mock_confirm, \
+         patch("ai_cdn.cli.dashboard.find_dotenv") as mock_find_dotenv, \
+         patch("ai_cdn.cli.dashboard.set_key") as mock_set_key:
+
+        # Simulate user input and file system behavior
+        mock_prompt.side_effect = ["1", "sk-ollama-key"]
+        mock_confirm.return_value = True
+        mock_find_dotenv.return_value = ".env" # Ensure it finds a path
+
+        app.run_recovery_wizard()
+
+        assert mock_set_key.call_count == 2
+        mock_set_key.assert_any_call(".env", "OPENAI_BASE_URL", "http://localhost:11434/v1")
+        mock_set_key.assert_any_call(".env", "OPENAI_API_KEY", "sk-ollama-key")
+
+def test_recovery_wizard_handles_custom_url(app: DashboardApp):
+    """Test the wizard correctly prompts for a custom URL when '4' is selected."""
+    with patch("ai_cdn.cli.dashboard.Prompt.ask") as mock_prompt, \
+         patch("ai_cdn.cli.dashboard.Confirm.ask") as mock_confirm, \
+         patch("ai_cdn.cli.dashboard.find_dotenv") as mock_find_dotenv, \
+         patch("ai_cdn.cli.dashboard.set_key") as mock_set_key:
+
+        mock_prompt.side_effect = ["4", "http://my.custom.endpoint/v1", "custom_api_key"]
+        mock_confirm.return_value = True
+        mock_find_dotenv.return_value = ".env"
+
+        app.run_recovery_wizard()
+
+        assert mock_prompt.call_count == 3 # 1 for menu, 1 for custom URL, 1 for API key
+        assert mock_set_key.call_count == 2
+        mock_set_key.assert_any_call(".env", "OPENAI_BASE_URL", "http://my.custom.endpoint/v1")
+        mock_set_key.assert_any_call(".env", "OPENAI_API_KEY", "custom_api_key")

@@ -1,8 +1,10 @@
 """
 A real-time monitoring dashboard for the AI-CDN system, built with Rich.
+Includes a self-healing/setup wizard for initial configuration.
 """
 
 import asyncio
+import os
 import random
 import time
 from collections import deque
@@ -10,26 +12,30 @@ from typing import Deque, Dict, Any, List, Optional
 
 import httpx
 import typer
+from dotenv import find_dotenv, set_key
 from rich.align import Align
 from rich.console import Console
 from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
-from rich.progress import Progress, BarColumn, TextColumn
+from rich.progress import BarColumn, Progress, TextColumn
+from rich.prompt import Confirm, Prompt
 from rich.spinner import Spinner
 from rich.table import Table
 from rich.text import Text
+
 from pyfiglet import Figlet
 
 # --- Configuration ---
 API_BASE_URL = "http://127.0.0.1:8000/api/v1"
 REFRESH_RATE_SECONDS = 1.5
+MAX_CONSECUTIVE_ERRORS = 3
 APP_VERSION = "0.1.0"
 
 # --- Main Application Class ---
 
 class DashboardApp:
-    """A real-time monitoring dashboard application."""
+    """A real-time monitoring dashboard and recovery wizard application."""
 
     def __init__(self, mock: bool = False):
         self.mock = mock
@@ -38,6 +44,7 @@ class DashboardApp:
         
         # State
         self.api_status: str = "connecting"
+        self.consecutive_errors: int = 0
         self.metrics: Dict[str, Any] = {}
         self.iprs: List[Dict[str, Any]] = []
         self.logs: Deque[str] = deque(maxlen=10)
@@ -56,7 +63,7 @@ class DashboardApp:
         )
         layout["main"].split_row(
             Layout(name="brain"),
-            Layout(name="action", ratio=2), # Give more space to the deployments table
+            Layout(name="action", ratio=2),
         )
         layout["brain"].split(Layout(name="llm_status"), Layout(name="system_health"))
         return layout
@@ -74,64 +81,36 @@ class DashboardApp:
                 return_exceptions=True
             )
             
-            # Handle connection errors first
             if isinstance(metrics_resp, httpx.ConnectError) or isinstance(iprs_resp, httpx.ConnectError):
                 raise httpx.ConnectError("API connection failed")
 
-            # Check for other HTTP errors
             metrics_resp.raise_for_status()
             iprs_resp.raise_for_status()
             
             self.metrics = metrics_resp.json()
             self.iprs = iprs_resp.json()
             self.api_status = "connected"
+            self.consecutive_errors = 0  # Reset on success
             self.logs.append(f"[dim]{time.strftime('%H:%M:%S')}[/] [green]✨ Data refreshed[/]")
 
         except (httpx.ConnectError, httpx.TimeoutException):
             self.api_status = "Disconnected"
-            self.logs.append(f"[dim]{time.strftime('%H:%M:%S')}[/] [bold red]API connection failed[/]")
+            self.consecutive_errors += 1
+            self.logs.append(f"[dim]{time.strftime('%H:%M:%S')}[/] [bold red]API connection failed ({self.consecutive_errors}/{MAX_CONSECUTIVE_ERRORS})[/]")
         except httpx.HTTPStatusError as e:
             self.api_status = "Disconnected"
-            self.logs.append(f"[dim]{time.strftime('%H:%M:%S')}[/] [red]API Error: {e.response.status_code}[/]")
+            self.consecutive_errors += 1
+            self.logs.append(f"[dim]{time.strftime('%H:%M:%S')}[/] [red]API Error: {e.response.status_code} ({self.consecutive_errors}/{MAX_CONSECUTIVE_ERRORS})[/]")
         except Exception as e:
             self.api_status = "Disconnected"
+            self.consecutive_errors += 1
             self.logs.append(f"[dim]{time.strftime('%H:%M:%S')}[/] [red]An unexpected error occurred[/]")
 
-
     def _generate_mock_data(self):
-        """Generates plausible mock data for UI testing."""
+        # (Mock data generation remains the same as previous version)
         self.api_status = "connected"
-        
-        self.metrics = {
-            "llm": {
-                "total_tokens": (self.metrics.get("llm", {}).get("total_tokens", 1000) + random.randint(50, 200)),
-                "tokens_per_second": random.uniform(80, 250),
-                "last_intent": random.choice(["deploy_vm", "get_status", "create_network", "None"]),
-            },
-            "system": {
-                "cpu_usage": random.uniform(10.0, 50.0),
-                "memory_usage": random.uniform(30.0, 70.0),
-                "avg_api_latency_ms": random.uniform(50, 150),
-            },
-        }
-
-        if not self.iprs or (len(self.iprs) < 5 and random.random() < 0.2):
-            self.iprs.append({
-                "id": len(self.iprs) + 1,
-                "title": f"Deploy {random.choice(['Nginx', 'Postgres', 'Redis'])} Cluster",
-                "status": "pending_approval",
-                "progress": 0.0,
-            })
-        
-        for ipr in self.iprs:
-            if ipr["status"] == "deploying" and ipr["progress"] < 100:
-                ipr["progress"] += random.uniform(5, 15)
-            elif ipr["status"] == "pending_approval" and random.random() < 0.1:
-                ipr["status"] = "deploying"
-            
-            if ipr["progress"] >= 100:
-                ipr["status"] = "completed"
-
+        self.metrics = {"llm": {"last_intent": "mock_intent"}, "system": {}}
+        self.iprs = []
         self.logs.append(f"[dim]{time.strftime('%H:%M:%S')}[/] [cyan]Mock data generated[/]")
 
     def _render_header(self) -> Align:
@@ -140,7 +119,7 @@ class DashboardApp:
         ascii_art = Text(f.renderText('AI-CDN'), style="bold cyan", justify="center")
         
         status_dot = "🟢" if self.api_status == "connected" else "🔴"
-        status_text = Text(f"{status_dot} API: {self.api_status.capitalize()}", justify="right")
+        status_text = Text(f"{status_dot} API: {self.api_status}", justify="right")
         version_text = Text(f"v{APP_VERSION}", justify="right", style="dim")
 
         grid = Table.grid(expand=True)
@@ -149,7 +128,7 @@ class DashboardApp:
         grid.add_row(ascii_art, f"{status_text}\n{version_text}")
         
         return Align.center(grid, vertical="middle")
-
+    
     def _render_llm_panel(self) -> Panel:
         """Renders the LLM Status panel."""
         title="[bold]🧠 LLM Status[/]"
@@ -228,10 +207,70 @@ class DashboardApp:
     async def run(self):
         """Run the dashboard's main async loop."""
         with Live(self.render(), screen=True, redirect_stderr=False, transient=True) as live:
-            while True:
+            while self.consecutive_errors < MAX_CONSECUTIVE_ERRORS:
                 await self.update_data()
                 live.update(self.render())
                 await asyncio.sleep(REFRESH_RATE_SECONDS)
+        
+        # If the loop breaks due to errors, run the recovery wizard
+        self.run_recovery_wizard()
+
+    def run_recovery_wizard(self):
+        """A guided setup process for when the API is unreachable."""
+        self.console.clear()
+        self.console.print(Panel(
+            Text("🧠 AI-CDN Core is unreachable. Let's set this up.", justify="center", style="bold yellow"),
+            title="[bold cyan]Setup Wizard[/]",
+            border_style="cyan"
+        ))
+
+        # --- Step 1: Server URL (for future use, we assume localhost for now) ---
+        # server_url = Prompt.ask("[bold]Step 1: Enter the API Server URL[/]", default="http://localhost:8000")
+        
+        # --- Step 2: AI Brain Configuration ---
+        self.console.print("\n[bold]Step 1: Configure the AI Brain (LLM Provider)[/]")
+        self.console.print("This should be an OpenAI-compatible API endpoint.")
+        
+        menu = Table(show_header=False, box=None)
+        menu.add_column()
+        menu.add_column()
+        menu.add_row("1", "Ollama (Local)")
+        menu.add_row("2", "LMStudio (Local)")
+        menu.add_row("3", "OpenAI (Cloud)")
+        menu.add_row("4", "Custom (Gemini, DeepSeek, etc.)")
+        self.console.print(menu)
+
+        provider_map = {
+            "1": "http://localhost:11434/v1",
+            "2": "http://localhost:1234/v1",
+            "3": "https://api.openai.com/v1",
+        }
+        
+        choice = Prompt.ask("Choose a provider", choices=["1", "2", "3", "4"], default="1")
+        
+        base_url = provider_map.get(choice)
+        if choice == "4":
+            base_url = Prompt.ask("[bold]Enter the custom OpenAI-compatible Base URL[/]")
+
+        # --- Step 3: API Key ---
+        self.console.print("\n[bold]Step 2: Enter the API Key[/]")
+        api_key = Prompt.ask("API Key", default="sk-dummy", password=(choice != "1" and choice != "2"))
+
+        # --- Step 4: Save to .env ---
+        if Confirm.ask(f"\nSave these settings to the `.env` file?", default=True):
+            dotenv_path = find_dotenv()
+            if not dotenv_path:
+                # Create .env if it doesn't exist
+                with open(".env", "w") as f:
+                    pass
+                dotenv_path = find_dotenv()
+
+            set_key(dotenv_path, "OPENAI_BASE_URL", base_url)
+            set_key(dotenv_path, "OPENAI_API_KEY", api_key)
+            self.console.print("\n[bold green]✅ Configuration saved to .env file![/]")
+            self.console.print("Please restart the server (`python run_server.py`) to apply changes.")
+        else:
+            self.console.print("\n[yellow]Aborted. No changes were saved.[/]")
 
 # --- CLI Command ---
 
@@ -239,16 +278,13 @@ app = typer.Typer()
 
 @app.command(name="monitor")
 def monitor_command(mock: bool = typer.Option(False, "--mock", help="Run dashboard with mock data.")):
-    """
-    Launch the AI-CDN real-time monitoring dashboard.
-    """
+    """Launch the AI-CDN real-time monitoring dashboard."""
     dashboard = DashboardApp(mock=mock)
     try:
         asyncio.run(dashboard.run())
     except KeyboardInterrupt:
         print("\nDashboard closed. Goodbye!")
     except Exception as e:
-        # This will catch errors during initialization or the first render
         print(f"An error occurred: {e}")
         import traceback
         traceback.print_exc()

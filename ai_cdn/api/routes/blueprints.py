@@ -1,24 +1,27 @@
 """API routes for System Blueprints."""
 
+import logging
+import time
 from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ai_cdn.core.database import get_session
+from ai_cdn.core.state import diff_states
 from ai_cdn.models.blueprint import SystemBlueprintModel
 from ai_cdn.schemas.blueprint import (
+    DeploymentRequest,
+    DeploymentResponse,
     SystemBlueprint,
     SystemBlueprintCreate,
     SystemBlueprintUpdate,
-    DeploymentRequest,
-    DeploymentResponse,
 )
-from ai_cdn.core.config import get_settings
 from ai_cdn.engines.fake import FakeEngine
 
 router = APIRouter(prefix="/blueprints", tags=["blueprints"])
-settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/", response_model=SystemBlueprint, status_code=status.HTTP_201_CREATED)
@@ -187,74 +190,58 @@ async def deploy_blueprint(
     session: AsyncSession = Depends(get_session),
 ) -> DeploymentResponse:
     """
-    Deploy a system blueprint.
-
-    Args:
-        blueprint_id: Blueprint ID
-        deployment_request: Deployment configuration
-        session: Database session
-
-    Returns:
-        Deployment result
-
-    Raises:
-        HTTPException: If blueprint not found or deployment fails
+    Deploy a system blueprint using a declarative, plan-based workflow.
     """
-    # Get blueprint
-    result = await session.execute(
-        select(SystemBlueprintModel).where(SystemBlueprintModel.id == blueprint_id)
-    )
-    blueprint = result.scalar_one_or_none()
-
-    if not blueprint:
+    # 1. Get blueprint from DB
+    db_blueprint = await session.get(SystemBlueprintModel, blueprint_id)
+    if not db_blueprint:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Blueprint {blueprint_id} not found",
         )
+    
+    # Convert to the Pydantic schema for use with the new core logic
+    blueprint_schema = SystemBlueprint.model_validate(db_blueprint)
 
-    # Convert to dict for engine
-    blueprint_dict = {
-        "version": blueprint.version,
-        "name": blueprint.name,
-        "description": blueprint.description,
-        "resources": blueprint.resources,
-        "metadata": blueprint.metadata,
-    }
-
-    # Get engine (currently only FakeEngine)
+    # 2. Get engine (currently only FakeEngine)
+    # TODO: Implement dynamic engine selection
     engine = FakeEngine()
 
-    # Validate blueprint
     try:
-        await engine.validate_blueprint(blueprint_dict)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid blueprint: {str(e)}",
+        # 3. Get current state from the infrastructure
+        current_state = await engine.get_state(blueprint_schema)
+
+        # 4. Calculate the plan by comparing desired vs. current state
+        plan = diff_states(blueprint_schema, current_state)
+
+        # 5. Handle dry run
+        if deployment_request.dry_run:
+            plan_summary = plan.generate_description()
+            return DeploymentResponse(
+                deployment_id="dry-run",
+                status="validated",
+                message="Dry run complete. The plan shows the actions that would be taken.",
+                plan_summary=plan_summary,
+            )
+
+        # 6. Apply the plan
+        if not plan.is_empty:
+            await engine.apply(plan)
+            await engine.destroy(plan)
+            message = "Deployment complete."
+        else:
+            message = "No changes required. Infrastructure is already up-to-date."
+
+        return DeploymentResponse(
+            deployment_id=f"deploy-{blueprint_id}-{int(time.time())}",
+            status="completed",
+            message=message,
+            plan_summary=plan.generate_description(),
+            resources_created=[r.name for r in plan.to_create],
         )
 
-    # Deploy or dry-run
-    if deployment_request.dry_run:
-        return DeploymentResponse(
-            deployment_id="dry-run",
-            status="validated",
-            message="Blueprint is valid (dry-run mode)",
-            resources_created=[],
-            resources_failed=[],
-        )
-
-    # Actual deployment
-    try:
-        result = await engine.deploy(blueprint_dict)
-        return DeploymentResponse(
-            deployment_id=result.metadata.get("deployment_id", "unknown"),
-            status=result.status.value,
-            message=result.message,
-            resources_created=result.resources_created,
-            resources_failed=result.resources_failed,
-            metadata=result.metadata,
-        )
     except Exception as e:
+        logger.error(f"Deployment failed for blueprint {blueprint_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Deployment failed: {str(e)}",

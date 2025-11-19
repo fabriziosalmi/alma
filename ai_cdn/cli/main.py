@@ -1,11 +1,14 @@
 """CLI interface for AI-CDN using Typer."""
 
-import typer
-from rich.console import Console
-from rich.table import Table
-from typing import Optional
-import yaml
 import asyncio
+
+import httpx
+import typer
+import yaml
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.table import Table
 
 from ai_cdn import __version__
 from ai_cdn.core.config import get_settings
@@ -28,7 +31,7 @@ def version_callback(value: bool) -> None:
 
 @app.callback()
 def main(
-    version: Optional[bool] = typer.Option(
+    version: bool | None = typer.Option(
         None,
         "--version",
         "-v",
@@ -65,7 +68,7 @@ def serve(
 def deploy(
     blueprint_file: str = typer.Argument(..., help="Path to blueprint YAML file"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Validate only, do not deploy"),
-    engine: Optional[str] = typer.Option(None, "--engine", "-e", help="Engine to use"),
+    engine: str | None = typer.Option(None, "--engine", "-e", help="Engine to use"),
 ) -> None:
     """
     Deploy a system blueprint.
@@ -76,7 +79,7 @@ def deploy(
 
     # Load blueprint
     try:
-        with open(blueprint_file, "r") as f:
+        with open(blueprint_file) as f:
             blueprint = yaml.safe_load(f)
     except FileNotFoundError:
         console.print(f"[red]Error: Blueprint file not found: {blueprint_file}[/red]")
@@ -146,7 +149,7 @@ def status() -> None:
 @app.command()
 def rollback(
     deployment_id: str = typer.Argument(..., help="Deployment ID to rollback"),
-    target: Optional[str] = typer.Option(None, "--to", help="Target state to rollback to"),
+    target: str | None = typer.Option(None, "--to", help="Target state to rollback to"),
 ) -> None:
     """
     Rollback a deployment.
@@ -160,9 +163,9 @@ def rollback(
         try:
             success = await engine.rollback(deployment_id, target)
             if success:
-                console.print(f"[green]✓ Rollback completed successfully[/green]")
+                console.print("[green]✓ Rollback completed successfully[/green]")
             else:
-                console.print(f"[red]✗ Rollback failed[/red]")
+                console.print("[red]✗ Rollback failed[/red]")
                 raise typer.Exit(1)
         except Exception as e:
             console.print(f"[red]✗ Rollback error: {e}[/red]")
@@ -174,7 +177,7 @@ def rollback(
 @app.command()
 def init(
     name: str = typer.Argument(..., help="Project name"),
-    path: Optional[str] = typer.Option(".", "--path", "-p", help="Path to create project"),
+    path: str | None = typer.Option(".", "--path", "-p", help="Path to create project"),
 ) -> None:
     """
     Initialize a new AI-CDN project.
@@ -208,8 +211,49 @@ def init(
     with open(blueprint_file, "w") as f:
         yaml.dump(example_blueprint, f, default_flow_style=False)
 
-    console.print(f"[green]✓ Project created successfully[/green]")
+    console.print("[green]✓ Project created successfully[/green]")
     console.print(f"[green]  Example blueprint: {blueprint_file}[/green]")
+
+
+
+@app.command("chat")
+def chat(message: str):
+    """
+    Talk to the AI-CDN Cognitive Engine.
+    """
+    host = "127.0.0.1" if settings.api_host == "0.0.0.0" else settings.api_host
+    api_url = f"http://{host}:{settings.api_port}{settings.api_prefix}"
+
+    # Show a spinner while thinking
+    with console.status("[bold green]Thinking...", spinner="dots"):
+        try:
+            response = httpx.post(f"{api_url}/conversation/chat", json={"message": message}, timeout=30.0)
+            response.raise_for_status()
+            data = response.json()
+        except httpx.ConnectError as e:
+            console.print(f"[bold red]Error connecting to AI-CDN API at {api_url}:[/bold red] {e}")
+            console.print("[yellow]Please ensure the API server is running (`ai-cdn serve`).[/yellow]")
+            return
+        except Exception as e:
+            console.print(f"[bold red]An unexpected error occurred:[/bold red] {e}")
+            return
+
+    # Check for Safety Block (Cognitive Engine)
+    if isinstance(data, dict) and data.get("risk_assessment") == "BLOCKED":
+        console.print(Panel(data.get("response", ""), title="🛑 SECURITY OVERRIDE", border_style="red bold"))
+        return
+
+    # Standard Response
+    # If it returns a blueprint, show it in a box
+    if isinstance(data, dict) and data.get("blueprint"):
+        console.print(Panel(yaml.dump(data["blueprint"]), title="🏗️ Blueprint Generated", border_style="blue"))
+
+    # Text response
+    if isinstance(data, dict) and data.get("response"):
+        console.print(Markdown(data.get("response", "")))
+    elif isinstance(data, str):
+        console.print(Markdown(data))
+
 
 
 if __name__ == "__main__":
