@@ -1,56 +1,64 @@
 """
-Test for SystemBlueprint model
+Test for SystemBlueprint schema
 """
 import pytest
-from aicdn.models.blueprint import SystemBlueprint, BlueprintMetadata, BlueprintSpec
-from aicdn.models.resources import ComputeNode, ComputeNodeSpec, ResourceKind
+from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
 
 
 def test_system_blueprint_creation():
     """Test creating a valid SystemBlueprint"""
     blueprint = SystemBlueprint(
-        metadata=BlueprintMetadata(name="test-blueprint"),
-        spec=BlueprintSpec(resources=[])
+        id=1,
+        created_at="2025-11-20T12:00:00",
+        updated_at="2025-11-20T12:00:00",
+        name="test-blueprint",
+        resources=[]
     )
     
-    assert blueprint.apiVersion == "cdn-ng.io/v1"
-    assert blueprint.kind == "SystemBlueprint"
-    assert blueprint.metadata.name == "test-blueprint"
+    assert blueprint.name == "test-blueprint"
+    assert blueprint.version == "1.0"
 
 
 def test_blueprint_with_compute_node():
     """Test blueprint with a ComputeNode resource"""
-    compute_node = ComputeNode(
+    compute_node = ResourceDefinition(
+        type="compute",
         name="test-node",
-        spec=ComputeNodeSpec(
-            cpu=4,
-            memory="8Gi",
-            architecture="x86_64"
-        )
+        provider="fake",
+        specs={
+            "cpu": 4,
+            "memory": "8Gi",
+            "storage": "100GB"
+        }
     )
     
     blueprint = SystemBlueprint(
-        metadata=BlueprintMetadata(name="test-with-node"),
-        spec=BlueprintSpec(resources=[compute_node])
+        id=1,
+        created_at="2025-11-20T12:00:00",
+        updated_at="2025-11-20T12:00:00",
+        name="test-with-node",
+        resources=[compute_node]
     )
     
-    assert len(blueprint.spec.resources) == 1
-    assert blueprint.spec.resources[0].name == "test-node"
-    assert blueprint.spec.resources[0].kind == ResourceKind.COMPUTE_NODE
+    assert len(blueprint.resources) == 1
+    assert blueprint.resources[0].name == "test-node"
+    assert blueprint.resources[0].type == "compute"
 
 
 def test_blueprint_serialization():
     """Test blueprint JSON serialization"""
     blueprint = SystemBlueprint(
-        metadata=BlueprintMetadata(name="serialize-test"),
-        spec=BlueprintSpec(resources=[])
+        id=1,
+        created_at="2025-11-20T12:00:00",
+        updated_at="2025-11-20T12:00:00",
+        name="serialize-test",
+        resources=[]
     )
     
     json_data = blueprint.model_dump()
     
-    assert json_data["apiVersion"] == "cdn-ng.io/v1"
-    assert json_data["metadata"]["name"] == "serialize-test"
+    assert json_data["name"] == "serialize-test"
     
     # Test deserialization
     blueprint_restored = SystemBlueprint(**json_data)
-    assert blueprint_restored.metadata.name == "serialize-test"
+    assert blueprint_restored.name == "serialize-test"

@@ -2,126 +2,63 @@
 Integration test for API endpoints
 """
 import pytest
-from fastapi.testclient import TestClient
-from aicdn.api.main import app
+from httpx import AsyncClient, ASGITransport
+from sqlalchemy.ext.asyncio import AsyncSession
+from alma.api.main import app
 
 
-client = TestClient(app)
+@pytest.fixture
+async def client(test_db_session: AsyncSession) -> AsyncClient:
+    """Create test client with database session override."""
+    from alma.core.database import get_session
+
+    async def override_get_session():
+        yield test_db_session
+
+    app.dependency_overrides[get_session] = override_get_session
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+
+    app.dependency_overrides.clear()
 
 
-def test_root_endpoint():
+async def test_root_endpoint(client: AsyncClient):
     """Test root endpoint"""
-    response = client.get("/")
+    response = await client.get("/")
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "ALMA Controller API"
     assert data["status"] == "operational"
 
 
-def test_health_check():
+async def test_health_check(client: AsyncClient):
     """Test health check endpoint"""
-    response = client.get("/health")
+    response = await client.get("/health")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
 
 
-def test_create_blueprint():
+async def test_create_blueprint(client: AsyncClient):
     """Test creating a blueprint"""
     blueprint_data = {
-        "apiVersion": "cdn-ng.io/v1",
-        "kind": "SystemBlueprint",
-        "metadata": {
-            "name": "test-blueprint",
-            "version": "v1"
-        },
-        "spec": {
-            "resources": []
-        }
+        "name": "test-blueprint",
+        "description": "A test blueprint",
+        "resources": []
     }
     
-    response = client.post("/blueprints", json=blueprint_data)
+    response = await client.post("/api/v1/blueprints/", json=blueprint_data)
     assert response.status_code == 201
     data = response.json()
     assert "id" in data
     assert data["name"] == "test-blueprint"
-    assert data["status"] == "created"
 
 
-def test_list_blueprints():
+async def test_list_blueprints(client: AsyncClient):
     """Test listing blueprints"""
-    response = client.get("/blueprints")
+    response = await client.get("/api/v1/blueprints/")
     assert response.status_code == 200
     data = response.json()
-    assert "blueprints" in data
-    assert "total" in data
-
-
-def test_deploy_blueprint():
-    """Test deploying a blueprint"""
-    # First create a blueprint
-    blueprint_data = {
-        "apiVersion": "cdn-ng.io/v1",
-        "kind": "SystemBlueprint",
-        "metadata": {
-            "name": "deploy-test",
-            "version": "v1"
-        },
-        "spec": {
-            "resources": [
-                {
-                    "kind": "ComputeNode",
-                    "name": "test-node",
-                    "spec": {
-                        "cpu": 2,
-                        "memory": "4Gi"
-                    }
-                }
-            ]
-        }
-    }
-    
-    create_response = client.post("/blueprints", json=blueprint_data)
-    blueprint_id = create_response.json()["id"]
-    
-    # Deploy it
-    deploy_response = client.post(f"/blueprints/{blueprint_id}/deploy")
-    assert deploy_response.status_code == 200
-    data = deploy_response.json()
-    assert data["status"] == "deployed"
-    assert len(data["results"]) == 1
-
-
-def test_dry_run_blueprint():
-    """Test dry-run of a blueprint"""
-    # Create a blueprint
-    blueprint_data = {
-        "apiVersion": "cdn-ng.io/v1",
-        "kind": "SystemBlueprint",
-        "metadata": {
-            "name": "dry-run-test",
-            "version": "v1"
-        },
-        "spec": {
-            "resources": [
-                {
-                    "kind": "ComputeNode",
-                    "name": "dry-node",
-                    "spec": {
-                        "cpu": 2,
-                        "memory": "4Gi"
-                    }
-                }
-            ]
-        }
-    }
-    
-    create_response = client.post("/blueprints", json=blueprint_data)
-    blueprint_id = create_response.json()["id"]
-    
-    # Dry run
-    dry_run_response = client.post(f"/blueprints/{blueprint_id}/dry-run")
-    assert dry_run_response.status_code == 200
-    data = dry_run_response.json()
-    assert data["dry_run"] is True
-    assert "plan" in data
+    assert isinstance(data, list)

@@ -139,7 +139,7 @@ class TestBlueprintAPI:
         mock_engine_instance.get_state = AsyncMock(return_value=[])
         
         now = datetime.datetime.now(datetime.UTC)
-        blueprint = SystemBlueprintModel(resources=sample_blueprint_data["resources"], created_at=now, updated_at=now)
+        blueprint = SystemBlueprintModel(name=sample_blueprint_data["name"], resources=sample_blueprint_data["resources"], created_at=now, updated_at=now)
         test_db_session.add(blueprint)
         await test_db_session.commit()
         await test_db_session.refresh(blueprint)
@@ -165,7 +165,7 @@ class TestBlueprintAPI:
         mock_engine_instance.destroy = AsyncMock()
 
         now = datetime.datetime.now(datetime.UTC)
-        blueprint = SystemBlueprintModel(resources=sample_blueprint_data["resources"], created_at=now, updated_at=now)
+        blueprint = SystemBlueprintModel(name=sample_blueprint_data["name"], resources=sample_blueprint_data["resources"], created_at=now, updated_at=now)
         test_db_session.add(blueprint)
         await test_db_session.commit()
         await test_db_session.refresh(blueprint)
@@ -197,7 +197,7 @@ class TestBlueprintAPI:
         mock_engine_instance.apply = AsyncMock()
 
         now = datetime.datetime.now(datetime.UTC)
-        blueprint = SystemBlueprintModel(resources=sample_blueprint_data["resources"], created_at=now, updated_at=now)
+        blueprint = SystemBlueprintModel(name=sample_blueprint_data["name"], resources=sample_blueprint_data["resources"], created_at=now, updated_at=now)
         test_db_session.add(blueprint)
         await test_db_session.commit()
         await test_db_session.refresh(blueprint)

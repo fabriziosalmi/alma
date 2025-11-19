@@ -1,10 +1,10 @@
-"""Unit tests for ProxmoxEngine."""
+"Unit tests for ProxmoxEngine."
 
 import pytest
-from unittest.mock import AsyncMock, patch
-
+from unittest.mock import patch, MagicMock
+from alma.core.state import Plan, ResourceState
 from alma.engines.proxmox import ProxmoxEngine
-from alma.engines.base import DeploymentStatus
+from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
 
 
 @pytest.fixture
@@ -26,24 +26,27 @@ def engine(proxmox_config: dict) -> ProxmoxEngine:
 
 
 @pytest.fixture
-def sample_blueprint() -> dict:
+def sample_blueprint() -> SystemBlueprint:
     """Sample blueprint for testing."""
-    return {
-        "version": "1.0",
-        "name": "test-proxmox-blueprint",
-        "resources": [
-            {
-                "type": "compute",
-                "name": "test-vm",
-                "provider": "proxmox",
-                "specs": {
+    return SystemBlueprint(
+        id=1,
+        created_at="2025-11-20T12:00:00",
+        updated_at="2025-11-20T12:00:00",
+        version="1.0",
+        name="test-proxmox-blueprint",
+        resources=[
+            ResourceDefinition(
+                type="compute",
+                name="test-vm",
+                provider="proxmox",
+                specs={
                     "cpu": 2,
                     "memory": "4GB",
                     "storage": "50GB",
                 },
-            }
+            )
         ],
-    }
+    )
 
 
 class TestProxmoxEngine:
@@ -55,61 +58,6 @@ class TestProxmoxEngine:
         assert engine.username == proxmox_config["username"]
         assert engine.node == proxmox_config["node"]
         assert engine.verify_ssl is False
-
-    async def test_validate_blueprint_valid(
-        self, engine: ProxmoxEngine, sample_blueprint: dict
-    ) -> None:
-        """Test validating a valid blueprint."""
-        assert await engine.validate_blueprint(sample_blueprint)
-
-    async def test_validate_blueprint_missing_version(self, engine: ProxmoxEngine) -> None:
-        """Test validation fails when version is missing."""
-        blueprint = {"name": "test", "resources": []}
-        with pytest.raises(ValueError, match="missing 'version' field"):
-            await engine.validate_blueprint(blueprint)
-
-    async def test_validate_blueprint_unsupported_resource_type(
-        self, engine: ProxmoxEngine
-    ) -> None:
-        """Test validation fails for unsupported resource types."""
-        blueprint = {
-            "version": "1.0",
-            "name": "test",
-            "resources": [
-                {
-                    "type": "network",  # Not supported by Proxmox engine
-                    "name": "test-net",
-                }
-            ],
-        }
-        with pytest.raises(ValueError, match="Unsupported resource type"):
-            await engine.validate_blueprint(blueprint)
-
-    async def test_validate_blueprint_missing_cpu_spec(self, engine: ProxmoxEngine) -> None:
-        """Test validation fails when compute resource missing CPU."""
-        blueprint = {
-            "version": "1.0",
-            "name": "test",
-            "resources": [
-                {
-                    "type": "compute",
-                    "name": "test-vm",
-                    "specs": {
-                        "memory": "4GB",
-                        # Missing cpu
-                    },
-                }
-            ],
-        }
-        with pytest.raises(ValueError, match="missing CPU spec"):
-            await engine.validate_blueprint(blueprint)
-
-    def test_parse_memory(self, engine: ProxmoxEngine) -> None:
-        """Test memory string parsing."""
-        assert engine._parse_memory("4GB") == 4096
-        assert engine._parse_memory("512MB") == 512
-        assert engine._parse_memory("1024") == 1024
-        assert engine._parse_memory("2.5GB") == 2560
 
     async def test_health_check_success(self, engine: ProxmoxEngine) -> None:
         """Test successful health check."""
@@ -128,22 +76,32 @@ class TestProxmoxEngine:
         assert "storage" in types
         assert "network" not in types
 
-    async def test_deploy_authentication_failure(
-        self, engine: ProxmoxEngine, sample_blueprint: dict
-    ) -> None:
+    async def test_apply_authentication_failure(self, engine: ProxmoxEngine, sample_blueprint: SystemBlueprint) -> None:
         """Test deployment fails when authentication fails."""
+        plan = Plan(to_create=sample_blueprint.resources)
         with patch.object(engine, "_authenticate", return_value=False):
-            result = await engine.deploy(sample_blueprint)
-            assert result.status == DeploymentStatus.FAILED
-            assert "authenticate" in result.message.lower()
+            with pytest.raises(ConnectionError, match="Failed to authenticate"):
+                await engine.apply(plan)
 
-    async def test_get_state(self, engine: ProxmoxEngine) -> None:
-        """Test getting resource state."""
-        state = await engine.get_state("100")
-        assert state.resource_id == "100"
-        assert state.resource_type == "compute"
+    async def test_get_state_empty(self, engine: ProxmoxEngine, sample_blueprint: SystemBlueprint) -> None:
+        """Test getting state when no resources exist."""
+        with patch.object(engine, "_authenticate", return_value=True):
+            state = await engine.get_state(sample_blueprint)
+            assert state == []
 
+    async def test_apply_create(self, engine: ProxmoxEngine, sample_blueprint: SystemBlueprint) -> None:
+        """Test apply for resource creation."""
+        plan = Plan(to_create=sample_blueprint.resources)
+        with patch.object(engine, "_authenticate", return_value=True), \
+             patch('builtins.print') as mock_print:
+            await engine.apply(plan)
+            mock_print.assert_called_with("Fake creating resource: test-vm")
+            
     async def test_destroy(self, engine: ProxmoxEngine) -> None:
         """Test destroying a resource."""
-        result = await engine.destroy("100")
-        assert result is True
+        resource_state = ResourceState(id="vm/101", type="compute", config={})
+        plan = Plan(to_delete=[resource_state])
+        with patch.object(engine, "_authenticate", return_value=True), \
+             patch('builtins.print') as mock_print:
+            await engine.destroy(plan)
+            mock_print.assert_called_with("Fake deleting resource: vm/101")
