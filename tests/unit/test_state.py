@@ -1,0 +1,188 @@
+# tests/unit/test_state.py
+
+import unittest
+from typing import List, Dict, Any
+from datetime import datetime
+
+from pydantic import BaseModel, Field
+
+# Module to be tested
+from ai_cdn.core.state import diff_states, ResourceState
+# The real schemas that our state module is now designed to work with
+from ai_cdn.schemas.blueprint import SystemBlueprint, ResourceDefinition
+
+
+class TestStateDiffer(unittest.TestCase):
+
+    def setUp(self):
+        """Set up common variables for tests."""
+        self.now = datetime.now()
+        self.db_fields = {"id": 1, "created_at": self.now, "updated_at": self.now}
+
+    def test_no_changes_plan(self):
+        """
+        Tests that an empty plan is generated when desired and current states match.
+        """
+        desired_blueprint = SystemBlueprint(
+            name="test-bp",
+            resources=[
+                ResourceDefinition(
+                    name="server-1",
+                    type="compute",
+                    provider="fake",
+                    specs={"image": "nginx:latest", "cpu": 1},
+                ),
+            ],
+            **self.db_fields
+        )
+        current_states = [
+            ResourceState(
+                id="server-1",
+                type="compute",
+                config={"image": "nginx:latest", "cpu": 1},
+            )
+        ]
+
+        plan = diff_states(desired_blueprint, current_states)
+
+        self.assertTrue(plan.is_empty)
+        self.assertEqual(len(plan.to_create), 0)
+        self.assertEqual(len(plan.to_update), 0)
+        self.assertEqual(len(plan.to_delete), 0)
+        self.assertIn("No changes", plan.to_rich_string())
+
+    def test_create_only_plan(self):
+        """
+        Tests that a plan to create resources is generated correctly.
+        """
+        desired_blueprint = SystemBlueprint(
+            name="test-bp",
+            resources=[
+                ResourceDefinition(
+                    name="new-db",
+                    type="compute",
+                    provider="fake",
+                    specs={"image": "postgres:15"},
+                ),
+            ],
+            **self.db_fields
+        )
+        current_states = []
+
+        plan = diff_states(desired_blueprint, current_states)
+
+        self.assertFalse(plan.is_empty)
+        self.assertEqual(len(plan.to_create), 1)
+        self.assertEqual(len(plan.to_update), 0)
+        self.assertEqual(len(plan.to_delete), 0)
+        self.assertEqual(plan.to_create[0].name, "new-db")
+
+    def test_delete_only_plan(self):
+        """
+        Tests that a plan to delete resources is generated correctly.
+        """
+        desired_blueprint = SystemBlueprint(name="test-bp", resources=[], **self.db_fields)
+        current_states = [
+            ResourceState(
+                id="old-cache",
+                type="compute",
+                config={"image": "redis:latest"},
+            )
+        ]
+
+        plan = diff_states(desired_blueprint, current_states)
+
+        self.assertFalse(plan.is_empty)
+        self.assertEqual(len(plan.to_create), 0)
+        self.assertEqual(len(plan.to_update), 0)
+        self.assertEqual(len(plan.to_delete), 1)
+        self.assertEqual(plan.to_delete[0].id, "old-cache")
+
+    def test_update_only_plan(self):
+        """
+        Tests that a plan to update a resource is generated when its config changes.
+        """
+        desired_blueprint = SystemBlueprint(
+            name="test-bp",
+            resources=[
+                ResourceDefinition(
+                    name="web-server",
+                    type="compute",
+                    provider="fake",
+                    specs={"image": "nginx:1.23", "cpu": 2},
+                ),
+            ],
+            **self.db_fields
+        )
+        current_states = [
+            ResourceState(
+                id="web-server",
+                type="compute",
+                config={"image": "nginx:1.22", "cpu": 1},
+            )
+        ]
+
+        plan = diff_states(desired_blueprint, current_states)
+
+        self.assertFalse(plan.is_empty)
+        self.assertEqual(len(plan.to_create), 0)
+        self.assertEqual(len(plan.to_update), 1)
+        self.assertEqual(len(plan.to_delete), 0)
+        
+        current, desired = plan.to_update[0]
+        self.assertEqual(current.id, "web-server")
+        self.assertEqual(desired.name, "web-server")
+        self.assertNotEqual(current.config, desired.specs)
+
+    def test_mixed_plan(self):
+        """
+        Tests a complex plan involving create, update, and delete actions.
+        """
+        desired_blueprint = SystemBlueprint(
+            name="test-bp",
+            resources=[
+                # To create
+                ResourceDefinition(
+                    name="new-api", type="compute", provider="fake", specs={"image": "fastapi:latest"}
+                ),
+                # To update
+                ResourceDefinition(
+                    name="main-db", type="compute", provider="fake", specs={"memory": "8Gi"}
+                ),
+            ],
+            **self.db_fields
+        )
+        current_states = [
+            # To update
+            ResourceState(
+                id="main-db",
+                type="compute",
+                config={"memory": "4Gi"},
+            ),
+            # To delete
+            ResourceState(
+                id="old-worker",
+                type="compute",
+                config={"image": "celery:latest"},
+            ),
+        ]
+
+        plan = diff_states(desired_blueprint, current_states)
+
+        self.assertFalse(plan.is_empty)
+        self.assertEqual(len(plan.to_create), 1)
+        self.assertEqual(plan.to_create[0].name, "new-api")
+
+        self.assertEqual(len(plan.to_update), 1)
+        self.assertEqual(plan.to_update[0][1].name, "main-db")
+
+        self.assertEqual(len(plan.to_delete), 1)
+        self.assertEqual(plan.to_delete[0].id, "old-worker")
+
+        summary = plan.generate_description()
+        self.assertIn("1 to create", summary)
+        self.assertIn("1 to modify", summary)
+        self.assertIn("1 to destroy", summary)
+
+if __name__ == "__main__":
+    unittest.main()

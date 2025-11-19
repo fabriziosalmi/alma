@@ -75,13 +75,11 @@ FASE 4: UX Revolution (Settimane 15-16) 🎨
 Output: Interfaccia visuale + conversazionale
 
 🚀 QUICK WINS (Immediate Impact - Settimana 1)
-Prima di tutto, implementiamo questi micro-miglioramenti ad alto ROI:
-
-Enhanced Function Calling: Espandi tool LLM (30min)
-Streaming Responses: Real-time feedback LLM (2h)
-Blueprint Templates Library: 20+ templates pronti (3h)
-API Rate Limiting: Protezione abuse (1h)
-Metrics Dashboard: Prometheus + Grafana basic (4h)
+[DONE] Enhanced Function Calling: Espandi tool LLM (30min)
+[DONE] Streaming Responses: Real-time feedback LLM (2h)
+[DONE] Blueprint Templates Library: 20+ templates pronti (3h)
+[DONE] API Rate Limiting: Protezione abuse (1h)
+[DONE] Metrics Dashboard: Prometheus + Grafana basic (4h)
 💎 IMPLEMENTAZIONE PRIORITARIA
 Vuoi che inizi subito con:
 

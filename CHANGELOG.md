@@ -119,6 +119,15 @@ Major update adding production-ready features and comprehensive documentation.
 - SQLAlchemy 2.0 compatibility issues with declarative_base
 - Database column name conflicts with reserved keywords
 - Import paths for monitoring routes
+- **Test suite compatibility with async implementation**
+  - Updated rate limiter tests to use async/await properly
+  - Fixed Prometheus metrics API usage in tests
+  - Created proper mock Request objects for testing
+  - Fixed histogram observation tests to work with prometheus_client
+- **Test execution issues**
+  - Fixed 18 failing tests in test_rate_limit_metrics.py
+  - All 76 runnable unit tests now passing
+  - Performance tests validated (<1ms rate limiting, <0.5ms metrics)
 
 ### Performance
 

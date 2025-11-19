@@ -1,16 +1,11 @@
 """Proxmox VE engine for managing virtual machines and containers."""
 
-import asyncio
 from typing import Any, Dict, List, Optional
 import httpx
 
-from ai_cdn.engines.base import (
-    Engine,
-    DeploymentResult,
-    DeploymentStatus,
-    ResourceState,
-    ResourceStatus,
-)
+from ai_cdn.core.state import Plan, ResourceState
+from ai_cdn.engines.base import Engine
+from ai_cdn.schemas.blueprint import SystemBlueprint
 
 
 class ProxmoxEngine(Engine):
@@ -42,20 +37,12 @@ class ProxmoxEngine(Engine):
         self.csrf_token: Optional[str] = None
 
     async def _authenticate(self) -> bool:
-        """
-        Authenticate with Proxmox API.
-
-        Returns:
-            True if authentication successful
-        """
+        # ... (internal logic remains the same)
         async with httpx.AsyncClient(verify=self.verify_ssl) as client:
             try:
                 response = await client.post(
                     f"{self.host}/api2/json/access/ticket",
-                    data={
-                        "username": self.username,
-                        "password": self.password,
-                    },
+                    data={"username": self.username, "password": self.password},
                 )
                 response.raise_for_status()
                 data = response.json()["data"]
@@ -67,248 +54,69 @@ class ProxmoxEngine(Engine):
                 return False
 
     async def _api_request(
-        self,
-        method: str,
-        endpoint: str,
-        data: Optional[Dict[str, Any]] = None,
+        self, method: str, endpoint: str, data: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """
-        Make authenticated API request to Proxmox.
-
-        Args:
-            method: HTTP method (GET, POST, PUT, DELETE)
-            endpoint: API endpoint path
-            data: Request data
-
-        Returns:
-            API response data
-        """
+        # ... (internal logic remains the same)
         if not self.ticket:
             await self._authenticate()
-
-        headers = {
-            "CSRFPreventionToken": self.csrf_token,
-        }
-        cookies = {
-            "PVEAuthCookie": self.ticket,
-        }
-
+        headers = {"CSRFPreventionToken": self.csrf_token}
+        cookies = {"PVEAuthCookie": self.ticket}
         async with httpx.AsyncClient(verify=self.verify_ssl) as client:
             url = f"{self.host}/api2/json/{endpoint}"
             response = await client.request(
-                method=method,
-                url=url,
-                headers=headers,
-                cookies=cookies,
-                data=data,
+                method=method, url=url, headers=headers, cookies=cookies, data=data
             )
             response.raise_for_status()
             return response.json().get("data", {})
 
-    async def validate_blueprint(self, blueprint: Dict[str, Any]) -> bool:
+    async def get_state(self, blueprint: SystemBlueprint) -> List[ResourceState]:
         """
-        Validate blueprint for Proxmox deployment.
-
-        Args:
-            blueprint: System blueprint to validate
-
-        Returns:
-            True if valid
-
-        Raises:
-            ValueError: If blueprint is invalid
+        Get state of all Proxmox resources for a blueprint.
+        
+        TODO: Implement actual state retrieval. This would involve listing all VMs/CTs
+        and filtering them based on a naming convention or tag derived from the blueprint.
+        For each found resource, it should construct a ResourceState object.
         """
-        # Basic validation
-        if "version" not in blueprint:
-            raise ValueError("Blueprint missing 'version' field")
-        if "name" not in blueprint:
-            raise ValueError("Blueprint missing 'name' field")
-        if "resources" not in blueprint:
-            raise ValueError("Blueprint missing 'resources' field")
+        # For now, returns an empty list, indicating no resources exist.
+        return []
 
-        # Validate resource types
-        supported_types = {"compute", "storage"}
-        for resource in blueprint.get("resources", []):
-            if resource.get("type") not in supported_types:
-                raise ValueError(
-                    f"Unsupported resource type: {resource.get('type')}. "
-                    f"Proxmox engine supports: {supported_types}"
-                )
-
-            # Validate compute resources have required specs
-            if resource.get("type") == "compute":
-                specs = resource.get("specs", {})
-                if "cpu" not in specs:
-                    raise ValueError(f"Compute resource '{resource.get('name')}' missing CPU spec")
-                if "memory" not in specs:
-                    raise ValueError(
-                        f"Compute resource '{resource.get('name')}' missing memory spec"
-                    )
-
-        return True
-
-    async def deploy(self, blueprint: Dict[str, Any]) -> DeploymentResult:
+    async def apply(self, plan: Plan) -> None:
         """
-        Deploy resources to Proxmox.
-
-        Args:
-            blueprint: System blueprint to deploy
-
-        Returns:
-            DeploymentResult with deployment status
+        Deploy or update resources in Proxmox based on a plan.
+        
+        TODO: Implement the logic to create/update VMs and other resources.
         """
-        await self.validate_blueprint(blueprint)
-
-        # Authenticate
         if not await self._authenticate():
-            return DeploymentResult(
-                status=DeploymentStatus.FAILED,
-                message="Failed to authenticate with Proxmox API",
-                resources_failed=[r.get("name", "unknown") for r in blueprint["resources"]],
-            )
+            raise ConnectionError("Failed to authenticate with Proxmox API")
 
-        resources_created = []
-        resources_failed = []
-        deployment_id = f"proxmox-{blueprint['name']}"
+        for resource_def in plan.to_create:
+            # TODO: Add logic to create a VM/CT from resource_def
+            print(f"Fake creating resource: {resource_def.name}")
+        
+        for _, resource_def in plan.to_update:
+            # TODO: Add logic to update a VM/CT from resource_def
+            print(f"Fake updating resource: {resource_def.name}")
+        
+        return
 
-        for resource in blueprint.get("resources", []):
-            resource_name = resource.get("name", "unnamed")
-            resource_type = resource.get("type")
-
-            try:
-                if resource_type == "compute":
-                    await self._deploy_vm(resource)
-                    resources_created.append(resource_name)
-                elif resource_type == "storage":
-                    # TODO: Implement storage deployment
-                    resources_failed.append(resource_name)
-                else:
-                    resources_failed.append(resource_name)
-            except Exception as e:
-                print(f"Failed to deploy resource {resource_name}: {e}")
-                resources_failed.append(resource_name)
-
-        status = (
-            DeploymentStatus.COMPLETED
-            if len(resources_failed) == 0
-            else DeploymentStatus.FAILED
-        )
-
-        return DeploymentResult(
-            status=status,
-            message=f"Deployed {len(resources_created)} resources, {len(resources_failed)} failed",
-            resources_created=resources_created,
-            resources_failed=resources_failed,
-            metadata={"deployment_id": deployment_id},
-        )
-
-    async def _deploy_vm(self, resource: Dict[str, Any]) -> str:
+    async def destroy(self, plan: Plan) -> None:
         """
-        Deploy a VM to Proxmox.
-
-        Args:
-            resource: Resource definition
-
-        Returns:
-            VM ID
+        Destroy Proxmox resources based on a plan.
+        
+        TODO: Implement actual VM/CT deletion.
         """
-        specs = resource.get("specs", {})
+        if not await self._authenticate():
+            raise ConnectionError("Failed to authenticate with Proxmox API")
+            
+        for resource_state in plan.to_delete:
+            # TODO: Add logic to delete a VM/CT using resource_state.id
+            print(f"Fake deleting resource: {resource_state.id}")
 
-        # Extract VM configuration
-        vm_config = {
-            "vmid": self._get_next_vmid(),  # TODO: Implement
-            "name": resource.get("name"),
-            "cores": specs.get("cpu", 1),
-            "memory": self._parse_memory(specs.get("memory", "512MB")),
-            "ostype": "l26",  # Linux 2.6+
-        }
-
-        # TODO: Make actual API call to create VM
-        # await self._api_request("POST", f"nodes/{self.node}/qemu", data=vm_config)
-
-        return str(vm_config["vmid"])
-
-    def _parse_memory(self, memory_str: str) -> int:
-        """
-        Parse memory string to MB.
-
-        Args:
-            memory_str: Memory string (e.g., "4GB", "512MB")
-
-        Returns:
-            Memory in MB
-        """
-        memory_str = memory_str.upper().strip()
-        if memory_str.endswith("GB"):
-            return int(float(memory_str[:-2]) * 1024)
-        elif memory_str.endswith("MB"):
-            return int(memory_str[:-2])
-        else:
-            return int(memory_str)  # Assume MB
-
-    def _get_next_vmid(self) -> int:
-        """
-        Get next available VM ID.
-
-        Returns:
-            Next VMID
-        """
-        # TODO: Query Proxmox for next available ID
-        return 100
-
-    async def get_state(self, resource_id: str) -> ResourceState:
-        """
-        Get state of a Proxmox resource.
-
-        Args:
-            resource_id: Resource ID (VMID)
-
-        Returns:
-            Resource state
-        """
-        # TODO: Implement actual state retrieval
-        return ResourceState(
-            resource_id=resource_id,
-            resource_type="compute",
-            status=ResourceStatus.RUNNING,
-            properties={},
-            metadata={},
-        )
-
-    async def destroy(self, resource_id: str) -> bool:
-        """
-        Destroy a Proxmox resource.
-
-        Args:
-            resource_id: Resource ID (VMID)
-
-        Returns:
-            True if successful
-        """
-        # TODO: Implement actual VM deletion
-        # await self._api_request("DELETE", f"nodes/{self.node}/qemu/{resource_id}")
-        return True
-
-    async def rollback(self, deployment_id: str, target_state: Optional[str] = None) -> bool:
-        """
-        Rollback Proxmox deployment.
-
-        Args:
-            deployment_id: Deployment ID
-            target_state: Target state to rollback to
-
-        Returns:
-            True if successful
-        """
-        # TODO: Implement rollback logic
-        return True
+        return
 
     async def health_check(self) -> bool:
         """
         Check Proxmox API connectivity.
-
-        Returns:
-            True if healthy
         """
         try:
             return await self._authenticate()
@@ -318,8 +126,5 @@ class ProxmoxEngine(Engine):
     def get_supported_resource_types(self) -> List[str]:
         """
         Get supported resource types.
-
-        Returns:
-            List of supported types
         """
         return ["compute", "storage"]

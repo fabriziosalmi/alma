@@ -93,6 +93,32 @@ POST /api/v1/ipr/
 GET /api/v1/blueprints/{id}/deploy
 ```
 
+### Layer 3.5: Cognitive Layer (The Brain)
+
+**Purpose**: Acts as a middleware between raw user intent and LLM execution. It provides safety, context, and personality.
+
+**Component**: `ai_cdn/core/cognitive.py`
+
+**Key Sub-Systems:**
+
+1.  **Context Tracker (FocusContext)**
+    *   *Responsibility*: Remembers what resource we are talking about.
+    *   *Logic*: If user says "Scale it to 5", the tracker resolves "it" to the `active_resource_id` (e.g., `vm-web-01`). Handles context switching detection.
+
+2.  **Risk Guard (RiskProfile)**
+    *   *Responsibility*: Prevents catastrophic errors driven by emotion or haste.
+    *   *Matrix*:
+        *   `High Frustration` + `Destructive Intent` = **BLOCK**
+        *   `Low Frustration` + `Destructive Intent` = **CONFIRMATION REQUIRED**
+        *   `Any Emotion` + `Read Intent` = **ALLOW**
+
+3.  **Adaptive Persona Engine**
+    *   *Responsibility*: Modulates the tone of voice.
+    *   *Modes*:
+        *   **ARCHITECT**: Verbose, explanatory, suggests best practices. (Trigger: `create`, `design`)
+        *   **OPERATOR**: Concise, JSON-heavy, status-focused. (Trigger: `deploy`, `scale`)
+        *   **MEDIC**: Systematic, inquisitive, reassuring. (Trigger: `troubleshoot`, `fix`)
+
 ### Layer 3: Reasoning Layer
 
 **Purpose**: AI-powered intelligence and decision making
