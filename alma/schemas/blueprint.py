@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, List, Optional
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 class ResourceSpec(BaseModel):
@@ -62,10 +62,12 @@ class SystemBlueprintInDB(SystemBlueprintBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        """Pydantic config."""
-
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+        # Map the blueprint_metadata field to metadata when reading from SQLAlchemy
+        # This allows Pydantic to read blueprint_metadata as metadata
+    )
 
 
 class SystemBlueprint(SystemBlueprintInDB):
@@ -77,7 +79,6 @@ class SystemBlueprint(SystemBlueprintInDB):
 class DeploymentRequest(BaseModel):
     """Request to deploy a blueprint."""
 
-    blueprint_id: int
     dry_run: bool = Field(default=False, description="If true, only validate without deploying")
     engine: Optional[str] = Field(None, description="Specific engine to use (overrides default)")
 

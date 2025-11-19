@@ -44,14 +44,19 @@ async def create_blueprint(
         name=blueprint.name,
         description=blueprint.description,
         resources=[r.model_dump() for r in blueprint.resources],
-        metadata=blueprint.metadata,
+        blueprint_metadata=blueprint.metadata,
     )
 
     session.add(db_blueprint)
     await session.commit()
     await session.refresh(db_blueprint)
 
-    return SystemBlueprint.model_validate(db_blueprint)
+    return SystemBlueprint.model_validate(
+        {
+            **{k: v for k, v in db_blueprint.__dict__.items() if not k.startswith('_')},
+            'metadata': db_blueprint.blueprint_metadata
+        }
+    )
 
 
 @router.get("/", response_model=List[SystemBlueprint])
@@ -73,7 +78,15 @@ async def list_blueprints(
     """
     result = await session.execute(select(SystemBlueprintModel).offset(skip).limit(limit))
     blueprints = result.scalars().all()
-    return [SystemBlueprint.model_validate(bp) for bp in blueprints]
+    return [
+        SystemBlueprint.model_validate(
+            {
+                **{k: v for k, v in bp.__dict__.items() if not k.startswith('_')},
+                'metadata': bp.blueprint_metadata
+            }
+        )
+        for bp in blueprints
+    ]
 
 
 @router.get("/{blueprint_id}", response_model=SystemBlueprint)
@@ -105,7 +118,12 @@ async def get_blueprint(
             detail=f"Blueprint {blueprint_id} not found",
         )
 
-    return SystemBlueprint.model_validate(blueprint)
+    return SystemBlueprint.model_validate(
+        {
+            **{k: v for k, v in blueprint.__dict__.items() if not k.startswith('_')},
+            'metadata': blueprint.blueprint_metadata
+        }
+    )
 
 
 @router.put("/{blueprint_id}", response_model=SystemBlueprint)
@@ -142,15 +160,28 @@ async def update_blueprint(
     # Update fields
     update_data = blueprint_update.model_dump(exclude_unset=True)
     if "resources" in update_data:
-        update_data["resources"] = [r.model_dump() for r in update_data["resources"]]
+        # Resources are already dicts from model_dump, or they might be ResourceDefinition objects
+        resources = update_data["resources"]
+        if resources and hasattr(resources[0], 'model_dump'):
+            update_data["resources"] = [r.model_dump() for r in resources]
+        # else they're already dicts, keep as is
 
     for field, value in update_data.items():
-        setattr(blueprint, field, value)
+        # Map metadata field to blueprint_metadata for the SQLAlchemy model
+        if field == "metadata":
+            setattr(blueprint, "blueprint_metadata", value)
+        else:
+            setattr(blueprint, field, value)
 
     await session.commit()
     await session.refresh(blueprint)
 
-    return SystemBlueprint.model_validate(blueprint)
+    return SystemBlueprint.model_validate(
+        {
+            **{k: v for k, v in blueprint.__dict__.items() if not k.startswith('_')},
+            'metadata': blueprint.blueprint_metadata
+        }
+    )
 
 
 @router.delete("/{blueprint_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -201,7 +232,12 @@ async def deploy_blueprint(
         )
     
     # Convert to the Pydantic schema for use with the new core logic
-    blueprint_schema = SystemBlueprint.model_validate(db_blueprint)
+    blueprint_schema = SystemBlueprint.model_validate(
+        {
+            **{k: v for k, v in db_blueprint.__dict__.items() if not k.startswith('_')},
+            'metadata': db_blueprint.blueprint_metadata
+        }
+    )
 
     # 2. Get engine (currently only FakeEngine)
     # TODO: Implement dynamic engine selection

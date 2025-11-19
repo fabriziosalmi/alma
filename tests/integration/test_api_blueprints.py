@@ -60,10 +60,10 @@ def sample_blueprint_data() -> dict:
 class TestBlueprintAPI:
     """Integration tests for Blueprint API endpoints."""
 
-    # This test doesn't need the DB, so it uses the simpler client
-    async def test_get_blueprint_not_found(self, client: AsyncClient) -> None:
+    # Use db_client to ensure test database is properly initialized
+    async def test_get_blueprint_not_found(self, db_client: AsyncClient) -> None:
         """Test getting non-existent blueprint returns 404."""
-        response = await client.get("/api/v1/blueprints/999")
+        response = await db_client.get("/api/v1/blueprints/999")
         assert response.status_code == 404
 
     async def test_create_blueprint(

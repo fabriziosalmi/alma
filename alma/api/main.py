@@ -82,9 +82,8 @@ async def root() -> dict[str, str]:
         Welcome message
     """
     return {
-        "message": f"Welcome to {settings.app_name}",
-        "version": settings.app_version,
-        "docs": "/docs",
+        "name": settings.app_name,
+        "status": "operational",
     }
 
 

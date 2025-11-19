@@ -120,25 +120,23 @@ class TestDeploymentRequest:
 
     def test_deployment_request_minimal(self) -> None:
         """Test deployment request with minimal fields."""
-        request = DeploymentRequest(blueprint_id=1)
+        request = DeploymentRequest()
 
-        assert request.blueprint_id == 1
         assert request.dry_run is False
         assert request.engine is None
 
     def test_deployment_request_with_options(self) -> None:
         """Test deployment request with all options."""
         request = DeploymentRequest(
-            blueprint_id=42,
             dry_run=True,
             engine="proxmox",
         )
 
-        assert request.blueprint_id == 42
         assert request.dry_run is True
         assert request.engine == "proxmox"
 
-    def test_deployment_request_missing_blueprint_id(self) -> None:
-        """Test validation fails when blueprint_id is missing."""
-        with pytest.raises(ValidationError):
-            DeploymentRequest()  # type: ignore
+    def test_deployment_request_defaults(self) -> None:
+        """Test deployment request defaults."""
+        request = DeploymentRequest()
+        assert request.dry_run is False
+        assert request.engine is None
