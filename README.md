@@ -1,8 +1,10 @@
 # ALMA: Infrastructure as Conversation
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![PyPI version](https://img.shields.io/pypi/v/alma.svg)](https://pypi.org/project/alma/)
 [![Status](https://img.shields.io/badge/Status-Sentient_Beta-purple.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Downloads](https://img.shields.io/pypi/dm/alma.svg)](https://pypi.org/project/alma/)
 
 **Stop writing YAML. Start conversing.**
 ALMA is the first **Cognitive Infrastructure Platform**. It doesn't just execute commands; it understands context, assesses risk, and adapts its persona to your emotional state.
@@ -26,6 +28,39 @@ Real-time terminal UI (`ALMA monitor`) featuring:
 - **IPR System**: Infrastructure Pull Requests for human-in-the-loop safety.
 - **Streaming**: Real-time responses (SSE) for instant feedback.
 - **Templates**: 10+ production-ready blueprints included.
+
+## Installation
+
+### From PyPI (Recommended)
+
+```bash
+pip install alma
+```
+
+### From GitHub Releases
+
+Download the latest wheel for your platform from [GitHub Releases](https://github.com/fabriziosalmi/alma/releases):
+
+```bash
+# Linux/macOS
+pip install https://github.com/fabriziosalmi/alma/releases/download/v0.1.0/alma-0.1.0-py3-none-any.whl
+
+# Or download and install locally
+wget https://github.com/fabriziosalmi/alma/releases/download/v0.1.0/alma-0.1.0-py3-none-any.whl
+pip install alma-0.1.0-py3-none-any.whl
+```
+
+### Development Installation
+
+For contributing or local development:
+
+```bash
+git clone https://github.com/fabriziosalmi/alma.git
+cd alma
+pip install -e '.[dev]'
+```
+
+This installs ALMA in editable mode with development dependencies (pytest, black, ruff, mypy).
 
 ## Architecture
 
