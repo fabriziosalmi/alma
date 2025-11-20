@@ -1,6 +1,5 @@
 """End-to-end tests for complete deployment workflow."""
 
-
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
