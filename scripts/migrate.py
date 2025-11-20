@@ -4,13 +4,12 @@
 import sys
 from pathlib import Path
 
+from alembic import command
+from alembic.config import Config
+
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
-
-from alembic.config import Config
-
-from alembic import command
 
 
 def get_alembic_config() -> Config:

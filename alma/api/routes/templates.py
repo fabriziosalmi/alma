@@ -110,7 +110,7 @@ async def customize_template(template_id: str, customizations: dict[str, Any]) -
             for resource in blueprint.get("resources", []):
                 if "specs" in resource:
                     specs = resource["specs"]
-                    if "cpu" in specs and isinstance(specs["cpu"], (int, float)):
+                    if "cpu" in specs and isinstance(specs["cpu"], int | float):
                         specs["cpu"] = int(specs["cpu"] * scale)
                     if "memory" in specs and isinstance(specs["memory"], str):
                         # Simple memory scaling (e.g., "4GB" -> "8GB")

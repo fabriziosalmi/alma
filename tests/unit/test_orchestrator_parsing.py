@@ -133,7 +133,7 @@ name: broken
         text = "Just some random text"
         result = orchestrator._extract_yaml(text)
         # May return None or the text itself as fallback
-        assert result is None or isinstance(result, (dict, str))
+        assert result is None or isinstance(result, dict | str)
 
 
 class TestOrchestratorEdgeCases:

@@ -82,10 +82,10 @@ async def test_metrics_collection():
     async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
         # Generate some traffic
         print("\n  Generating traffic...")
-        for _ in range(20):
+        for _i in range(100):
             try:
                 await client.get("/api/v1/blueprints")
-            except:
+            except Exception:
                 pass
 
         # Check Prometheus metrics
@@ -235,7 +235,7 @@ async def test_end_to_end():
                 )
                 if response.status_code == 429:
                     limited_count += 1
-            except:
+            except Exception:
                 pass
 
         if limited_count > 0:

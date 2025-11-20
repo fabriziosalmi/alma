@@ -174,7 +174,7 @@ async def interactive_chat():
                                     print(event["data"], end="", flush=True)
                                 elif event.get("type") == "done":
                                     print("\n")
-                            except:
+                            except Exception:
                                 pass
             except Exception as e:
                 print(f"\n❌ Error: {e}\n")
