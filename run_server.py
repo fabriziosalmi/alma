@@ -19,7 +19,7 @@ def main():
     print("🔍 ReDoc: http://localhost:8000/redoc")
     print("")
 
-    uvicorn.run("aicdn.api.main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")
+    uvicorn.run("alma.api.main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")
 
 
 if __name__ == "__main__":
