@@ -81,7 +81,7 @@ class TestBlueprintAPI:
         self, db_client: AsyncClient, test_db_session: AsyncSession, sample_blueprint_data: dict
     ) -> None:
         """Test listing all blueprints."""
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.utc)
         test_db_session.add(
             SystemBlueprintModel(name="bp-1", resources=[], created_at=now, updated_at=now)
         )
@@ -99,7 +99,7 @@ class TestBlueprintAPI:
         self, db_client: AsyncClient, test_db_session: AsyncSession, sample_blueprint_data: dict
     ) -> None:
         """Test updating a blueprint."""
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.utc)
         blueprint = SystemBlueprintModel(
             name="original-name", resources=[], created_at=now, updated_at=now
         )
@@ -117,7 +117,7 @@ class TestBlueprintAPI:
         self, db_client: AsyncClient, test_db_session: AsyncSession
     ) -> None:
         """Test deleting a blueprint."""
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.utc)
         blueprint = SystemBlueprintModel(
             name="to-delete", resources=[], created_at=now, updated_at=now
         )
@@ -146,7 +146,7 @@ class TestBlueprintAPI:
         mock_engine_instance = MockFakeEngine.return_value
         mock_engine_instance.get_state = AsyncMock(return_value=[])
 
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.utc)
         blueprint = SystemBlueprintModel(
             name=sample_blueprint_data["name"],
             resources=sample_blueprint_data["resources"],
@@ -183,7 +183,7 @@ class TestBlueprintAPI:
         mock_engine_instance.apply = AsyncMock()
         mock_engine_instance.destroy = AsyncMock()
 
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.utc)
         blueprint = SystemBlueprintModel(
             name=sample_blueprint_data["name"],
             resources=sample_blueprint_data["resources"],
@@ -227,7 +227,7 @@ class TestBlueprintAPI:
         )
         mock_engine_instance.apply = AsyncMock()
 
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.utc)
         blueprint = SystemBlueprintModel(
             name=sample_blueprint_data["name"],
             resources=sample_blueprint_data["resources"],
