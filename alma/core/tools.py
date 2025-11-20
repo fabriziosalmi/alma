@@ -587,9 +587,7 @@ class InfrastructureTools:
         }
 
     @staticmethod
-    def _suggest_architecture(
-        args: dict[str, Any], ctx: dict[str, Any] | None
-    ) -> dict[str, Any]:
+    def _suggest_architecture(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Suggest architecture implementation."""
         args.get("requirements", {})
         args.get("constraints", {})
@@ -625,9 +623,7 @@ class InfrastructureTools:
         }
 
     @staticmethod
-    def _migrate_infrastructure(
-        args: dict[str, Any], ctx: dict[str, Any] | None
-    ) -> dict[str, Any]:
+    def _migrate_infrastructure(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Migrate infrastructure implementation."""
         args.get("source_platform")
         args.get("target_platform")
