@@ -402,7 +402,8 @@ class InfrastructureTools:
             return {
                 "success": False,
                 "error": f"Unknown tool: {tool_name}",
-                "available_tools": list(tool_map.keys())
+                "available_tools": list(tool_map.keys()),
+                "timestamp": datetime.utcnow().isoformat()
             }
         
         try:

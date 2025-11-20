@@ -184,5 +184,56 @@ class TestStateDiffer(unittest.TestCase):
         self.assertIn("1 to modify", summary)
         self.assertIn("1 to destroy", summary)
 
+
+class TestPlanRichString:
+    """Test Plan.to_rich_string method for coverage."""
+    
+    def test_to_rich_string_empty_plan(self):
+        """Test rich string for empty plan."""
+        from alma.core.state import Plan
+        plan = Plan()
+        rich_str = plan.to_rich_string()
+        assert "No changes" in rich_str
+    
+    def test_to_rich_string_with_create(self):
+        """Test rich string with create actions."""
+        from alma.core.state import Plan
+        resource = ResourceDefinition(name="vm1", type="compute", provider="proxmox", specs={"cpu": 2})
+        plan = Plan(to_create=[resource])
+        rich_str = plan.to_rich_string()
+        assert "CREATE" in rich_str
+        assert "vm1" in rich_str
+    
+    def test_to_rich_string_with_update(self):
+        """Test rich string with update actions."""
+        from alma.core.state import Plan
+        current = ResourceState(id="vm1", type="compute", config={"cpu": 2})
+        desired = ResourceDefinition(name="vm1", type="compute", provider="proxmox", specs={"cpu": 4})
+        plan = Plan(to_update=[(current, desired)])
+        rich_str = plan.to_rich_string()
+        assert "MODIFY" in rich_str
+    
+    def test_to_rich_string_with_delete(self):
+        """Test rich string with delete actions."""
+        from alma.core.state import Plan
+        resource = ResourceState(id="vm1", type="compute", config={})
+        plan = Plan(to_delete=[resource])
+        rich_str = plan.to_rich_string()
+        assert "DESTROY" in rich_str
+        assert "permanently deleted" in rich_str
+    
+    def test_to_rich_string_all_actions(self):
+        """Test rich string with all actions."""
+        from alma.core.state import Plan
+        plan = Plan(
+            to_create=[ResourceDefinition(name="vm2", type="compute", provider="proxmox", specs={})],
+            to_update=[(ResourceState(id="vm1", type="compute", config={}),
+                       ResourceDefinition(name="vm1", type="compute", provider="proxmox", specs={}))],
+            to_delete=[ResourceState(id="vm0", type="compute", config={})]
+        )
+        rich_str = plan.to_rich_string()
+        assert "Summary" in rich_str
+
+
 if __name__ == "__main__":
     unittest.main()

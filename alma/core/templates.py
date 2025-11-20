@@ -1,6 +1,6 @@
 """Blueprint templates library for common infrastructure patterns."""
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from enum import Enum
 
 
@@ -129,6 +129,15 @@ class BlueprintTemplates:
         Raises:
             ValueError: If template not found
         """
+        # Map common aliases to actual template IDs
+        template_aliases = {
+            "kubernetes-cluster": "microservices-k8s",
+            "microservices": "microservices-k8s",
+        }
+        
+        # Use alias if available
+        actual_template_id = template_aliases.get(template_id, template_id)
+        
         templates = {
             "simple-web-app": BlueprintTemplates._simple_web_app(),
             "ha-web-app": BlueprintTemplates._ha_web_app(),
@@ -142,10 +151,82 @@ class BlueprintTemplates:
             "redis-cluster": BlueprintTemplates._redis_cluster(),
         }
         
-        if template_id not in templates:
+        if actual_template_id not in templates:
             raise ValueError(f"Template '{template_id}' not found")
         
-        return templates[template_id]
+        return templates[actual_template_id]
+
+    @staticmethod
+    def list_templates(category: Optional[TemplateCategory] = None) -> List[Dict[str, Any]]:
+        """
+        List all available templates, optionally filtered by category.
+        
+        Args:
+            category: Optional category filter
+            
+        Returns:
+            List of template metadata
+        """
+        templates = BlueprintTemplates.get_all_templates()
+        
+        if category:
+            templates = [t for t in templates if t["category"] == category]
+        
+        return templates
+
+    @staticmethod
+    def customize_template(
+        template_id: str, 
+        parameters: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Customize a template with provided parameters.
+        
+        Args:
+            template_id: Template identifier
+            parameters: Customization parameters (e.g., instance_count, cpu_per_instance)
+            
+        Returns:
+            Customized blueprint
+        """
+        template = BlueprintTemplates.get_template(template_id)
+        blueprint = template.copy()
+        
+        # Apply common customizations
+        if "instance_count" in parameters:
+            # Scale compute resources
+            compute_resources = [r for r in blueprint.get("resources", []) if r.get("type") == "compute"]
+            if compute_resources and len(compute_resources) > 0:
+                # Replicate the first compute resource
+                base_resource = compute_resources[0].copy()
+                new_resources = []
+                for r in blueprint.get("resources", []):
+                    if r.get("type") != "compute":
+                        new_resources.append(r)
+                
+                for i in range(parameters["instance_count"]):
+                    resource = base_resource.copy()
+                    resource["name"] = f"{base_resource['name']}-{i+1}"
+                    new_resources.append(resource)
+                
+                blueprint["resources"] = new_resources
+        
+        if "cpu_per_instance" in parameters:
+            for resource in blueprint.get("resources", []):
+                if resource.get("type") == "compute" and "specs" in resource:
+                    resource["specs"]["cpu"] = parameters["cpu_per_instance"]
+        
+        if "memory_per_instance" in parameters:
+            for resource in blueprint.get("resources", []):
+                if resource.get("type") == "compute" and "specs" in resource:
+                    resource["specs"]["memory"] = parameters["memory_per_instance"]
+        
+        if "environment" in parameters:
+            if "metadata" not in blueprint:
+                blueprint["metadata"] = {}
+            blueprint["metadata"]["environment"] = parameters["environment"]
+        
+        return blueprint
 
     @staticmethod
     def _simple_web_app() -> Dict[str, Any]:

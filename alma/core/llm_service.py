@@ -12,7 +12,19 @@ settings = get_settings()
 # Global instances
 _llm_instance: Optional[LLMInterface] = None
 _orchestrator_instance: Optional[EnhancedOrchestrator] = None
-_initialization_lock = asyncio.Lock()
+_initialization_lock: Optional[asyncio.Lock] = None
+
+
+def _get_lock() -> asyncio.Lock:
+    """Get or create the initialization lock for the current event loop."""
+    global _initialization_lock
+    try:
+        if _initialization_lock is None or _initialization_lock._loop != asyncio.get_event_loop():
+            _initialization_lock = asyncio.Lock()
+    except RuntimeError:
+        # No event loop running
+        _initialization_lock = asyncio.Lock()
+    return _initialization_lock
 
 
 async def initialize_llm() -> LLMInterface:
@@ -24,7 +36,7 @@ async def initialize_llm() -> LLMInterface:
     """
     global _llm_instance
 
-    async with _initialization_lock:
+    async with _get_lock():
         if _llm_instance is not None:
             return _llm_instance
 
@@ -83,7 +95,7 @@ async def get_orchestrator(use_real_llm: bool = True) -> EnhancedOrchestrator:
     """
     global _orchestrator_instance
 
-    async with _initialization_lock:
+    async with _get_lock():
         if _orchestrator_instance is not None:
             return _orchestrator_instance
 

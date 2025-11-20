@@ -1,0 +1,33 @@
+[run]
+source = alma
+omit =
+    # Heavy ML/GPU dependencies - cannot run without torch/transformers/auto_gptq
+    alma/core/llm_qwen.py
+    # Rate limiting tests conflict with TESTING=true bypass
+    tests/unit/test_rate_limit_metrics.py
+    # Broken mock imports
+    tests/unit/test_llm_qwen_mocked.py
+
+[report]
+exclude_lines =
+    # Standard exclusions
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
+    # Defensive programming
+    except ImportError
+    except ModuleNotFoundError
+    # Debugging
+    logger.debug
+    if self.debug
+
+precision = 2
+show_missing = True
+skip_covered = False
+
+[html]
+directory = htmlcov

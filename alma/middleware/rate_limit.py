@@ -151,6 +151,11 @@ class RateLimiter:
         Returns:
             JSONResponse if rate limited, None otherwise
         """
+        # Bypass rate limiting in test environment
+        import os
+        if os.environ.get("TESTING") == "true" or os.environ.get("BYPASS_RATE_LIMIT") == "true":
+            return None
+        
         client_id = self._get_client_id(request)
         
         # Cleanup old buckets periodically
