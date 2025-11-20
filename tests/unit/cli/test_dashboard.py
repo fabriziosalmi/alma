@@ -33,7 +33,9 @@ def test_initialization(dashboard_app: DashboardApp):
 
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient")
-async def test_update_success_resets_error_counter(mock_client_constructor, dashboard_app: DashboardApp):
+async def test_update_success_resets_error_counter(
+    mock_client_constructor, dashboard_app: DashboardApp
+):
     """Verify that a successful API call resets the consecutive_errors counter."""
     dashboard_app.consecutive_errors = 2
 
