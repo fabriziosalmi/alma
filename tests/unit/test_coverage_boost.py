@@ -6,7 +6,7 @@ from alma.core.llm_orchestrator import EnhancedOrchestrator
 
 class TestEnhancedOrchestratorEdgeCases:
     """Test edge cases that boost coverage without complex mocking."""
-    
+
     def test_orchestrator_extract_json_invalid(self):
         """Test JSON extraction from invalid text."""
         orchestrator = EnhancedOrchestrator()

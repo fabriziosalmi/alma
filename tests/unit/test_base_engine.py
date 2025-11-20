@@ -30,12 +30,9 @@ class TestBaseEngineInterface:
         """Test deploy interface."""
         engine = MockEngine()
         resource = ResourceDefinition(
-            type="compute",
-            name="test-resource",
-            provider="mock",
-            specs={"cpu": 2}
+            type="compute", name="test-resource", provider="mock", specs={"cpu": 2}
         )
-        
+
         result = await engine.deploy(resource)
         assert result["status"] == "deployed"
         assert "resource_id" in result
@@ -45,12 +42,9 @@ class TestBaseEngineInterface:
         """Test destroy interface."""
         engine = MockEngine()
         resource = ResourceDefinition(
-            type="compute",
-            name="test-resource",
-            provider="mock",
-            specs={"cpu": 2}
+            type="compute", name="test-resource", provider="mock", specs={"cpu": 2}
         )
-        
+
         result = await engine.destroy(resource)
         assert result["status"] == "destroyed"
 
@@ -64,9 +58,9 @@ class TestBaseEngineInterface:
             name="test",
             resources=[],
             created_at="2025-01-01T00:00:00Z",
-            updated_at="2025-01-01T00:00:00Z"
+            updated_at="2025-01-01T00:00:00Z",
         )
-        
+
         state = await engine.get_state(blueprint)
         assert isinstance(state, list)
 
@@ -76,12 +70,9 @@ class TestBaseEngineInterface:
         """Test validate interface."""
         engine = MockEngine()
         resource = ResourceDefinition(
-            type="compute",
-            name="test-resource",
-            provider="mock",
-            specs={"cpu": 2}
+            type="compute", name="test-resource", provider="mock", specs={"cpu": 2}
         )
-        
+
         # Should not raise
         await engine.validate(resource)
 
@@ -91,11 +82,8 @@ class TestBaseEngineInterface:
         """Test validate fails on invalid resource."""
         engine = MockEngine()
         resource = ResourceDefinition(
-            type="compute",
-            name="",  # Invalid empty name
-            provider="mock",
-            specs={}
+            type="compute", name="", provider="mock", specs={}  # Invalid empty name
         )
-        
+
         with pytest.raises(ValueError, match="name is required"):
             await engine.validate(resource)

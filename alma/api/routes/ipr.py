@@ -158,9 +158,7 @@ async def get_ipr(
         IPR data
     """
     result = await session.execute(
-        select(InfrastructurePullRequestModel).where(
-            InfrastructurePullRequestModel.id == ipr_id
-        )
+        select(InfrastructurePullRequestModel).where(InfrastructurePullRequestModel.id == ipr_id)
     )
     ipr = result.scalar_one_or_none()
 
@@ -191,9 +189,7 @@ async def update_ipr(
         Updated IPR
     """
     result = await session.execute(
-        select(InfrastructurePullRequestModel).where(
-            InfrastructurePullRequestModel.id == ipr_id
-        )
+        select(InfrastructurePullRequestModel).where(InfrastructurePullRequestModel.id == ipr_id)
     )
     ipr = result.scalar_one_or_none()
 
@@ -239,9 +235,7 @@ async def review_ipr(
         Updated IPR
     """
     result = await session.execute(
-        select(InfrastructurePullRequestModel).where(
-            InfrastructurePullRequestModel.id == ipr_id
-        )
+        select(InfrastructurePullRequestModel).where(InfrastructurePullRequestModel.id == ipr_id)
     )
     ipr = result.scalar_one_or_none()
 
@@ -286,9 +280,7 @@ async def deploy_ipr(
         Updated IPR with deployment information
     """
     result = await session.execute(
-        select(InfrastructurePullRequestModel).where(
-            InfrastructurePullRequestModel.id == ipr_id
-        )
+        select(InfrastructurePullRequestModel).where(InfrastructurePullRequestModel.id == ipr_id)
     )
     ipr = result.scalar_one_or_none()
 
@@ -353,9 +345,7 @@ async def cancel_ipr(
         session: Database session
     """
     result = await session.execute(
-        select(InfrastructurePullRequestModel).where(
-            InfrastructurePullRequestModel.id == ipr_id
-        )
+        select(InfrastructurePullRequestModel).where(InfrastructurePullRequestModel.id == ipr_id)
     )
     ipr = result.scalar_one_or_none()
 

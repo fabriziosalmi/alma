@@ -8,7 +8,6 @@ from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
 
 
 class TestTerraformExporter(unittest.TestCase):
-
     def test_export_docker_compute_resource(self):
         """
         Tests that a blueprint with a single Docker compute resource is
@@ -48,11 +47,11 @@ class TestTerraformExporter(unittest.TestCase):
         # Check for the docker_container resource
         self.assertIn('resource "docker_container" "my-web-server"', main_tf)
         self.assertIn("image = resource.docker_image.my_web_server_image.image_id", main_tf)
-        
+
         # Check for port mapping
         self.assertIn("internal = 8080", main_tf)
         self.assertIn("external = 8080", main_tf)
-        
+
     def test_exporter_handles_empty_blueprint(self):
         """
         Tests that the exporter doesn't fail with an empty list of resources.
@@ -62,7 +61,7 @@ class TestTerraformExporter(unittest.TestCase):
             name="empty-bp",
             created_at=datetime.now(),
             updated_at=datetime.now(),
-            resources=[], # No resources
+            resources=[],  # No resources
         )
 
         exporter = TerraformExporter(blueprint)
@@ -71,13 +70,14 @@ class TestTerraformExporter(unittest.TestCase):
         self.assertIn("main.tf", hcl_files)
         # Check that no 'resource' blocks were created
         self.assertNotIn('resource "', hcl_files["main.tf"])
-        
+
     def test_raises_error_on_null_blueprint(self):
         """
         Tests that the exporter raises a ValueError if initialized with None.
         """
         with self.assertRaises(ValueError):
             TerraformExporter(None)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -43,9 +43,7 @@ class TestEnhancedOrchestrator:
         self, orchestrator_without_llm: EnhancedOrchestrator
     ) -> None:
         """Test intent parsing fallback to rules when LLM disabled."""
-        intent = await orchestrator_without_llm.parse_intent_with_llm(
-            "Create a web server"
-        )
+        intent = await orchestrator_without_llm.parse_intent_with_llm("Create a web server")
 
         assert intent["intent"] == "create_blueprint"
         assert "raw_input" in intent
@@ -77,9 +75,7 @@ class TestEnhancedOrchestrator:
             ],
         }
 
-        description = await orchestrator_without_llm.blueprint_to_natural_language(
-            blueprint
-        )
+        description = await orchestrator_without_llm.blueprint_to_natural_language(blueprint)
 
         assert "test-app" in description
         assert "web-server" in description
@@ -143,9 +139,7 @@ class TestEnhancedOrchestrator:
         assert len(findings) > 0
         assert "severity" in findings[0]
 
-    def test_extract_json_valid(
-        self, orchestrator_with_llm: EnhancedOrchestrator
-    ) -> None:
+    def test_extract_json_valid(self, orchestrator_with_llm: EnhancedOrchestrator) -> None:
         """Test JSON extraction from text."""
         text = 'Some text {"key": "value", "number": 42} more text'
         result = orchestrator_with_llm._extract_json(text)
@@ -154,9 +148,7 @@ class TestEnhancedOrchestrator:
         assert result["key"] == "value"
         assert result["number"] == 42
 
-    def test_extract_json_invalid(
-        self, orchestrator_with_llm: EnhancedOrchestrator
-    ) -> None:
+    def test_extract_json_invalid(self, orchestrator_with_llm: EnhancedOrchestrator) -> None:
         """Test JSON extraction with invalid JSON."""
         text = "No JSON here at all"
         result = orchestrator_with_llm._extract_json(text)
@@ -181,9 +173,7 @@ resources: []
         assert result["version"] == "1.0"
         assert result["name"] == "test"
 
-    def test_extract_yaml_plain(
-        self, orchestrator_with_llm: EnhancedOrchestrator
-    ) -> None:
+    def test_extract_yaml_plain(self, orchestrator_with_llm: EnhancedOrchestrator) -> None:
         """Test YAML extraction from plain text."""
         text = """
 version: "1.0"
@@ -195,9 +185,7 @@ resources: []
         assert result is not None
         assert result["version"] == "1.0"
 
-    def test_parse_numbered_list(
-        self, orchestrator_with_llm: EnhancedOrchestrator
-    ) -> None:
+    def test_parse_numbered_list(self, orchestrator_with_llm: EnhancedOrchestrator) -> None:
         """Test numbered list parsing."""
         text = """
 1. First suggestion

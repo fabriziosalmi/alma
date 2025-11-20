@@ -44,10 +44,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
             Function execution result
         """
         if not self.use_llm or self.llm is None:
-            return {
-                "success": False,
-                "error": "LLM not available for function calling"
-            }
+            return {"success": False, "error": "LLM not available for function calling"}
 
         # Get available tools
         available_tools = self.tools.get_available_tools()
@@ -57,10 +54,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
             function_call = await self.llm.function_call(user_input, available_tools)
 
             if not function_call or "function" not in function_call:
-                return {
-                    "success": False,
-                    "error": "LLM did not return valid function call"
-                }
+                return {"success": False, "error": "LLM did not return valid function call"}
 
             # Execute the selected tool
             tool_name = function_call.get("function")
@@ -70,10 +64,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
             return result
 
         except Exception as e:
-            return {
-                "success": False,
-                "error": f"Function call execution failed: {e}"
-            }
+            return {"success": False, "error": f"Function call execution failed: {e}"}
 
     def get_available_tools(self) -> List[Dict[str, Any]]:
         """
@@ -225,9 +216,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
         # Fallback
         return await super().suggest_improvements(blueprint)
 
-    async def estimate_resources(
-        self, workload: str, expected_load: str
-    ) -> Dict[str, Any]:
+    async def estimate_resources(self, workload: str, expected_load: str) -> Dict[str, Any]:
         """
         Estimate resource requirements using LLM.
 

@@ -76,32 +76,40 @@ class TestProxmoxEngine:
         assert "storage" in types
         assert "network" not in types
 
-    async def test_apply_authentication_failure(self, engine: ProxmoxEngine, sample_blueprint: SystemBlueprint) -> None:
+    async def test_apply_authentication_failure(
+        self, engine: ProxmoxEngine, sample_blueprint: SystemBlueprint
+    ) -> None:
         """Test deployment fails when authentication fails."""
         plan = Plan(to_create=sample_blueprint.resources)
         with patch.object(engine, "_authenticate", return_value=False):
             with pytest.raises(ConnectionError, match="Failed to authenticate"):
                 await engine.apply(plan)
 
-    async def test_get_state_empty(self, engine: ProxmoxEngine, sample_blueprint: SystemBlueprint) -> None:
+    async def test_get_state_empty(
+        self, engine: ProxmoxEngine, sample_blueprint: SystemBlueprint
+    ) -> None:
         """Test getting state when no resources exist."""
         with patch.object(engine, "_authenticate", return_value=True):
             state = await engine.get_state(sample_blueprint)
             assert state == []
 
-    async def test_apply_create(self, engine: ProxmoxEngine, sample_blueprint: SystemBlueprint) -> None:
+    async def test_apply_create(
+        self, engine: ProxmoxEngine, sample_blueprint: SystemBlueprint
+    ) -> None:
         """Test apply for resource creation."""
         plan = Plan(to_create=sample_blueprint.resources)
-        with patch.object(engine, "_authenticate", return_value=True), \
-             patch('builtins.print') as mock_print:
+        with patch.object(engine, "_authenticate", return_value=True), patch(
+            "builtins.print"
+        ) as mock_print:
             await engine.apply(plan)
             mock_print.assert_called_with("Fake creating resource: test-vm")
-            
+
     async def test_destroy(self, engine: ProxmoxEngine) -> None:
         """Test destroying a resource."""
         resource_state = ResourceState(id="vm/101", type="compute", config={})
         plan = Plan(to_delete=[resource_state])
-        with patch.object(engine, "_authenticate", return_value=True), \
-             patch('builtins.print') as mock_print:
+        with patch.object(engine, "_authenticate", return_value=True), patch(
+            "builtins.print"
+        ) as mock_print:
             await engine.destroy(plan)
             mock_print.assert_called_with("Fake deleting resource: vm/101")

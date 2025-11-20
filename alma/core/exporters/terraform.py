@@ -26,9 +26,7 @@ class TerraformExporter:
             raise ValueError("A valid SystemBlueprint must be provided.")
         self.blueprint = blueprint
         self.jinja_env = Environment(
-            loader=FileSystemLoader(str(TEMPLATE_DIR)),
-            trim_blocks=True,
-            lstrip_blocks=True
+            loader=FileSystemLoader(str(TEMPLATE_DIR)), trim_blocks=True, lstrip_blocks=True
         )
 
     def export(self) -> Dict[str, str]:
@@ -40,15 +38,15 @@ class TerraformExporter:
             values are the rendered HCL code as strings.
         """
         logger.info(f"Starting Terraform export for blueprint '{self.blueprint.name}'...")
-        
+
         processed_resources = self._process_resources()
-        
+
         main_tf_content = self.jinja_env.get_template("main.tf.j2").render(
             resources=processed_resources
         )
-        
+
         logger.info("Terraform export complete.")
-        
+
         return {
             "main.tf": main_tf_content
             # provider.tf and outputs.tf could be rendered here as well
@@ -59,11 +57,11 @@ class TerraformExporter:
         Processes blueprint resources into a format suitable for the Jinja2 template.
         """
         processed = []
-        
+
         # This logic is complex because a single 'compute' resource in our blueprint
         # maps to *two* terraform resources: a docker_image and a docker_container.
         # We need to create the image resource first and give it a name the container can reference.
-        
+
         for resource in self.blueprint.resources:
             if resource.provider == "docker" and resource.type == "compute":
                 # 1. Create the docker_image resource representation
@@ -80,16 +78,18 @@ class TerraformExporter:
                     "name": resource.name,
                     "tf_type": "docker_container",
                     "specs": resource.specs,
-                    "image_resource_name": image_resource_name, # So we can reference the image
+                    "image_resource_name": image_resource_name,  # So we can reference the image
                 }
                 processed.append(container_resource)
 
             elif resource.provider == "proxmox":
                 # Future implementation for Proxmox
                 # 'compute' -> 'proxmox_vm_qemu'
-                logger.warning(f"Proxmox provider for resource '{resource.name}' is not yet supported.")
+                logger.warning(
+                    f"Proxmox provider for resource '{resource.name}' is not yet supported."
+                )
                 pass
-                
+
             else:
                 logger.warning(
                     f"Unsupported provider '{resource.provider}' or type '{resource.type}' "

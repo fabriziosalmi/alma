@@ -34,6 +34,7 @@ APP_VERSION = "0.1.0"
 
 # --- Main Application Class ---
 
+
 class DashboardApp:
     """A real-time monitoring dashboard and recovery wizard application."""
 
@@ -41,7 +42,7 @@ class DashboardApp:
         self.mock = mock
         self.console = Console()
         self.layout = self.generate_layout()
-        
+
         # State
         self.api_status: str = "connecting"
         self.consecutive_errors: int = 0
@@ -78,15 +79,17 @@ class DashboardApp:
             metrics_resp, iprs_resp = await asyncio.gather(
                 self.http_client.get("/monitoring/metrics/summary"),
                 self.http_client.get("/iprs/"),
-                return_exceptions=True
+                return_exceptions=True,
             )
-            
-            if isinstance(metrics_resp, httpx.ConnectError) or isinstance(iprs_resp, httpx.ConnectError):
+
+            if isinstance(metrics_resp, httpx.ConnectError) or isinstance(
+                iprs_resp, httpx.ConnectError
+            ):
                 raise httpx.ConnectError("API connection failed")
 
             metrics_resp.raise_for_status()
             iprs_resp.raise_for_status()
-            
+
             self.metrics = metrics_resp.json()
             self.iprs = iprs_resp.json()
             self.api_status = "connected"
@@ -96,15 +99,21 @@ class DashboardApp:
         except (httpx.ConnectError, httpx.TimeoutException):
             self.api_status = "Disconnected"
             self.consecutive_errors += 1
-            self.logs.append(f"[dim]{time.strftime('%H:%M:%S')}[/] [bold red]API connection failed ({self.consecutive_errors}/{MAX_CONSECUTIVE_ERRORS})[/]")
+            self.logs.append(
+                f"[dim]{time.strftime('%H:%M:%S')}[/] [bold red]API connection failed ({self.consecutive_errors}/{MAX_CONSECUTIVE_ERRORS})[/]"
+            )
         except httpx.HTTPStatusError as e:
             self.api_status = "Disconnected"
             self.consecutive_errors += 1
-            self.logs.append(f"[dim]{time.strftime('%H:%M:%S')}[/] [red]API Error: {e.response.status_code} ({self.consecutive_errors}/{MAX_CONSECUTIVE_ERRORS})[/]")
+            self.logs.append(
+                f"[dim]{time.strftime('%H:%M:%S')}[/] [red]API Error: {e.response.status_code} ({self.consecutive_errors}/{MAX_CONSECUTIVE_ERRORS})[/]"
+            )
         except Exception as e:
             self.api_status = "Disconnected"
             self.consecutive_errors += 1
-            self.logs.append(f"[dim]{time.strftime('%H:%M:%S')}[/] [red]An unexpected error occurred[/]")
+            self.logs.append(
+                f"[dim]{time.strftime('%H:%M:%S')}[/] [red]An unexpected error occurred[/]"
+            )
 
     def _generate_mock_data(self):
         # (Mock data generation remains the same as previous version)
@@ -115,9 +124,9 @@ class DashboardApp:
 
     def _render_header(self) -> Align:
         """Renders the dashboard header."""
-        f = Figlet(font='slant')
-        ascii_art = Text(f.renderText('ALMA'), style="bold cyan", justify="center")
-        
+        f = Figlet(font="slant")
+        ascii_art = Text(f.renderText("ALMA"), style="bold cyan", justify="center")
+
         status_dot = "🟢" if self.api_status == "connected" else "🔴"
         status_text = Text(f"{status_dot} API: {self.api_status}", justify="right")
         version_text = Text(f"v{APP_VERSION}", justify="right", style="dim")
@@ -126,12 +135,12 @@ class DashboardApp:
         grid.add_column(ratio=1)
         grid.add_column(width=25)
         grid.add_row(ascii_art, f"{status_text}\n{version_text}")
-        
+
         return Align.center(grid, vertical="middle")
-    
+
     def _render_llm_panel(self) -> Panel:
         """Renders the LLM Status panel."""
-        title="[bold]🧠 LLM Status[/]"
+        title = "[bold]🧠 LLM Status[/]"
         if self.api_status != "connected" and not self.mock:
             return Panel(Spinner("dots", "Connecting..."), title=title, border_style="red")
 
@@ -148,12 +157,12 @@ class DashboardApp:
         """Renders the System Health panel."""
         title = "[bold]⚙️ System Health[/]"
         if self.api_status != "connected" and not self.mock:
-             return Panel(Text("---", justify="center"), title=title, border_style="red")
+            return Panel(Text("---", justify="center"), title=title, border_style="red")
 
         system_metrics = self.metrics.get("system", {})
-        cpu = system_metrics.get('cpu_usage', 0)
-        mem = system_metrics.get('memory_usage', 0)
-        latency = system_metrics.get('avg_api_latency_ms', 0)
+        cpu = system_metrics.get("cpu_usage", 0)
+        mem = system_metrics.get("memory_usage", 0)
+        latency = system_metrics.get("avg_api_latency_ms", 0)
 
         grid = Table.grid(expand=True)
         grid.add_column()
@@ -173,8 +182,10 @@ class DashboardApp:
 
         if self.iprs:
             for ipr in self.iprs:
-                progress = Progress(BarColumn(), TextColumn("{task.percentage:>3.0f}%"), expand=True)
-                
+                progress = Progress(
+                    BarColumn(), TextColumn("{task.percentage:>3.0f}%"), expand=True
+                )
+
                 status_map = {
                     "pending_approval": "[yellow]Pending[/]",
                     "deploying": "[cyan]Deploying[/]",
@@ -183,13 +194,13 @@ class DashboardApp:
                 status_text = status_map.get(ipr["status"], ipr["status"])
                 task_id = progress.add_task(status_text, total=100)
                 progress.update(task_id, completed=ipr.get("progress", 0))
-                
-                table.add_row(str(ipr['id']), ipr['title'], status_text, progress)
+
+                table.add_row(str(ipr["id"]), ipr["title"], status_text, progress)
         elif self.api_status == "connected":
-             table.add_row(Text("No active deployments.", justify="center", style="dim"), span=4)
-        
+            table.add_row(Text("No active deployments.", justify="center", style="dim"), span=4)
+
         return Panel(table, title="[bold]🚀 Active Deployments[/]", border_style="green")
-        
+
     def _render_footer(self) -> Panel:
         """Renders the scrolling log footer."""
         log_text = "\n".join(self.logs)
@@ -211,26 +222,32 @@ class DashboardApp:
                 await self.update_data()
                 live.update(self.render())
                 await asyncio.sleep(REFRESH_RATE_SECONDS)
-        
+
         # If the loop breaks due to errors, run the recovery wizard
         self.run_recovery_wizard()
 
     def run_recovery_wizard(self):
         """A guided setup process for when the API is unreachable."""
         self.console.clear()
-        self.console.print(Panel(
-            Text("🧠 ALMA Core is unreachable. Let's set this up.", justify="center", style="bold yellow"),
-            title="[bold cyan]Setup Wizard[/]",
-            border_style="cyan"
-        ))
+        self.console.print(
+            Panel(
+                Text(
+                    "🧠 ALMA Core is unreachable. Let's set this up.",
+                    justify="center",
+                    style="bold yellow",
+                ),
+                title="[bold cyan]Setup Wizard[/]",
+                border_style="cyan",
+            )
+        )
 
         # --- Step 1: Server URL (for future use, we assume localhost for now) ---
         # server_url = Prompt.ask("[bold]Step 1: Enter the API Server URL[/]", default="http://localhost:8000")
-        
+
         # --- Step 2: AI Brain Configuration ---
         self.console.print("\n[bold]Step 1: Configure the AI Brain (LLM Provider)[/]")
         self.console.print("This should be an OpenAI-compatible API endpoint.")
-        
+
         menu = Table(show_header=False, box=None)
         menu.add_column()
         menu.add_column()
@@ -245,16 +262,18 @@ class DashboardApp:
             "2": "http://localhost:1234/v1",
             "3": "https://api.openai.com/v1",
         }
-        
+
         choice = Prompt.ask("Choose a provider", choices=["1", "2", "3", "4"], default="1")
-        
+
         base_url = provider_map.get(choice)
         if choice == "4":
             base_url = Prompt.ask("[bold]Enter the custom OpenAI-compatible Base URL[/]")
 
         # --- Step 3: API Key ---
         self.console.print("\n[bold]Step 2: Enter the API Key[/]")
-        api_key = Prompt.ask("API Key", default="sk-dummy", password=(choice != "1" and choice != "2"))
+        api_key = Prompt.ask(
+            "API Key", default="sk-dummy", password=(choice != "1" and choice != "2")
+        )
 
         # --- Step 4: Save to .env ---
         if Confirm.ask(f"\nSave these settings to the `.env` file?", default=True):
@@ -268,16 +287,22 @@ class DashboardApp:
             set_key(dotenv_path, "OPENAI_BASE_URL", base_url)
             set_key(dotenv_path, "OPENAI_API_KEY", api_key)
             self.console.print("\n[bold green]✅ Configuration saved to .env file![/]")
-            self.console.print("Please restart the server (`python run_server.py`) to apply changes.")
+            self.console.print(
+                "Please restart the server (`python run_server.py`) to apply changes."
+            )
         else:
             self.console.print("\n[yellow]Aborted. No changes were saved.[/]")
+
 
 # --- CLI Command ---
 
 app = typer.Typer()
 
+
 @app.command(name="dashboard")
-def dashboard_command(mock: bool = typer.Option(False, "--mock", help="Run dashboard with mock data.")):
+def dashboard_command(
+    mock: bool = typer.Option(False, "--mock", help="Run dashboard with mock data.")
+):
     """Launch the ALMA real-time monitoring dashboard."""
     dashboard = DashboardApp(mock=mock)
     try:
@@ -287,7 +312,9 @@ def dashboard_command(mock: bool = typer.Option(False, "--mock", help="Run dashb
     except Exception as e:
         print(f"An error occurred: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     app()

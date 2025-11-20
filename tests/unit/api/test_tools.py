@@ -24,7 +24,7 @@ class TestToolsAPI:
         assert "tools" in data
         assert isinstance(data["tools"], list)
         assert len(data["tools"]) > 0
-        
+
         # Check tool structure
         tool = data["tools"][0]
         assert "name" in tool
@@ -35,13 +35,7 @@ class TestToolsAPI:
         """Test executing a tool."""
         request_data = {
             "tool_name": "validate_blueprint",
-            "arguments": {
-                "blueprint": {
-                    "version": "1.0",
-                    "name": "test",
-                    "resources": []
-                }
-            }
+            "arguments": {"blueprint": {"version": "1.0", "name": "test", "resources": []}},
         }
         response = await client.post("/api/v1/tools/execute-direct", json=request_data)
         assert response.status_code == 200
@@ -50,10 +44,7 @@ class TestToolsAPI:
 
     async def test_execute_unknown_tool(self, client: AsyncClient) -> None:
         """Test executing an unknown tool."""
-        request_data = {
-            "tool_name": "nonexistent_tool",
-            "arguments": {}
-        }
+        request_data = {"tool_name": "nonexistent_tool", "arguments": {}}
         response = await client.post("/api/v1/tools/execute-direct", json=request_data)
         # Should handle gracefully - error in result
         assert response.status_code == 200

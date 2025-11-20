@@ -17,9 +17,15 @@ class ResourceState(BaseModel):
     This is a standardized format that all engines must return from get_state().
     The 'id' of a ResourceState must correspond to the 'name' of a ResourceDefinition.
     """
-    id: str = Field(..., description="Unique identifier for the resource, matching the blueprint's resource name.")
+
+    id: str = Field(
+        ...,
+        description="Unique identifier for the resource, matching the blueprint's resource name.",
+    )
     type: str = Field(..., description="The type of the resource (e.g., 'compute', 'network').")
-    config: Dict[str, Any] = Field(..., description="The current configuration of the resource from the engine.")
+    config: Dict[str, Any] = Field(
+        ..., description="The current configuration of the resource from the engine."
+    )
 
 
 class Plan(BaseModel):
@@ -27,14 +33,20 @@ class Plan(BaseModel):
     Represents the execution plan after comparing desired and current states.
     This object is the primary input for the user approval (IPR) step.
     """
+
     # Allow arbitrary types like the aliased Resource
     model_config = {"arbitrary_types_allowed": True}
-    
-    to_create: List[Resource] = Field(default_factory=list, description="List of resources to be created.")
-    to_update: List[Tuple[ResourceState, Resource]] = Field(
-        default_factory=list, description="List of (current, desired) tuples for resources to be updated."
+
+    to_create: List[Resource] = Field(
+        default_factory=list, description="List of resources to be created."
     )
-    to_delete: List[ResourceState] = Field(default_factory=list, description="List of resources to be deleted.")
+    to_update: List[Tuple[ResourceState, Resource]] = Field(
+        default_factory=list,
+        description="List of (current, desired) tuples for resources to be updated.",
+    )
+    to_delete: List[ResourceState] = Field(
+        default_factory=list, description="List of resources to be deleted."
+    )
 
     @property
     def is_empty(self) -> bool:
@@ -138,7 +150,7 @@ def diff_states(desired_blueprint: SystemBlueprint, current_states: List[Resourc
         if desired_res.specs != current_res.config:
             plan.to_update.append((current_res, desired_res))
             updates_found += 1
-            
+
     logger.info(f"Found {updates_found} resources to potentially update.")
     logger.info("State diff complete. Plan generated.")
 

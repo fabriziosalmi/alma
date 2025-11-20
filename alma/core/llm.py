@@ -23,9 +23,7 @@ class LLMInterface(ABC):
         pass
 
     @abstractmethod
-    async def function_call(
-        self, prompt: str, functions: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    async def function_call(self, prompt: str, functions: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Generate function call from prompt.
 
@@ -38,9 +36,7 @@ class LLMInterface(ABC):
         """
         pass
 
-    async def stream_generate(
-        self, prompt: str, context: Optional[Dict[str, Any]] = None
-    ) -> Any:
+    async def stream_generate(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> Any:
         """
         Stream text generation from prompt (optional, falls back to generate).
 
@@ -130,9 +126,7 @@ class ConversationalOrchestrator:
             keyword_matches = sum(
                 1 for keyword in patterns["keywords"] if keyword in user_input_lower
             )
-            entity_matches = sum(
-                1 for entity in patterns["entities"] if entity in user_input_lower
-            )
+            entity_matches = sum(1 for entity in patterns["entities"] if entity in user_input_lower)
 
             total_matches = keyword_matches + entity_matches
             if total_matches > confidence:
@@ -323,9 +317,7 @@ class MockLLM(LLMInterface):
         """Generate mock response."""
         return f"Mock response to: {prompt}"
 
-    async def function_call(
-        self, prompt: str, functions: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    async def function_call(self, prompt: str, functions: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Generate mock function call."""
         if functions:
             return {

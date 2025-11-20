@@ -38,7 +38,7 @@ class KubernetesEngine(Engine):
         except config.ConfigException:
             # Fall back to kube config file
             await config.load_kube_config()
-        
+
         self.api_client = client.ApiClient()
         self.apps_v1 = client.AppsV1Api(self.api_client)
         self.core_v1 = client.CoreV1Api(self.api_client)
@@ -89,7 +89,7 @@ class KubernetesEngine(Engine):
     async def apply(self, plan: Plan) -> None:
         """Apply a plan to create or update Kubernetes resources."""
         await self._initialize_clients()
-        
+
         # We can process creates and updates together
         for resource in plan.to_create + [res for _, res in plan.to_update]:
             try:
@@ -98,7 +98,9 @@ class KubernetesEngine(Engine):
                 elif resource.type == "network":
                     await self._apply_service(resource)
                 else:
-                    logger.warning(f"Resource type '{resource.type}' is not supported by KubernetesEngine.")
+                    logger.warning(
+                        f"Resource type '{resource.type}' is not supported by KubernetesEngine."
+                    )
             except Exception as e:
                 logger.error(f"Failed to apply resource '{resource.name}': {e}", exc_info=True)
                 # In a real scenario, we might want to collect failures and report them
@@ -107,7 +109,7 @@ class KubernetesEngine(Engine):
     async def destroy(self, plan: Plan) -> None:
         """Destroy Kubernetes resources based on a plan."""
         await self._initialize_clients()
-        
+
         for resource_state in plan.to_delete:
             try:
                 if resource_state.type == "compute":
@@ -122,7 +124,9 @@ class KubernetesEngine(Engine):
                     logger.info(f"Deleted Service: {resource_state.id}")
             except ApiException as e:
                 if e.status == 404:
-                    logger.warning(f"Resource '{resource_state.id}' not found for deletion, skipping.")
+                    logger.warning(
+                        f"Resource '{resource_state.id}' not found for deletion, skipping."
+                    )
                 else:
                     logger.error(f"Failed to delete resource '{resource_state.id}': {e}")
                     raise
@@ -133,7 +137,9 @@ class KubernetesEngine(Engine):
         """Create or patch a Deployment."""
         deployment_body = self._construct_deployment(resource)
         try:
-            await self.apps_v1.read_namespaced_deployment(name=resource.name, namespace=self.namespace)
+            await self.apps_v1.read_namespaced_deployment(
+                name=resource.name, namespace=self.namespace
+            )
             await self.apps_v1.patch_namespaced_deployment(
                 name=resource.name, namespace=self.namespace, body=deployment_body
             )
@@ -175,7 +181,7 @@ class KubernetesEngine(Engine):
         name = resource.name
         labels = {
             alma_BLUEPRINT_LABEL: resource.metadata.get("blueprint_name", "unknown"),
-            "app": name
+            "app": name,
         }
 
         container = client.V1Container(
@@ -206,7 +212,7 @@ class KubernetesEngine(Engine):
         """Constructs a V1Service object from a ResourceDefinition."""
         specs = resource.specs
         name = resource.name
-        
+
         # Service selects pods based on the 'app' label of a 'compute' resource.
         # This assumes a convention where a network resource 'x-svc' targets a compute resource 'x'.
         target_app = specs.get("selector")
@@ -215,15 +221,15 @@ class KubernetesEngine(Engine):
 
         labels = {
             alma_BLUEPRINT_LABEL: resource.metadata.get("blueprint_name", "unknown"),
-            "app": name
+            "app": name,
         }
-        
+
         selector = {"app": target_app}
 
         port = client.V1ServicePort(
             protocol="TCP",
             port=specs.get("port", 80),
-            target_port=specs.get("target_port", specs.get("port", 80))
+            target_port=specs.get("target_port", specs.get("port", 80)),
         )
 
         spec = client.V1ServiceSpec(
@@ -238,7 +244,7 @@ class KubernetesEngine(Engine):
             metadata=client.V1ObjectMeta(name=name, labels=labels, namespace=self.namespace),
             spec=spec,
         )
-    
+
     # --- Helper methods for converting K8s objects to ResourceState ---
 
     def _deployment_to_resource_state(self, dep: client.V1Deployment) -> ResourceState:

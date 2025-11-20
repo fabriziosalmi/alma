@@ -177,9 +177,7 @@ class TestDeploymentWorkflow:
             ]
         }
 
-        update_response = await client.put(
-            f"/api/v1/blueprints/{blueprint_id}", json=update_data
-        )
+        update_response = await client.put(f"/api/v1/blueprints/{blueprint_id}", json=update_data)
         assert update_response.status_code == 200
 
         # Redeploy updated blueprint
@@ -191,9 +189,7 @@ class TestDeploymentWorkflow:
         deployment_data = deploy2_response.json()
         assert len(deployment_data["resources_created"]) == 2
 
-    async def test_multiple_blueprints_independent_deployment(
-        self, client: AsyncClient
-    ) -> None:
+    async def test_multiple_blueprints_independent_deployment(self, client: AsyncClient) -> None:
         """Test deploying multiple blueprints independently."""
         blueprints = []
 

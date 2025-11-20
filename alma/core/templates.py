@@ -6,7 +6,7 @@ from enum import Enum
 
 class TemplateCategory(str, Enum):
     """Blueprint template categories."""
-    
+
     WEB = "web"
     DATABASE = "database"
     MICROSERVICES = "microservices"
@@ -20,7 +20,7 @@ class TemplateCategory(str, Enum):
 class BlueprintTemplates:
     """
     Library of pre-built blueprint templates for common patterns.
-    
+
     Templates are production-ready and follow best practices.
     """
 
@@ -28,7 +28,7 @@ class BlueprintTemplates:
     def get_all_templates() -> List[Dict[str, Any]]:
         """
         Get list of all available templates.
-        
+
         Returns:
             List of template metadata
         """
@@ -39,7 +39,7 @@ class BlueprintTemplates:
                 "category": TemplateCategory.WEB,
                 "description": "Basic web app with load balancer and database",
                 "complexity": "simple",
-                "estimated_cost": "$100-200/month"
+                "estimated_cost": "$100-200/month",
             },
             {
                 "id": "ha-web-app",
@@ -47,7 +47,7 @@ class BlueprintTemplates:
                 "category": TemplateCategory.WEB,
                 "description": "HA web app with autoscaling, CDN, and failover",
                 "complexity": "medium",
-                "estimated_cost": "$500-1000/month"
+                "estimated_cost": "$500-1000/month",
             },
             {
                 "id": "microservices-k8s",
@@ -55,7 +55,7 @@ class BlueprintTemplates:
                 "category": TemplateCategory.MICROSERVICES,
                 "description": "Full microservices platform with service mesh",
                 "complexity": "advanced",
-                "estimated_cost": "$1000-2000/month"
+                "estimated_cost": "$1000-2000/month",
             },
             {
                 "id": "postgres-ha",
@@ -63,7 +63,7 @@ class BlueprintTemplates:
                 "category": TemplateCategory.DATABASE,
                 "description": "PostgreSQL with replication and automated backup",
                 "complexity": "medium",
-                "estimated_cost": "$300-600/month"
+                "estimated_cost": "$300-600/month",
             },
             {
                 "id": "data-pipeline",
@@ -71,7 +71,7 @@ class BlueprintTemplates:
                 "category": TemplateCategory.DATA,
                 "description": "ETL pipeline with data warehouse and analytics",
                 "complexity": "advanced",
-                "estimated_cost": "$800-1500/month"
+                "estimated_cost": "$800-1500/month",
             },
             {
                 "id": "ml-training",
@@ -79,7 +79,7 @@ class BlueprintTemplates:
                 "category": TemplateCategory.ML,
                 "description": "GPU cluster for ML model training",
                 "complexity": "advanced",
-                "estimated_cost": "$2000-5000/month"
+                "estimated_cost": "$2000-5000/month",
             },
             {
                 "id": "zero-trust-network",
@@ -87,7 +87,7 @@ class BlueprintTemplates:
                 "category": TemplateCategory.SECURITY,
                 "description": "Zero-trust architecture with mTLS and segmentation",
                 "complexity": "advanced",
-                "estimated_cost": "$400-800/month"
+                "estimated_cost": "$400-800/month",
             },
             {
                 "id": "observability-stack",
@@ -95,7 +95,7 @@ class BlueprintTemplates:
                 "category": TemplateCategory.MONITORING,
                 "description": "Metrics, logs, traces with Prometheus/Grafana/Jaeger",
                 "complexity": "medium",
-                "estimated_cost": "$200-400/month"
+                "estimated_cost": "$200-400/month",
             },
             {
                 "id": "api-gateway",
@@ -103,7 +103,7 @@ class BlueprintTemplates:
                 "category": TemplateCategory.NETWORKING,
                 "description": "Kong-based API gateway with rate limiting",
                 "complexity": "medium",
-                "estimated_cost": "$300-500/month"
+                "estimated_cost": "$300-500/month",
             },
             {
                 "id": "redis-cluster",
@@ -111,21 +111,21 @@ class BlueprintTemplates:
                 "category": TemplateCategory.DATABASE,
                 "description": "Redis cluster with persistence and replication",
                 "complexity": "simple",
-                "estimated_cost": "$100-300/month"
-            }
+                "estimated_cost": "$100-300/month",
+            },
         ]
 
     @staticmethod
     def get_template(template_id: str) -> Dict[str, Any]:
         """
         Get specific template blueprint.
-        
+
         Args:
             template_id: Template identifier
-            
+
         Returns:
             Blueprint template
-            
+
         Raises:
             ValueError: If template not found
         """
@@ -134,10 +134,10 @@ class BlueprintTemplates:
             "kubernetes-cluster": "microservices-k8s",
             "microservices": "microservices-k8s",
         }
-        
+
         # Use alias if available
         actual_template_id = template_aliases.get(template_id, template_id)
-        
+
         templates = {
             "simple-web-app": BlueprintTemplates._simple_web_app(),
             "ha-web-app": BlueprintTemplates._ha_web_app(),
@@ -150,52 +150,51 @@ class BlueprintTemplates:
             "api-gateway": BlueprintTemplates._api_gateway(),
             "redis-cluster": BlueprintTemplates._redis_cluster(),
         }
-        
+
         if actual_template_id not in templates:
             raise ValueError(f"Template '{template_id}' not found")
-        
+
         return templates[actual_template_id]
 
     @staticmethod
     def list_templates(category: Optional[TemplateCategory] = None) -> List[Dict[str, Any]]:
         """
         List all available templates, optionally filtered by category.
-        
+
         Args:
             category: Optional category filter
-            
+
         Returns:
             List of template metadata
         """
         templates = BlueprintTemplates.get_all_templates()
-        
+
         if category:
             templates = [t for t in templates if t["category"] == category]
-        
+
         return templates
 
     @staticmethod
-    def customize_template(
-        template_id: str, 
-        parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def customize_template(template_id: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
         Customize a template with provided parameters.
-        
+
         Args:
             template_id: Template identifier
             parameters: Customization parameters (e.g., instance_count, cpu_per_instance)
-            
+
         Returns:
             Customized blueprint
         """
         template = BlueprintTemplates.get_template(template_id)
         blueprint = template.copy()
-        
+
         # Apply common customizations
         if "instance_count" in parameters:
             # Scale compute resources
-            compute_resources = [r for r in blueprint.get("resources", []) if r.get("type") == "compute"]
+            compute_resources = [
+                r for r in blueprint.get("resources", []) if r.get("type") == "compute"
+            ]
             if compute_resources and len(compute_resources) > 0:
                 # Replicate the first compute resource
                 base_resource = compute_resources[0].copy()
@@ -203,29 +202,29 @@ class BlueprintTemplates:
                 for r in blueprint.get("resources", []):
                     if r.get("type") != "compute":
                         new_resources.append(r)
-                
+
                 for i in range(parameters["instance_count"]):
                     resource = base_resource.copy()
                     resource["name"] = f"{base_resource['name']}-{i+1}"
                     new_resources.append(resource)
-                
+
                 blueprint["resources"] = new_resources
-        
+
         if "cpu_per_instance" in parameters:
             for resource in blueprint.get("resources", []):
                 if resource.get("type") == "compute" and "specs" in resource:
                     resource["specs"]["cpu"] = parameters["cpu_per_instance"]
-        
+
         if "memory_per_instance" in parameters:
             for resource in blueprint.get("resources", []):
                 if resource.get("type") == "compute" and "specs" in resource:
                     resource["specs"]["memory"] = parameters["memory_per_instance"]
-        
+
         if "environment" in parameters:
             if "metadata" not in blueprint:
                 blueprint["metadata"] = {}
             blueprint["metadata"]["environment"] = parameters["environment"]
-        
+
         return blueprint
 
     @staticmethod
@@ -244,50 +243,31 @@ class BlueprintTemplates:
                         "type": "http",
                         "algorithm": "round-robin",
                         "health_check": "/health",
-                        "backends": ["web-server-1", "web-server-2"]
-                    }
+                        "backends": ["web-server-1", "web-server-2"],
+                    },
                 },
                 {
                     "type": "compute",
                     "name": "web-server-1",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 2,
-                        "memory": "4GB",
-                        "storage": "50GB",
-                        "os": "ubuntu-22.04"
-                    },
-                    "dependencies": ["postgres-db"]
+                    "specs": {"cpu": 2, "memory": "4GB", "storage": "50GB", "os": "ubuntu-22.04"},
+                    "dependencies": ["postgres-db"],
                 },
                 {
                     "type": "compute",
                     "name": "web-server-2",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 2,
-                        "memory": "4GB",
-                        "storage": "50GB",
-                        "os": "ubuntu-22.04"
-                    },
-                    "dependencies": ["postgres-db"]
+                    "specs": {"cpu": 2, "memory": "4GB", "storage": "50GB", "os": "ubuntu-22.04"},
+                    "dependencies": ["postgres-db"],
                 },
                 {
                     "type": "compute",
                     "name": "postgres-db",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 4,
-                        "memory": "8GB",
-                        "storage": "200GB",
-                        "storage_type": "SSD"
-                    }
-                }
+                    "specs": {"cpu": 4, "memory": "8GB", "storage": "200GB", "storage_type": "SSD"},
+                },
             ],
-            "metadata": {
-                "template": "simple-web-app",
-                "category": "web",
-                "complexity": "simple"
-            }
+            "metadata": {"template": "simple-web-app", "category": "web", "complexity": "simple"},
         }
 
     @staticmethod
@@ -302,12 +282,7 @@ class BlueprintTemplates:
                     "type": "network",
                     "name": "cdn",
                     "provider": "fake",
-                    "specs": {
-                        "type": "cdn",
-                        "caching": True,
-                        "ssl": True,
-                        "waf": True
-                    }
+                    "specs": {"type": "cdn", "caching": True, "ssl": True, "waf": True},
                 },
                 {
                     "type": "network",
@@ -318,8 +293,8 @@ class BlueprintTemplates:
                         "algorithm": "least-connections",
                         "ssl_termination": True,
                         "health_check": "/health",
-                        "backends": ["web-1", "web-2", "web-3"]
-                    }
+                        "backends": ["web-1", "web-2", "web-3"],
+                    },
                 },
                 {
                     "type": "compute",
@@ -329,35 +304,23 @@ class BlueprintTemplates:
                         "cpu": 4,
                         "memory": "8GB",
                         "storage": "100GB",
-                        "autoscaling": {
-                            "min": 2,
-                            "max": 10,
-                            "target_cpu": 70
-                        }
+                        "autoscaling": {"min": 2, "max": 10, "target_cpu": 70},
                     },
-                    "dependencies": ["db-primary", "redis-cache"]
+                    "dependencies": ["db-primary", "redis-cache"],
                 },
                 {
                     "type": "compute",
                     "name": "web-2",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 4,
-                        "memory": "8GB",
-                        "storage": "100GB"
-                    },
-                    "dependencies": ["db-primary", "redis-cache"]
+                    "specs": {"cpu": 4, "memory": "8GB", "storage": "100GB"},
+                    "dependencies": ["db-primary", "redis-cache"],
                 },
                 {
                     "type": "compute",
                     "name": "web-3",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 4,
-                        "memory": "8GB",
-                        "storage": "100GB"
-                    },
-                    "dependencies": ["db-primary", "redis-cache"]
+                    "specs": {"cpu": 4, "memory": "8GB", "storage": "100GB"},
+                    "dependencies": ["db-primary", "redis-cache"],
                 },
                 {
                     "type": "compute",
@@ -368,40 +331,28 @@ class BlueprintTemplates:
                         "memory": "32GB",
                         "storage": "1TB",
                         "storage_type": "NVMe",
-                        "replication": {
-                            "standby": "db-standby",
-                            "type": "streaming"
-                        }
-                    }
+                        "replication": {"standby": "db-standby", "type": "streaming"},
+                    },
                 },
                 {
                     "type": "compute",
                     "name": "db-standby",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 8,
-                        "memory": "32GB",
-                        "storage": "1TB",
-                        "storage_type": "NVMe"
-                    }
+                    "specs": {"cpu": 8, "memory": "32GB", "storage": "1TB", "storage_type": "NVMe"},
                 },
                 {
                     "type": "compute",
                     "name": "redis-cache",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 2,
-                        "memory": "16GB",
-                        "storage": "100GB"
-                    }
-                }
+                    "specs": {"cpu": 2, "memory": "16GB", "storage": "100GB"},
+                },
             ],
             "metadata": {
                 "template": "ha-web-app",
                 "category": "web",
                 "complexity": "medium",
-                "availability": "99.9%"
-            }
+                "availability": "99.9%",
+            },
         }
 
     @staticmethod
@@ -420,8 +371,8 @@ class BlueprintTemplates:
                         "cpu": 4,
                         "memory": "16GB",
                         "storage": "200GB",
-                        "role": "control-plane"
-                    }
+                        "role": "control-plane",
+                    },
                 },
                 {
                     "type": "compute",
@@ -431,8 +382,8 @@ class BlueprintTemplates:
                         "cpu": 4,
                         "memory": "16GB",
                         "storage": "200GB",
-                        "role": "control-plane"
-                    }
+                        "role": "control-plane",
+                    },
                 },
                 {
                     "type": "compute",
@@ -442,8 +393,8 @@ class BlueprintTemplates:
                         "cpu": 4,
                         "memory": "16GB",
                         "storage": "200GB",
-                        "role": "control-plane"
-                    }
+                        "role": "control-plane",
+                    },
                 },
                 {
                     "type": "compute",
@@ -455,11 +406,8 @@ class BlueprintTemplates:
                         "storage": "500GB",
                         "role": "worker",
                         "count": 5,
-                        "autoscaling": {
-                            "min": 3,
-                            "max": 20
-                        }
-                    }
+                        "autoscaling": {"min": 3, "max": 20},
+                    },
                 },
                 {
                     "type": "service",
@@ -469,25 +417,21 @@ class BlueprintTemplates:
                         "type": "service-mesh",
                         "mTLS": True,
                         "tracing": True,
-                        "traffic_management": True
-                    }
+                        "traffic_management": True,
+                    },
                 },
                 {
                     "type": "storage",
                     "name": "persistent-storage",
                     "provider": "proxmox",
-                    "specs": {
-                        "type": "ceph",
-                        "size": "10TB",
-                        "replicas": 3
-                    }
-                }
+                    "specs": {"type": "ceph", "size": "10TB", "replicas": 3},
+                },
             ],
             "metadata": {
                 "template": "microservices-k8s",
                 "category": "microservices",
-                "complexity": "advanced"
-            }
+                "complexity": "advanced",
+            },
         }
 
     @staticmethod
@@ -507,8 +451,8 @@ class BlueprintTemplates:
                         "memory": "32GB",
                         "storage": "2TB",
                         "storage_type": "NVMe",
-                        "role": "primary"
-                    }
+                        "role": "primary",
+                    },
                 },
                 {
                     "type": "compute",
@@ -519,9 +463,9 @@ class BlueprintTemplates:
                         "memory": "32GB",
                         "storage": "2TB",
                         "storage_type": "NVMe",
-                        "role": "replica"
+                        "role": "replica",
                     },
-                    "dependencies": ["pg-primary"]
+                    "dependencies": ["pg-primary"],
                 },
                 {
                     "type": "compute",
@@ -532,9 +476,9 @@ class BlueprintTemplates:
                         "memory": "32GB",
                         "storage": "2TB",
                         "storage_type": "NVMe",
-                        "role": "replica"
+                        "role": "replica",
                     },
-                    "dependencies": ["pg-primary"]
+                    "dependencies": ["pg-primary"],
                 },
                 {
                     "type": "service",
@@ -543,25 +487,17 @@ class BlueprintTemplates:
                     "specs": {
                         "type": "connection-pooler",
                         "load_balancing": True,
-                        "failover": "automatic"
-                    }
+                        "failover": "automatic",
+                    },
                 },
                 {
                     "type": "storage",
                     "name": "backup-storage",
                     "provider": "proxmox",
-                    "specs": {
-                        "type": "s3-compatible",
-                        "size": "5TB",
-                        "retention": "30 days"
-                    }
-                }
+                    "specs": {"type": "s3-compatible", "size": "5TB", "retention": "30 days"},
+                },
             ],
-            "metadata": {
-                "template": "postgres-ha",
-                "category": "database",
-                "complexity": "medium"
-            }
+            "metadata": {"template": "postgres-ha", "category": "database", "complexity": "medium"},
         }
 
     @staticmethod
@@ -576,11 +512,7 @@ class BlueprintTemplates:
                     "type": "service",
                     "name": "airflow",
                     "provider": "fake",
-                    "specs": {
-                        "type": "workflow-orchestrator",
-                        "workers": 5,
-                        "scheduler_ha": True
-                    }
+                    "specs": {"type": "workflow-orchestrator", "workers": 5, "scheduler_ha": True},
                 },
                 {
                     "type": "service",
@@ -590,19 +522,14 @@ class BlueprintTemplates:
                         "type": "message-queue",
                         "brokers": 3,
                         "partitions": 100,
-                        "replication": 3
-                    }
+                        "replication": 3,
+                    },
                 },
                 {
                     "type": "compute",
                     "name": "spark-cluster",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 32,
-                        "memory": "128GB",
-                        "storage": "2TB",
-                        "workers": 10
-                    }
+                    "specs": {"cpu": 32, "memory": "128GB", "storage": "2TB", "workers": 10},
                 },
                 {
                     "type": "storage",
@@ -611,25 +538,17 @@ class BlueprintTemplates:
                     "specs": {
                         "type": "object-storage",
                         "size": "100TB",
-                        "lifecycle": "intelligent-tiering"
-                    }
+                        "lifecycle": "intelligent-tiering",
+                    },
                 },
                 {
                     "type": "service",
                     "name": "clickhouse",
                     "provider": "fake",
-                    "specs": {
-                        "type": "data-warehouse",
-                        "shards": 4,
-                        "replicas": 2
-                    }
-                }
+                    "specs": {"type": "data-warehouse", "shards": 4, "replicas": 2},
+                },
             ],
-            "metadata": {
-                "template": "data-pipeline",
-                "category": "data",
-                "complexity": "advanced"
-            }
+            "metadata": {"template": "data-pipeline", "category": "data", "complexity": "advanced"},
         }
 
     @staticmethod
@@ -649,8 +568,8 @@ class BlueprintTemplates:
                         "memory": "256GB",
                         "storage": "4TB",
                         "gpu": "NVIDIA A100",
-                        "gpu_count": 8
-                    }
+                        "gpu_count": 8,
+                    },
                 },
                 {
                     "type": "compute",
@@ -661,8 +580,8 @@ class BlueprintTemplates:
                         "memory": "256GB",
                         "storage": "4TB",
                         "gpu": "NVIDIA A100",
-                        "gpu_count": 8
-                    }
+                        "gpu_count": 8,
+                    },
                 },
                 {
                     "type": "service",
@@ -671,25 +590,17 @@ class BlueprintTemplates:
                     "specs": {
                         "type": "ml-platform",
                         "experiment_tracking": True,
-                        "model_registry": True
-                    }
+                        "model_registry": True,
+                    },
                 },
                 {
                     "type": "storage",
                     "name": "dataset-storage",
                     "provider": "fake",
-                    "specs": {
-                        "type": "high-throughput",
-                        "size": "50TB",
-                        "iops": 100000
-                    }
-                }
+                    "specs": {"type": "high-throughput", "size": "50TB", "iops": 100000},
+                },
             ],
-            "metadata": {
-                "template": "ml-training",
-                "category": "ml",
-                "complexity": "advanced"
-            }
+            "metadata": {"template": "ml-training", "category": "ml", "complexity": "advanced"},
         }
 
     @staticmethod
@@ -704,11 +615,7 @@ class BlueprintTemplates:
                     "type": "service",
                     "name": "identity-provider",
                     "provider": "fake",
-                    "specs": {
-                        "type": "idp",
-                        "mfa": True,
-                        "sso": True
-                    }
+                    "specs": {"type": "idp", "mfa": True, "sso": True},
                 },
                 {
                     "type": "network",
@@ -717,34 +624,27 @@ class BlueprintTemplates:
                     "specs": {
                         "type": "zero-trust-mesh",
                         "mTLS": "enforced",
-                        "authorization": "fine-grained"
-                    }
+                        "authorization": "fine-grained",
+                    },
                 },
                 {
                     "type": "service",
                     "name": "policy-engine",
                     "provider": "fake",
-                    "specs": {
-                        "type": "opa",
-                        "policies": "least-privilege"
-                    }
+                    "specs": {"type": "opa", "policies": "least-privilege"},
                 },
                 {
                     "type": "service",
                     "name": "certificate-manager",
                     "provider": "fake",
-                    "specs": {
-                        "type": "vault",
-                        "auto_rotation": True,
-                        "ttl": "24h"
-                    }
-                }
+                    "specs": {"type": "vault", "auto_rotation": True, "ttl": "24h"},
+                },
             ],
             "metadata": {
                 "template": "zero-trust-network",
                 "category": "security",
-                "complexity": "advanced"
-            }
+                "complexity": "advanced",
+            },
         }
 
     @staticmethod
@@ -759,12 +659,7 @@ class BlueprintTemplates:
                     "type": "service",
                     "name": "prometheus",
                     "provider": "fake",
-                    "specs": {
-                        "type": "metrics",
-                        "retention": "90 days",
-                        "ha": True,
-                        "replicas": 2
-                    }
+                    "specs": {"type": "metrics", "retention": "90 days", "ha": True, "replicas": 2},
                 },
                 {
                     "type": "service",
@@ -773,18 +668,14 @@ class BlueprintTemplates:
                     "specs": {
                         "type": "visualization",
                         "dashboards": "pre-configured",
-                        "alerting": True
-                    }
+                        "alerting": True,
+                    },
                 },
                 {
                     "type": "service",
                     "name": "loki",
                     "provider": "fake",
-                    "specs": {
-                        "type": "logs",
-                        "retention": "30 days",
-                        "compression": True
-                    }
+                    "specs": {"type": "logs", "retention": "30 days", "compression": True},
                 },
                 {
                     "type": "service",
@@ -793,24 +684,21 @@ class BlueprintTemplates:
                     "specs": {
                         "type": "tracing",
                         "sampling": "adaptive",
-                        "storage": "elasticsearch"
-                    }
+                        "storage": "elasticsearch",
+                    },
                 },
                 {
                     "type": "service",
                     "name": "alertmanager",
                     "provider": "fake",
-                    "specs": {
-                        "type": "alerting",
-                        "integrations": ["slack", "pagerduty", "email"]
-                    }
-                }
+                    "specs": {"type": "alerting", "integrations": ["slack", "pagerduty", "email"]},
+                },
             ],
             "metadata": {
                 "template": "observability-stack",
                 "category": "monitoring",
-                "complexity": "medium"
-            }
+                "complexity": "medium",
+            },
         }
 
     @staticmethod
@@ -828,41 +716,27 @@ class BlueprintTemplates:
                     "specs": {
                         "type": "api-gateway",
                         "instances": 3,
-                        "plugins": [
-                            "rate-limiting",
-                            "jwt-auth",
-                            "cors",
-                            "request-transformer"
-                        ]
-                    }
+                        "plugins": ["rate-limiting", "jwt-auth", "cors", "request-transformer"],
+                    },
                 },
                 {
                     "type": "compute",
                     "name": "kong-db",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 4,
-                        "memory": "16GB",
-                        "storage": "500GB",
-                        "type": "postgresql"
-                    }
+                    "specs": {"cpu": 4, "memory": "16GB", "storage": "500GB", "type": "postgresql"},
                 },
                 {
                     "type": "service",
                     "name": "redis-cache",
                     "provider": "fake",
-                    "specs": {
-                        "type": "cache",
-                        "size": "8GB",
-                        "eviction": "lru"
-                    }
-                }
+                    "specs": {"type": "cache", "size": "8GB", "eviction": "lru"},
+                },
             ],
             "metadata": {
                 "template": "api-gateway",
                 "category": "networking",
-                "complexity": "medium"
-            }
+                "complexity": "medium",
+            },
         }
 
     @staticmethod
@@ -877,85 +751,51 @@ class BlueprintTemplates:
                     "type": "compute",
                     "name": "redis-master-1",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 4,
-                        "memory": "32GB",
-                        "storage": "200GB",
-                        "role": "master"
-                    }
+                    "specs": {"cpu": 4, "memory": "32GB", "storage": "200GB", "role": "master"},
                 },
                 {
                     "type": "compute",
                     "name": "redis-master-2",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 4,
-                        "memory": "32GB",
-                        "storage": "200GB",
-                        "role": "master"
-                    }
+                    "specs": {"cpu": 4, "memory": "32GB", "storage": "200GB", "role": "master"},
                 },
                 {
                     "type": "compute",
                     "name": "redis-master-3",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 4,
-                        "memory": "32GB",
-                        "storage": "200GB",
-                        "role": "master"
-                    }
+                    "specs": {"cpu": 4, "memory": "32GB", "storage": "200GB", "role": "master"},
                 },
                 {
                     "type": "compute",
                     "name": "redis-replica-1",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 4,
-                        "memory": "32GB",
-                        "storage": "200GB",
-                        "role": "replica"
-                    },
-                    "dependencies": ["redis-master-1"]
+                    "specs": {"cpu": 4, "memory": "32GB", "storage": "200GB", "role": "replica"},
+                    "dependencies": ["redis-master-1"],
                 },
                 {
                     "type": "compute",
                     "name": "redis-replica-2",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 4,
-                        "memory": "32GB",
-                        "storage": "200GB",
-                        "role": "replica"
-                    },
-                    "dependencies": ["redis-master-2"]
+                    "specs": {"cpu": 4, "memory": "32GB", "storage": "200GB", "role": "replica"},
+                    "dependencies": ["redis-master-2"],
                 },
                 {
                     "type": "compute",
                     "name": "redis-replica-3",
                     "provider": "proxmox",
-                    "specs": {
-                        "cpu": 4,
-                        "memory": "32GB",
-                        "storage": "200GB",
-                        "role": "replica"
-                    },
-                    "dependencies": ["redis-master-3"]
+                    "specs": {"cpu": 4, "memory": "32GB", "storage": "200GB", "role": "replica"},
+                    "dependencies": ["redis-master-3"],
                 },
                 {
                     "type": "service",
                     "name": "redis-sentinel",
                     "provider": "fake",
-                    "specs": {
-                        "type": "failover-manager",
-                        "instances": 3,
-                        "quorum": 2
-                    }
-                }
+                    "specs": {"type": "failover-manager", "instances": 3, "quorum": 2},
+                },
             ],
             "metadata": {
                 "template": "redis-cluster",
                 "category": "database",
-                "complexity": "simple"
-            }
+                "complexity": "simple",
+            },
         }

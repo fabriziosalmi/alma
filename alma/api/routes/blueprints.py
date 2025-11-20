@@ -53,8 +53,8 @@ async def create_blueprint(
 
     return SystemBlueprint.model_validate(
         {
-            **{k: v for k, v in db_blueprint.__dict__.items() if not k.startswith('_')},
-            'metadata': db_blueprint.blueprint_metadata
+            **{k: v for k, v in db_blueprint.__dict__.items() if not k.startswith("_")},
+            "metadata": db_blueprint.blueprint_metadata,
         }
     )
 
@@ -81,8 +81,8 @@ async def list_blueprints(
     return [
         SystemBlueprint.model_validate(
             {
-                **{k: v for k, v in bp.__dict__.items() if not k.startswith('_')},
-                'metadata': bp.blueprint_metadata
+                **{k: v for k, v in bp.__dict__.items() if not k.startswith("_")},
+                "metadata": bp.blueprint_metadata,
             }
         )
         for bp in blueprints
@@ -120,8 +120,8 @@ async def get_blueprint(
 
     return SystemBlueprint.model_validate(
         {
-            **{k: v for k, v in blueprint.__dict__.items() if not k.startswith('_')},
-            'metadata': blueprint.blueprint_metadata
+            **{k: v for k, v in blueprint.__dict__.items() if not k.startswith("_")},
+            "metadata": blueprint.blueprint_metadata,
         }
     )
 
@@ -162,7 +162,7 @@ async def update_blueprint(
     if "resources" in update_data:
         # Resources are already dicts from model_dump, or they might be ResourceDefinition objects
         resources = update_data["resources"]
-        if resources and hasattr(resources[0], 'model_dump'):
+        if resources and hasattr(resources[0], "model_dump"):
             update_data["resources"] = [r.model_dump() for r in resources]
         # else they're already dicts, keep as is
 
@@ -178,8 +178,8 @@ async def update_blueprint(
 
     return SystemBlueprint.model_validate(
         {
-            **{k: v for k, v in blueprint.__dict__.items() if not k.startswith('_')},
-            'metadata': blueprint.blueprint_metadata
+            **{k: v for k, v in blueprint.__dict__.items() if not k.startswith("_")},
+            "metadata": blueprint.blueprint_metadata,
         }
     )
 
@@ -230,12 +230,12 @@ async def deploy_blueprint(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Blueprint {blueprint_id} not found",
         )
-    
+
     # Convert to the Pydantic schema for use with the new core logic
     blueprint_schema = SystemBlueprint.model_validate(
         {
-            **{k: v for k, v in db_blueprint.__dict__.items() if not k.startswith('_')},
-            'metadata': db_blueprint.blueprint_metadata
+            **{k: v for k, v in db_blueprint.__dict__.items() if not k.startswith("_")},
+            "metadata": db_blueprint.blueprint_metadata,
         }
     )
 

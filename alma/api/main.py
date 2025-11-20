@@ -102,9 +102,10 @@ async def health_check() -> dict[str, str]:
 async def metrics_endpoint():
     """
     Prometheus metrics endpoint.
-    
+
     Returns:
         Prometheus-formatted metrics
     """
     from alma.middleware.metrics import get_prometheus_metrics
+
     return get_prometheus_metrics()

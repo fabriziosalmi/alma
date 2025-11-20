@@ -31,7 +31,8 @@ def version_callback(value: bool) -> None:
 
 @app.callback()
 def main(
-    version: bool | None = typer.Option(
+    version: bool
+    | None = typer.Option(
         None,
         "--version",
         "-v",
@@ -215,7 +216,6 @@ def init(
     console.print(f"[green]  Example blueprint: {blueprint_file}[/green]")
 
 
-
 @app.command("chat")
 def chat(message: str):
     """
@@ -227,12 +227,16 @@ def chat(message: str):
     # Show a spinner while thinking
     with console.status("[bold green]Thinking...", spinner="dots"):
         try:
-            response = httpx.post(f"{api_url}/conversation/chat", json={"message": message}, timeout=30.0)
+            response = httpx.post(
+                f"{api_url}/conversation/chat", json={"message": message}, timeout=30.0
+            )
             response.raise_for_status()
             data = response.json()
         except httpx.ConnectError as e:
             console.print(f"[bold red]Error connecting to ALMA API at {api_url}:[/bold red] {e}")
-            console.print("[yellow]Please ensure the API server is running (`alma serve`).[/yellow]")
+            console.print(
+                "[yellow]Please ensure the API server is running (`alma serve`).[/yellow]"
+            )
             return
         except Exception as e:
             console.print(f"[bold red]An unexpected error occurred:[/bold red] {e}")
@@ -240,20 +244,23 @@ def chat(message: str):
 
     # Check for Safety Block (Cognitive Engine)
     if isinstance(data, dict) and data.get("risk_assessment") == "BLOCKED":
-        console.print(Panel(data.get("response", ""), title="🛑 SECURITY OVERRIDE", border_style="red bold"))
+        console.print(
+            Panel(data.get("response", ""), title="🛑 SECURITY OVERRIDE", border_style="red bold")
+        )
         return
 
     # Standard Response
     # If it returns a blueprint, show it in a box
     if isinstance(data, dict) and data.get("blueprint"):
-        console.print(Panel(yaml.dump(data["blueprint"]), title="🏗️ Blueprint Generated", border_style="blue"))
+        console.print(
+            Panel(yaml.dump(data["blueprint"]), title="🏗️ Blueprint Generated", border_style="blue")
+        )
 
     # Text response
     if isinstance(data, dict) and data.get("response"):
         console.print(Markdown(data.get("response", "")))
     elif isinstance(data, str):
         console.print(Markdown(data))
-
 
 
 if __name__ == "__main__":

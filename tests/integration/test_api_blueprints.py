@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from alma.api.main import app
 from alma.models.blueprint import SystemBlueprintModel
 
+
 # Keep the original client fixture
 @pytest.fixture
 async def client() -> AsyncClient:
@@ -17,6 +18,7 @@ async def client() -> AsyncClient:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
+
 
 # A separate fixture for tests that need DB access
 @pytest.fixture
@@ -80,12 +82,12 @@ class TestBlueprintAPI:
     ) -> None:
         """Test listing all blueprints."""
         now = datetime.datetime.now(datetime.UTC)
-        test_db_session.add(SystemBlueprintModel(
-            name="bp-1", resources=[], created_at=now, updated_at=now
-        ))
-        test_db_session.add(SystemBlueprintModel(
-            name="bp-2", resources=[], created_at=now, updated_at=now
-        ))
+        test_db_session.add(
+            SystemBlueprintModel(name="bp-1", resources=[], created_at=now, updated_at=now)
+        )
+        test_db_session.add(
+            SystemBlueprintModel(name="bp-2", resources=[], created_at=now, updated_at=now)
+        )
         await test_db_session.commit()
 
         response = await db_client.get("/api/v1/blueprints/")
@@ -116,7 +118,9 @@ class TestBlueprintAPI:
     ) -> None:
         """Test deleting a blueprint."""
         now = datetime.datetime.now(datetime.UTC)
-        blueprint = SystemBlueprintModel(name="to-delete", resources=[], created_at=now, updated_at=now)
+        blueprint = SystemBlueprintModel(
+            name="to-delete", resources=[], created_at=now, updated_at=now
+        )
         test_db_session.add(blueprint)
         await test_db_session.commit()
         await test_db_session.refresh(blueprint)
@@ -131,32 +135,47 @@ class TestBlueprintAPI:
 
     @patch("alma.api.routes.blueprints.FakeEngine")
     async def test_deploy_blueprint_dry_run(
-        self, MockFakeEngine, db_client: AsyncClient, test_db_session: AsyncSession, sample_blueprint_data: dict
+        self,
+        MockFakeEngine,
+        db_client: AsyncClient,
+        test_db_session: AsyncSession,
+        sample_blueprint_data: dict,
     ) -> None:
         """Test dry-run deploy returns a plan summary."""
         # Mock the engine to simulate no resources currently exist
         mock_engine_instance = MockFakeEngine.return_value
         mock_engine_instance.get_state = AsyncMock(return_value=[])
-        
+
         now = datetime.datetime.now(datetime.UTC)
-        blueprint = SystemBlueprintModel(name=sample_blueprint_data["name"], resources=sample_blueprint_data["resources"], created_at=now, updated_at=now)
+        blueprint = SystemBlueprintModel(
+            name=sample_blueprint_data["name"],
+            resources=sample_blueprint_data["resources"],
+            created_at=now,
+            updated_at=now,
+        )
         test_db_session.add(blueprint)
         await test_db_session.commit()
         await test_db_session.refresh(blueprint)
 
         deploy_data = {"dry_run": True}
-        response = await db_client.post(f"/api/v1/blueprints/{blueprint.id}/deploy", json=deploy_data)
+        response = await db_client.post(
+            f"/api/v1/blueprints/{blueprint.id}/deploy", json=deploy_data
+        )
 
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "validated"
         assert "deployment_id" in data
         assert data["deployment_id"] == "dry-run"
-        assert "1 to create" in data["plan_summary"] # Check the plan is returned
+        assert "1 to create" in data["plan_summary"]  # Check the plan is returned
 
     @patch("alma.api.routes.blueprints.FakeEngine")
     async def test_deploy_blueprint_actual(
-        self, MockFakeEngine, db_client: AsyncClient, test_db_session: AsyncSession, sample_blueprint_data: dict
+        self,
+        MockFakeEngine,
+        db_client: AsyncClient,
+        test_db_session: AsyncSession,
+        sample_blueprint_data: dict,
     ) -> None:
         """Test an actual deploy calls the engine's apply and destroy methods."""
         mock_engine_instance = MockFakeEngine.return_value
@@ -165,46 +184,65 @@ class TestBlueprintAPI:
         mock_engine_instance.destroy = AsyncMock()
 
         now = datetime.datetime.now(datetime.UTC)
-        blueprint = SystemBlueprintModel(name=sample_blueprint_data["name"], resources=sample_blueprint_data["resources"], created_at=now, updated_at=now)
+        blueprint = SystemBlueprintModel(
+            name=sample_blueprint_data["name"],
+            resources=sample_blueprint_data["resources"],
+            created_at=now,
+            updated_at=now,
+        )
         test_db_session.add(blueprint)
         await test_db_session.commit()
         await test_db_session.refresh(blueprint)
 
         deploy_data = {"dry_run": False}
-        response = await db_client.post(f"/api/v1/blueprints/{blueprint.id}/deploy", json=deploy_data)
+        response = await db_client.post(
+            f"/api/v1/blueprints/{blueprint.id}/deploy", json=deploy_data
+        )
 
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "completed"
-        assert len(data["resources_created"]) == 1 # Based on sample data
-        
+        assert len(data["resources_created"]) == 1  # Based on sample data
+
         mock_engine_instance.apply.assert_called_once()
         mock_engine_instance.destroy.assert_called_once()
 
     @patch("alma.api.routes.blueprints.FakeEngine")
     async def test_deploy_no_changes(
-        self, MockFakeEngine, db_client: AsyncClient, test_db_session: AsyncSession, sample_blueprint_data: dict
+        self,
+        MockFakeEngine,
+        db_client: AsyncClient,
+        test_db_session: AsyncSession,
+        sample_blueprint_data: dict,
     ) -> None:
         """Test deploying a blueprint that is already up-to-date."""
         # Mock engine to return a state that matches the blueprint
         from alma.core.state import ResourceState
+
         mock_engine_instance = MockFakeEngine.return_value
-        mock_engine_instance.get_state = AsyncMock(return_value=[
-            ResourceState(
-                id="web-server", type="compute", config={"cpu": 2, "memory": "4GB"}
-            )
-        ])
+        mock_engine_instance.get_state = AsyncMock(
+            return_value=[
+                ResourceState(id="web-server", type="compute", config={"cpu": 2, "memory": "4GB"})
+            ]
+        )
         mock_engine_instance.apply = AsyncMock()
 
         now = datetime.datetime.now(datetime.UTC)
-        blueprint = SystemBlueprintModel(name=sample_blueprint_data["name"], resources=sample_blueprint_data["resources"], created_at=now, updated_at=now)
+        blueprint = SystemBlueprintModel(
+            name=sample_blueprint_data["name"],
+            resources=sample_blueprint_data["resources"],
+            created_at=now,
+            updated_at=now,
+        )
         test_db_session.add(blueprint)
         await test_db_session.commit()
         await test_db_session.refresh(blueprint)
 
         deploy_data = {"dry_run": False}
-        response = await db_client.post(f"/api/v1/blueprints/{blueprint.id}/deploy", json=deploy_data)
-        
+        response = await db_client.post(
+            f"/api/v1/blueprints/{blueprint.id}/deploy", json=deploy_data
+        )
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "completed"

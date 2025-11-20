@@ -10,7 +10,7 @@ class TestSettings:
     def test_default_settings(self) -> None:
         """Test default settings values."""
         settings = Settings()
-        
+
         assert settings.app_name == "ALMA"
         assert settings.debug is False
         assert settings.database_echo is False
@@ -26,7 +26,7 @@ class TestSettings:
         """Test that get_settings returns the same instance."""
         settings1 = get_settings()
         settings2 = get_settings()
-        
+
         assert settings1 is settings2
 
     def test_allowed_origins(self) -> None:

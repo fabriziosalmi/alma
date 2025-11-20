@@ -8,6 +8,7 @@ from enum import Enum
 
 class ResourceKind(str, Enum):
     """Supported resource types"""
+
     COMPUTE_NODE = "ComputeNode"
     NETWORK_LINK = "NetworkLink"
     SERVICE_INSTANCE = "ServiceInstance"
@@ -18,6 +19,7 @@ class ResourceKind(str, Enum):
 
 class EngineSelector(BaseModel):
     """Engine selector for resource provisioning"""
+
     vendor: Optional[str] = Field(None, description="Vendor name (e.g., 'proxmox', 'mikrotik')")
     type: Optional[str] = Field(None, description="Resource type (e.g., 'lxc', 'vm', 'bare-metal')")
     version: Optional[str] = Field(None, description="Version constraint")
@@ -25,16 +27,20 @@ class EngineSelector(BaseModel):
 
 class ResourceDefinition(BaseModel):
     """Base class for all infrastructure resources"""
+
     kind: ResourceKind = Field(..., description="Resource type")
     name: str = Field(..., description="Unique resource name")
     spec: Dict[str, Any] = Field(default_factory=dict, description="Resource specification")
-    engineSelector: Optional[EngineSelector] = Field(None, description="Engine to use for provisioning")
+    engineSelector: Optional[EngineSelector] = Field(
+        None, description="Engine to use for provisioning"
+    )
     connections: Dict[str, Any] = Field(default_factory=dict, description="Resource connections")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
 
 class ComputeNodeSpec(BaseModel):
     """Specification for compute node resources"""
+
     cpu: int = Field(..., ge=1, description="Number of CPU cores")
     memory: str = Field(..., description="Memory size (e.g., '8Gi', '16384Mi')")
     architecture: Literal["x86_64", "arm64"] = Field(default="x86_64")
@@ -43,6 +49,7 @@ class ComputeNodeSpec(BaseModel):
 
 class ComputeNode(ResourceDefinition):
     """Compute node resource"""
+
     kind: Literal[ResourceKind.COMPUTE_NODE] = ResourceKind.COMPUTE_NODE
     spec: ComputeNodeSpec
 
@@ -52,6 +59,7 @@ class ComputeNode(ResourceDefinition):
 
 class NetworkLinkSpec(BaseModel):
     """Specification for network link resources"""
+
     domain: str = Field(..., description="Network domain name")
     vlanId: Optional[int] = Field(None, ge=1, le=4094, description="VLAN ID")
     bandwidth: Optional[str] = Field(None, description="Bandwidth (e.g., '10Gbps')")
@@ -60,6 +68,7 @@ class NetworkLinkSpec(BaseModel):
 
 class NetworkLink(ResourceDefinition):
     """Network link resource"""
+
     kind: Literal[ResourceKind.NETWORK_LINK] = ResourceKind.NETWORK_LINK
     spec: NetworkLinkSpec
 
@@ -69,6 +78,7 @@ class NetworkLink(ResourceDefinition):
 
 class ServiceInstanceSpec(BaseModel):
     """Specification for service instance resources"""
+
     serviceDefinition: str = Field(..., description="Reference to service definition")
     replicas: int = Field(default=1, ge=1, description="Number of replicas")
     healthCheck: Optional[Dict[str, Any]] = Field(None, description="Health check configuration")
@@ -77,6 +87,7 @@ class ServiceInstanceSpec(BaseModel):
 
 class ServiceInstance(ResourceDefinition):
     """Service instance resource"""
+
     kind: Literal[ResourceKind.SERVICE_INSTANCE] = ResourceKind.SERVICE_INSTANCE
     spec: ServiceInstanceSpec
 

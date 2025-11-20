@@ -53,11 +53,8 @@ async def list_tools(
         List of tool definitions with descriptions and parameters
     """
     tools = orchestrator.get_available_tools()
-    
-    return ToolsListResponse(
-        tools=tools,
-        count=len(tools)
-    )
+
+    return ToolsListResponse(tools=tools, count=len(tools))
 
 
 @router.post("/execute", response_model=ToolExecutionResponse)
@@ -67,7 +64,7 @@ async def execute_tool(
 ) -> ToolExecutionResponse:
     """
     Execute a tool based on natural language query.
-    
+
     The LLM will analyze the query and select the most appropriate tool.
 
     Args:
@@ -77,11 +74,8 @@ async def execute_tool(
     Returns:
         Tool execution result
     """
-    result = await orchestrator.execute_function_call(
-        request.query,
-        request.context
-    )
-    
+    result = await orchestrator.execute_function_call(request.query, request.context)
+
     return ToolExecutionResponse(**result)
 
 
@@ -92,7 +86,7 @@ async def execute_tool_direct(
 ) -> ToolExecutionResponse:
     """
     Directly execute a specific tool with provided arguments.
-    
+
     Bypasses LLM selection and executes the named tool directly.
 
     Args:
@@ -103,14 +97,10 @@ async def execute_tool_direct(
         Tool execution result
     """
     from alma.core.tools import InfrastructureTools
-    
+
     tools = InfrastructureTools()
-    result = tools.execute_tool(
-        request.tool_name,
-        request.arguments,
-        request.context
-    )
-    
+    result = tools.execute_tool(request.tool_name, request.arguments, request.context)
+
     return ToolExecutionResponse(**result)
 
 
@@ -130,15 +120,12 @@ async def get_tool_info(
         Tool definition and documentation
     """
     tools = orchestrator.get_available_tools()
-    
+
     for tool in tools:
         if tool["name"] == tool_name:
             return tool
-    
-    raise HTTPException(
-        status_code=404,
-        detail=f"Tool '{tool_name}' not found"
-    )
+
+    raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not found")
 
 
 @router.post("/validate-blueprint")
@@ -148,7 +135,7 @@ async def validate_blueprint(
 ) -> Dict[str, Any]:
     """
     Validate a blueprint using the validation tool.
-    
+
     Convenience endpoint for blueprint validation.
 
     Args:
@@ -159,25 +146,20 @@ async def validate_blueprint(
         Validation result
     """
     from alma.core.tools import InfrastructureTools
-    
+
     tools = InfrastructureTools()
-    result = tools.execute_tool(
-        "validate_blueprint",
-        {"blueprint": blueprint, "strict": strict}
-    )
-    
+    result = tools.execute_tool("validate_blueprint", {"blueprint": blueprint, "strict": strict})
+
     return result
 
 
 @router.post("/estimate-resources")
 async def estimate_resources(
-    workload_type: str,
-    expected_load: str,
-    availability: str = "standard"
+    workload_type: str, expected_load: str, availability: str = "standard"
 ) -> Dict[str, Any]:
     """
     Estimate resource requirements for a workload.
-    
+
     Convenience endpoint for resource estimation.
 
     Args:
@@ -189,17 +171,17 @@ async def estimate_resources(
         Resource estimation
     """
     from alma.core.tools import InfrastructureTools
-    
+
     tools = InfrastructureTools()
     result = tools.execute_tool(
         "estimate_resources",
         {
             "workload_type": workload_type,
             "expected_load": expected_load,
-            "availability": availability
-        }
+            "availability": availability,
+        },
     )
-    
+
     return result
 
 
@@ -207,11 +189,11 @@ async def estimate_resources(
 async def security_audit(
     blueprint: Dict[str, Any],
     compliance_framework: str = "general",
-    severity_threshold: str = "medium"
+    severity_threshold: str = "medium",
 ) -> Dict[str, Any]:
     """
     Perform security audit on a blueprint.
-    
+
     Convenience endpoint for security auditing.
 
     Args:
@@ -223,15 +205,15 @@ async def security_audit(
         Security audit findings
     """
     from alma.core.tools import InfrastructureTools
-    
+
     tools = InfrastructureTools()
     result = tools.execute_tool(
         "security_audit",
         {
             "blueprint": blueprint,
             "compliance_framework": compliance_framework,
-            "severity_threshold": severity_threshold
-        }
+            "severity_threshold": severity_threshold,
+        },
     )
-    
+
     return result

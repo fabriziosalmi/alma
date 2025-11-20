@@ -271,9 +271,7 @@ Respond in JSON format:
 }}"""
 
     @staticmethod
-    def migration_plan(
-        source: str, target: str, blueprint: Dict[str, Any]
-    ) -> str:
+    def migration_plan(source: str, target: str, blueprint: Dict[str, Any]) -> str:
         """
         Generate prompt for migration planning.
 

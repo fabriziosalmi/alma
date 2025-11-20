@@ -43,12 +43,8 @@ async def test_health_check(client: AsyncClient):
 
 async def test_create_blueprint(client: AsyncClient):
     """Test creating a blueprint"""
-    blueprint_data = {
-        "name": "test-blueprint",
-        "description": "A test blueprint",
-        "resources": []
-    }
-    
+    blueprint_data = {"name": "test-blueprint", "description": "A test blueprint", "resources": []}
+
     response = await client.post("/api/v1/blueprints/", json=blueprint_data)
     assert response.status_code == 201
     data = response.json()

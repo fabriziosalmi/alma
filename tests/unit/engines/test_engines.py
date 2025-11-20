@@ -13,9 +13,9 @@ class TestBaseEngine:
     def test_base_engine_cannot_instantiate(self) -> None:
         """Test that Engine cannot be instantiated directly."""
         # Engine is abstract, but we can test its structure
-        assert hasattr(Engine, 'apply')
-        assert hasattr(Engine, 'destroy')
-        assert hasattr(Engine, 'get_state')
+        assert hasattr(Engine, "apply")
+        assert hasattr(Engine, "destroy")
+        assert hasattr(Engine, "get_state")
 
 
 class TestKubernetesEngine:
@@ -34,9 +34,9 @@ class TestKubernetesEngine:
             type="deployment",
             name="test-deployment",
             provider="kubernetes",
-            specs={"replicas": 3, "image": "nginx:latest"}
+            specs={"replicas": 3, "image": "nginx:latest"},
         )
-        
+
         # Should not raise an error for valid resource
         try:
             await engine.validate(resource)
@@ -61,9 +61,9 @@ class TestProxmoxEngine:
             type="vm",
             name="test-vm",
             provider="proxmox",
-            specs={"cpu": 2, "memory": "4GB", "disk": "50GB"}
+            specs={"cpu": 2, "memory": "4GB", "disk": "50GB"},
         )
-        
+
         # Should not raise an error for valid resource structure
         try:
             await engine.validate(resource)

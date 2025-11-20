@@ -36,7 +36,9 @@ def sample_blueprint() -> SystemBlueprint:
 class TestFakeEngine:
     """Tests for FakeEngine class."""
 
-    async def test_apply_create(self, engine: FakeEngine, sample_blueprint: SystemBlueprint) -> None:
+    async def test_apply_create(
+        self, engine: FakeEngine, sample_blueprint: SystemBlueprint
+    ) -> None:
         """Test successful creation of resources."""
         plan = Plan(to_create=sample_blueprint.resources)
         await engine.apply(plan)
@@ -46,7 +48,9 @@ class TestFakeEngine:
         assert state[0].id == "web-server"
         assert state[0].config["cpu"] == 2
 
-    async def test_apply_update(self, engine: FakeEngine, sample_blueprint: SystemBlueprint) -> None:
+    async def test_apply_update(
+        self, engine: FakeEngine, sample_blueprint: SystemBlueprint
+    ) -> None:
         """Test successful update of resources."""
         # First, create the resource
         plan_create = Plan(to_create=sample_blueprint.resources)
@@ -78,7 +82,9 @@ class TestFakeEngine:
 
         assert len(await engine.get_state(sample_blueprint)) == 0
 
-    async def test_get_state_empty(self, engine: FakeEngine, sample_blueprint: SystemBlueprint) -> None:
+    async def test_get_state_empty(
+        self, engine: FakeEngine, sample_blueprint: SystemBlueprint
+    ) -> None:
         """Test getting state when no resources exist."""
         state = await engine.get_state(sample_blueprint)
         assert state == []

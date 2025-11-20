@@ -66,7 +66,7 @@ That's it!
 
     def test_json_extraction_nested(self, orchestrator: EnhancedOrchestrator) -> None:
         """Test extracting nested JSON."""
-        text = '''
+        text = """
 {
     "config": {
         "database": {
@@ -76,7 +76,7 @@ That's it!
         "cache": {"enabled": true}
     }
 }
-'''
+"""
         result = orchestrator._extract_json(text)
         assert result is not None
         assert result["config"]["database"]["host"] == "localhost"
@@ -139,7 +139,9 @@ name: broken
 class TestOrchestratorEdgeCases:
     """Tests for orchestrator edge cases."""
 
-    def test_json_extraction_with_escape_sequences(self, orchestrator: EnhancedOrchestrator) -> None:
+    def test_json_extraction_with_escape_sequences(
+        self, orchestrator: EnhancedOrchestrator
+    ) -> None:
         """Test JSON with escape sequences."""
         text = '{"message": "Hello\\nWorld", "path": "C:\\\\Users\\\\test"}'
         result = orchestrator._extract_json(text)

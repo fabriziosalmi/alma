@@ -12,7 +12,7 @@ class TestBlueprintTemplates:
         templates = BlueprintTemplates.list_templates()
         assert isinstance(templates, list)
         assert len(templates) > 0
-        
+
         # Check template structure
         template = templates[0]
         assert "id" in template

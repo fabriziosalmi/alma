@@ -33,32 +33,44 @@ CONTEXT_KEYWORDS = {
 
 # --- Data Models ---
 
+
 class FocusContext(BaseModel):
     """Tracks the user's current conversational focus."""
-    active_resource_id: Optional[str] = Field(None, description="The specific resource being discussed.")
+
+    active_resource_id: Optional[str] = Field(
+        None, description="The specific resource being discussed."
+    )
     current_topic: str = Field("general", description="The general topic of conversation.")
     topic_confidence: float = Field(0.0, description="Confidence score for the detected topic.")
 
+
 class CommandRiskLevel(str, Enum):
     """Enumeration for the assessed risk level of a command."""
+
     LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
     CRITICAL = "CRITICAL"
 
+
 class UserEmotionalStability(str, Enum):
     """Enumeration for the assessed emotional state of the user."""
+
     STABLE = "STABLE"
     NEUTRAL = "NEUTRAL"
     VOLATILE = "VOLATILE"
 
+
 class RiskProfile(BaseModel):
     """Represents the overall risk assessment for a given request."""
+
     command_risk_level: CommandRiskLevel = CommandRiskLevel.LOW
     user_emotional_stability: UserEmotionalStability = UserEmotionalStability.STABLE
     requires_step_up_auth: bool = False
 
+
 # --- Core Logic Functions ---
+
 
 def detect_context_shift(input_text: str, current_focus: FocusContext) -> FocusContext:
     """
@@ -68,18 +80,20 @@ def detect_context_shift(input_text: str, current_focus: FocusContext) -> FocusC
     accidental commands being run on a previous, out-of-context resource.
     """
     input_words = set(input_text.lower().split())
-    
+
     for topic, keywords in CONTEXT_KEYWORDS.items():
         if keywords.intersection(input_words):
             if topic != current_focus.current_topic:
-                logger.warning(f"Context shift detected: Old='{current_focus.current_topic}', New='{topic}'.")
+                logger.warning(
+                    f"Context shift detected: Old='{current_focus.current_topic}', New='{topic}'."
+                )
                 # Major shift: clear the active resource to be safe.
                 return FocusContext(
                     active_resource_id=None,
                     current_topic=topic,
-                    topic_confidence=0.9  # High confidence on keyword match
+                    topic_confidence=0.9,  # High confidence on keyword match
                 )
-    
+
     # No shift detected, return the existing context
     return current_focus
 
@@ -108,14 +122,15 @@ def assess_risk(intent: str, frustration: float) -> RiskProfile:
 
     # CRITICAL RISK MATRIX: Destructive action + Volatile user
     if (
-        profile.command_risk_level == CommandRiskLevel.HIGH and
-        profile.user_emotional_stability == UserEmotionalStability.VOLATILE
+        profile.command_risk_level == CommandRiskLevel.HIGH
+        and profile.user_emotional_stability == UserEmotionalStability.VOLATILE
     ):
         logger.critical("CRITICAL RISK DETECTED: Volatile user attempting destructive action.")
         profile.command_risk_level = CommandRiskLevel.CRITICAL
         profile.requires_step_up_auth = True
 
     return profile
+
 
 def select_persona(intent_type: str) -> str:
     """
@@ -134,6 +149,7 @@ class AdvancedCognitiveEngine:
     """
     A stateful engine that integrates context, risk, and persona.
     """
+
     def __init__(self):
         self.focus = FocusContext()
         self.frustration_level = 0.0
@@ -151,13 +167,13 @@ class AdvancedCognitiveEngine:
             or a safety override string.
         """
         # 1. TODO: Normalize input and update frustration level (e.g., based on sentiment analysis)
-        
+
         # 2. Check for a shift in context
         self.focus = detect_context_shift(user_input, self.focus)
 
         # 3. Assess the risk of the intended action
         risk_profile = assess_risk(intent, self.frustration_level)
-        
+
         # 4. Check for SAFETY OVERRIDE
         if risk_profile.command_risk_level == CommandRiskLevel.CRITICAL:
             logger.error("Safety override triggered due to CRITICAL risk. Halting operation.")
@@ -165,9 +181,11 @@ class AdvancedCognitiveEngine:
 
         # 5. Select the appropriate persona for the response
         persona = select_persona(intent)
-        
-        logger.info(f"Cognitive analysis complete. Risk: {risk_profile.command_risk_level}, Persona: {persona}")
-        
+
+        logger.info(
+            f"Cognitive analysis complete. Risk: {risk_profile.command_risk_level}, Persona: {persona}"
+        )
+
         return {
             "focus_context": self.focus,
             "risk_profile": risk_profile,

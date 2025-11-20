@@ -91,9 +91,7 @@ class Qwen3LLM(LLMInterface):
         except Exception as e:
             raise RuntimeError(f"Failed to initialize Qwen3 model: {e}")
 
-    async def stream_generate(
-        self, prompt: str, context: Optional[Dict[str, Any]] = None
-    ):
+    async def stream_generate(self, prompt: str, context: Optional[Dict[str, Any]] = None):
         """
         Stream text generation from prompt.
 
@@ -129,9 +127,7 @@ class Qwen3LLM(LLMInterface):
             from threading import Thread
 
             streamer = TextIteratorStreamer(
-                self.tokenizer,
-                skip_prompt=True,
-                skip_special_tokens=True
+                self.tokenizer, skip_prompt=True, skip_special_tokens=True
             )
 
             generation_kwargs = dict(
@@ -155,9 +151,7 @@ class Qwen3LLM(LLMInterface):
         for chunk in await loop.run_in_executor(None, lambda: list(_stream())):
             yield chunk
 
-    async def generate(
-        self, prompt: str, context: Optional[Dict[str, Any]] = None
-    ) -> str:
+    async def generate(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> str:
         """
         Generate text from prompt.
 
@@ -233,9 +227,7 @@ class Qwen3LLM(LLMInterface):
 
         return await loop.run_in_executor(None, _generate)
 
-    async def function_call(
-        self, prompt: str, functions: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    async def function_call(self, prompt: str, functions: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Generate function call from prompt.
 

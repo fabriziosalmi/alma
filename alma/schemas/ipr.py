@@ -17,9 +17,7 @@ class IPRCreate(IPRBase):
     """Schema for creating a new IPR."""
 
     created_by: str = Field(..., description="User creating the IPR")
-    changes_summary: Optional[Dict[str, Any]] = Field(
-        None, description="Summary of changes"
-    )
+    changes_summary: Optional[Dict[str, Any]] = Field(None, description="Summary of changes")
 
 
 class IPRUpdate(BaseModel):

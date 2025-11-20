@@ -47,27 +47,21 @@ class TestConversationalOrchestrator:
         assert intent["intent"] == "list_blueprints"
         assert intent["confidence"] > 0
 
-    async def test_parse_intent_deploy(
-        self, orchestrator: ConversationalOrchestrator
-    ) -> None:
+    async def test_parse_intent_deploy(self, orchestrator: ConversationalOrchestrator) -> None:
         """Test parsing deploy intent."""
         intent = await orchestrator.parse_intent("Deploy the infrastructure")
 
         assert intent["intent"] == "deploy"
         assert intent["confidence"] > 0
 
-    async def test_parse_intent_status(
-        self, orchestrator: ConversationalOrchestrator
-    ) -> None:
+    async def test_parse_intent_status(self, orchestrator: ConversationalOrchestrator) -> None:
         """Test parsing status intent."""
         intent = await orchestrator.parse_intent("Check the status of my infrastructure")
 
         assert intent["intent"] == "status"
         assert intent["confidence"] > 0
 
-    async def test_parse_intent_rollback(
-        self, orchestrator: ConversationalOrchestrator
-    ) -> None:
+    async def test_parse_intent_rollback(self, orchestrator: ConversationalOrchestrator) -> None:
         """Test parsing rollback intent."""
         intent = await orchestrator.parse_intent("Rollback the last deployment")
 

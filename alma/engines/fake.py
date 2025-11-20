@@ -33,7 +33,7 @@ class FakeEngine(Engine):
     async def get_state(self, blueprint: SystemBlueprint) -> List[ResourceState]:
         """
         Get simulated state of all resources for a given blueprint.
-        
+
         In this fake implementation, we assume all resources in the state belong
         to the blueprint being checked. A real engine would use labels or tags.
         """
@@ -66,7 +66,7 @@ class FakeEngine(Engine):
                 config=resource_def.specs,
             )
             self.resources[resource_def.name] = state
-        
+
         return
 
     async def destroy(self, plan: Plan) -> None:
@@ -77,7 +77,7 @@ class FakeEngine(Engine):
             await asyncio.sleep(0.02)
             if resource_state.id in self.resources:
                 del self.resources[resource_state.id]
-        
+
         return
 
     def get_supported_resource_types(self) -> List[str]:

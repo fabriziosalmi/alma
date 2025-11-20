@@ -225,7 +225,7 @@ async def chat_stream(
 ):
     """
     Stream conversational responses in real-time.
-    
+
     This endpoint streams the AI's response as it's generated,
     providing better UX for long responses.
 
@@ -236,14 +236,15 @@ async def chat_stream(
     Returns:
         Streaming response with Server-Sent Events
     """
+
     async def generate_stream():
         """Generate streaming response."""
         # First, parse intent
         intent_result = await orchestrator.parse_intent_with_llm(request.message)
-        
+
         # Send intent as first event
         yield f"data: {json.dumps({'type': 'intent', 'data': intent_result})}\\n\\n"
-        
+
         # Generate streaming response based on intent
         if intent_result["intent"] == "create_blueprint":
             prompt = f"Generate infrastructure blueprint for: {request.message}"
@@ -253,7 +254,7 @@ async def chat_stream(
             prompt = f"Provide status information for: {request.message}"
         else:
             prompt = f"Respond to infrastructure query: {request.message}"
-        
+
         # Stream LLM response
         if orchestrator.use_llm and orchestrator.llm:
             try:
@@ -266,18 +267,18 @@ async def chat_stream(
             # Fallback to non-streaming
             response = f"I understand you want to {intent_result['intent'].replace('_', ' ')}."
             yield f"data: {json.dumps({'type': 'text', 'data': response})}\\n\\n"
-        
+
         # Send completion event
         yield f"data: {json.dumps({'type': 'done', 'data': 'complete'})}\\n\\n"
-    
+
     return StreamingResponse(
         generate_stream(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"
-        }
+            "X-Accel-Buffering": "no",
+        },
     )
 
 
@@ -288,7 +289,7 @@ async def generate_blueprint_stream(
 ):
     """
     Stream blueprint generation in real-time.
-    
+
     Shows the thinking process as the AI generates the blueprint.
 
     Args:
@@ -298,27 +299,29 @@ async def generate_blueprint_stream(
     Returns:
         Streaming response
     """
+
     async def generate_stream():
         """Generate streaming blueprint creation."""
         yield f"data: {json.dumps({'type': 'status', 'data': 'Analyzing requirements...'})}\\n\\n"
-        
+
         # Generate blueprint with streaming
         if orchestrator.use_llm and orchestrator.llm:
             from alma.core.prompts import InfrastructurePrompts
-            
+
             prompt = InfrastructurePrompts.blueprint_generation(request.description)
-            
+
             full_response = ""
             yield f"data: {json.dumps({'type': 'status', 'data': 'Generating blueprint...'})}\\n\\n"
-            
+
             try:
                 async for chunk in orchestrator.llm.stream_generate(prompt):
                     if chunk:
                         full_response += chunk
                         yield f"data: {json.dumps({'type': 'text', 'data': chunk})}\\n\\n"
-                
+
                 # Try to extract YAML from full response
                 import yaml
+
                 try:
                     # Extract YAML block
                     if "```yaml" in full_response:
@@ -333,25 +336,25 @@ async def generate_blueprint_stream(
                         blueprint = yaml.safe_load(yaml_content)
                     else:
                         blueprint = yaml.safe_load(full_response)
-                    
+
                     yield f"data: {json.dumps({'type': 'blueprint', 'data': blueprint})}\\n\\n"
                 except:
                     yield f"data: {json.dumps({'type': 'warning', 'data': 'Could not parse as YAML'})}\\n\\n"
-                    
+
             except Exception as e:
                 yield f"data: {json.dumps({'type': 'error', 'data': str(e)})}\\n\\n"
         else:
             # Fallback
             blueprint = await orchestrator.natural_language_to_blueprint(request.description)
             yield f"data: {json.dumps({'type': 'blueprint', 'data': blueprint})}\\n\\n"
-        
+
         yield f"data: {json.dumps({'type': 'done', 'data': 'complete'})}\\n\\n"
-    
+
     return StreamingResponse(
         generate_stream(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-        }
+        },
     )

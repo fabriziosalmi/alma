@@ -72,7 +72,7 @@ class ProxmoxEngine(Engine):
     async def get_state(self, blueprint: SystemBlueprint) -> List[ResourceState]:
         """
         Get state of all Proxmox resources for a blueprint.
-        
+
         TODO: Implement actual state retrieval. This would involve listing all VMs/CTs
         and filtering them based on a naming convention or tag derived from the blueprint.
         For each found resource, it should construct a ResourceState object.
@@ -83,7 +83,7 @@ class ProxmoxEngine(Engine):
     async def apply(self, plan: Plan) -> None:
         """
         Deploy or update resources in Proxmox based on a plan.
-        
+
         TODO: Implement the logic to create/update VMs and other resources.
         """
         if not await self._authenticate():
@@ -92,22 +92,22 @@ class ProxmoxEngine(Engine):
         for resource_def in plan.to_create:
             # TODO: Add logic to create a VM/CT from resource_def
             print(f"Fake creating resource: {resource_def.name}")
-        
+
         for _, resource_def in plan.to_update:
             # TODO: Add logic to update a VM/CT from resource_def
             print(f"Fake updating resource: {resource_def.name}")
-        
+
         return
 
     async def destroy(self, plan: Plan) -> None:
         """
         Destroy Proxmox resources based on a plan.
-        
+
         TODO: Implement actual VM/CT deletion.
         """
         if not await self._authenticate():
             raise ConnectionError("Failed to authenticate with Proxmox API")
-            
+
         for resource_state in plan.to_delete:
             # TODO: Add logic to delete a VM/CT using resource_state.id
             print(f"Fake deleting resource: {resource_state.id}")

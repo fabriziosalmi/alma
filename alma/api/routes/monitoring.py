@@ -43,13 +43,13 @@ class HealthStatus(BaseModel):
 async def get_metrics_summary() -> MetricsSummary:
     """
     Get human-readable metrics summary.
-    
+
     Returns:
         Metrics summary
     """
     collector = get_metrics_collector()
     summary = collector.get_summary()
-    
+
     return MetricsSummary(**summary)
 
 
@@ -57,7 +57,7 @@ async def get_metrics_summary() -> MetricsSummary:
 async def prometheus_metrics():
     """
     Get Prometheus-formatted metrics.
-    
+
     Returns:
         Prometheus metrics in text format
     """
@@ -68,21 +68,25 @@ async def prometheus_metrics():
 async def get_rate_limit_stats() -> RateLimitStats:
     """
     Get rate limiting statistics.
-    
+
     Returns:
         Rate limit stats
     """
     limiter = get_rate_limiter()
-    stats = limiter.limiters.get("default").get_stats() if "default" in limiter.limiters else {
-        "total_requests": 0,
-        "total_blocked": 0,
-        "block_rate": 0.0,
-        "active_clients": 0,
-        "requests_per_minute_limit": 60,
-        "burst_size": 10,
-        "top_clients": []
-    }
-    
+    stats = (
+        limiter.limiters.get("default").get_stats()
+        if "default" in limiter.limiters
+        else {
+            "total_requests": 0,
+            "total_blocked": 0,
+            "block_rate": 0.0,
+            "active_clients": 0,
+            "requests_per_minute_limit": 60,
+            "burst_size": 10,
+            "top_clients": [],
+        }
+    )
+
     return RateLimitStats(**stats)
 
 
@@ -90,25 +94,22 @@ async def get_rate_limit_stats() -> RateLimitStats:
 async def detailed_health() -> HealthStatus:
     """
     Detailed health check with component status.
-    
+
     Returns:
         Health status
     """
     collector = get_metrics_collector()
-    
+
     # Check components
     components = {
         "api": "healthy",
         "database": "healthy",  # TODO: Check actual DB connection
-        "llm": "healthy",       # TODO: Check LLM availability
-        "rate_limiter": "healthy"
+        "llm": "healthy",  # TODO: Check LLM availability
+        "rate_limiter": "healthy",
     }
-    
+
     return HealthStatus(
-        status="healthy",
-        uptime=collector.get_uptime(),
-        version="0.1.0",
-        components=components
+        status="healthy", uptime=collector.get_uptime(), version="0.1.0", components=components
     )
 
 
@@ -116,28 +117,30 @@ async def detailed_health() -> HealthStatus:
 async def system_overview() -> Dict[str, Any]:
     """
     Get comprehensive system overview.
-    
+
     Returns:
         System statistics
     """
     collector = get_metrics_collector()
     limiter = get_rate_limiter()
-    
-    rate_limit_stats = limiter.limiters.get("default").get_stats() if "default" in limiter.limiters else {}
-    
+
+    rate_limit_stats = (
+        limiter.limiters.get("default").get_stats() if "default" in limiter.limiters else {}
+    )
+
     return {
         "system": {
             "uptime_seconds": collector.get_uptime(),
             "version": "0.1.0",
-            "status": "operational"
+            "status": "operational",
         },
         "rate_limiting": {
             "total_requests": rate_limit_stats.get("total_requests", 0),
             "total_blocked": rate_limit_stats.get("total_blocked", 0),
-            "block_rate": rate_limit_stats.get("block_rate", 0.0)
+            "block_rate": rate_limit_stats.get("block_rate", 0.0),
         },
         "performance": {
             "avg_response_time_ms": 0,  # TODO: Calculate from metrics
-            "requests_per_second": 0     # TODO: Calculate from metrics
-        }
+            "requests_per_second": 0,  # TODO: Calculate from metrics
+        },
     }

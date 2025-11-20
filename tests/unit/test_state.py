@@ -8,12 +8,12 @@ from pydantic import BaseModel, Field
 
 # Module to be tested
 from alma.core.state import diff_states, ResourceState
+
 # The real schemas that our state module is now designed to work with
 from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
 
 
 class TestStateDiffer(unittest.TestCase):
-
     def setUp(self):
         """Set up common variables for tests."""
         self.now = datetime.now()
@@ -33,7 +33,7 @@ class TestStateDiffer(unittest.TestCase):
                     specs={"image": "nginx:latest", "cpu": 1},
                 ),
             ],
-            **self.db_fields
+            **self.db_fields,
         )
         current_states = [
             ResourceState(
@@ -65,7 +65,7 @@ class TestStateDiffer(unittest.TestCase):
                     specs={"image": "postgres:15"},
                 ),
             ],
-            **self.db_fields
+            **self.db_fields,
         )
         current_states = []
 
@@ -112,7 +112,7 @@ class TestStateDiffer(unittest.TestCase):
                     specs={"image": "nginx:1.23", "cpu": 2},
                 ),
             ],
-            **self.db_fields
+            **self.db_fields,
         )
         current_states = [
             ResourceState(
@@ -128,7 +128,7 @@ class TestStateDiffer(unittest.TestCase):
         self.assertEqual(len(plan.to_create), 0)
         self.assertEqual(len(plan.to_update), 1)
         self.assertEqual(len(plan.to_delete), 0)
-        
+
         current, desired = plan.to_update[0]
         self.assertEqual(current.id, "web-server")
         self.assertEqual(desired.name, "web-server")
@@ -143,14 +143,17 @@ class TestStateDiffer(unittest.TestCase):
             resources=[
                 # To create
                 ResourceDefinition(
-                    name="new-api", type="compute", provider="fake", specs={"image": "fastapi:latest"}
+                    name="new-api",
+                    type="compute",
+                    provider="fake",
+                    specs={"image": "fastapi:latest"},
                 ),
                 # To update
                 ResourceDefinition(
                     name="main-db", type="compute", provider="fake", specs={"memory": "8Gi"}
                 ),
             ],
-            **self.db_fields
+            **self.db_fields,
         )
         current_states = [
             # To update
@@ -187,49 +190,64 @@ class TestStateDiffer(unittest.TestCase):
 
 class TestPlanRichString:
     """Test Plan.to_rich_string method for coverage."""
-    
+
     def test_to_rich_string_empty_plan(self):
         """Test rich string for empty plan."""
         from alma.core.state import Plan
+
         plan = Plan()
         rich_str = plan.to_rich_string()
         assert "No changes" in rich_str
-    
+
     def test_to_rich_string_with_create(self):
         """Test rich string with create actions."""
         from alma.core.state import Plan
-        resource = ResourceDefinition(name="vm1", type="compute", provider="proxmox", specs={"cpu": 2})
+
+        resource = ResourceDefinition(
+            name="vm1", type="compute", provider="proxmox", specs={"cpu": 2}
+        )
         plan = Plan(to_create=[resource])
         rich_str = plan.to_rich_string()
         assert "CREATE" in rich_str
         assert "vm1" in rich_str
-    
+
     def test_to_rich_string_with_update(self):
         """Test rich string with update actions."""
         from alma.core.state import Plan
+
         current = ResourceState(id="vm1", type="compute", config={"cpu": 2})
-        desired = ResourceDefinition(name="vm1", type="compute", provider="proxmox", specs={"cpu": 4})
+        desired = ResourceDefinition(
+            name="vm1", type="compute", provider="proxmox", specs={"cpu": 4}
+        )
         plan = Plan(to_update=[(current, desired)])
         rich_str = plan.to_rich_string()
         assert "MODIFY" in rich_str
-    
+
     def test_to_rich_string_with_delete(self):
         """Test rich string with delete actions."""
         from alma.core.state import Plan
+
         resource = ResourceState(id="vm1", type="compute", config={})
         plan = Plan(to_delete=[resource])
         rich_str = plan.to_rich_string()
         assert "DESTROY" in rich_str
         assert "permanently deleted" in rich_str
-    
+
     def test_to_rich_string_all_actions(self):
         """Test rich string with all actions."""
         from alma.core.state import Plan
+
         plan = Plan(
-            to_create=[ResourceDefinition(name="vm2", type="compute", provider="proxmox", specs={})],
-            to_update=[(ResourceState(id="vm1", type="compute", config={}),
-                       ResourceDefinition(name="vm1", type="compute", provider="proxmox", specs={}))],
-            to_delete=[ResourceState(id="vm0", type="compute", config={})]
+            to_create=[
+                ResourceDefinition(name="vm2", type="compute", provider="proxmox", specs={})
+            ],
+            to_update=[
+                (
+                    ResourceState(id="vm1", type="compute", config={}),
+                    ResourceDefinition(name="vm1", type="compute", provider="proxmox", specs={}),
+                )
+            ],
+            to_delete=[ResourceState(id="vm0", type="compute", config={})],
         )
         rich_str = plan.to_rich_string()
         assert "Summary" in rich_str

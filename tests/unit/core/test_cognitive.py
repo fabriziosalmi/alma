@@ -12,11 +12,11 @@ from alma.core.cognitive import (
     detect_context_shift,
     assess_risk,
     select_persona,
-    SAFETY_OVERRIDE
+    SAFETY_OVERRIDE,
 )
 
-class TestCognitiveLogic(unittest.TestCase):
 
+class TestCognitiveLogic(unittest.TestCase):
     def test_detect_context_shift_no_change(self):
         """Tests that context remains when no new keywords are found."""
         initial_focus = FocusContext(active_resource_id="vm-123", current_topic="compute")
@@ -26,7 +26,9 @@ class TestCognitiveLogic(unittest.TestCase):
     def test_detect_context_shift_with_change(self):
         """Tests that a keyword shifts the context and clears the active resource."""
         initial_focus = FocusContext(active_resource_id="vm-123", current_topic="compute")
-        new_focus = detect_context_shift("now let's talk about the database firewall", initial_focus)
+        new_focus = detect_context_shift(
+            "now let's talk about the database firewall", initial_focus
+        )
         self.assertIsNone(new_focus.active_resource_id)
         self.assertEqual(new_focus.current_topic, "networking")
         self.assertGreater(new_focus.topic_confidence, 0.8)
@@ -50,7 +52,7 @@ class TestCognitiveLogic(unittest.TestCase):
         self.assertEqual(profile.command_risk_level, CommandRiskLevel.CRITICAL)
         self.assertEqual(profile.user_emotional_stability, UserEmotionalStability.VOLATILE)
         self.assertTrue(profile.requires_step_up_auth)
-    
+
     def test_assess_risk_high_stable(self):
         """Tests that a destructive intent with low frustration is only HIGH risk."""
         profile = assess_risk("delete_vm", frustration=0.1)
@@ -68,8 +70,8 @@ class TestCognitiveLogic(unittest.TestCase):
         self.assertEqual(select_persona("troubleshoot_network"), "MEDIC")
         self.assertEqual(select_persona("get_status"), "DEFAULT")
 
+
 class TestAdvancedCognitiveEngine(unittest.TestCase):
-    
     def setUp(self):
         self.engine = AdvancedCognitiveEngine()
 
@@ -77,38 +79,38 @@ class TestAdvancedCognitiveEngine(unittest.TestCase):
         """Tests a standard, non-critical processing flow."""
         self.engine.frustration_level = 0.2
         result = self.engine.process_advanced(
-            user_input="please deploy a new web server",
-            intent="deploy_vm"
+            user_input="please deploy a new web server", intent="deploy_vm"
         )
-        
+
         self.assertIsNone(result.get("override"))
         self.assertEqual(result["persona"], "OPERATOR")
         self.assertEqual(result["risk_profile"].command_risk_level, CommandRiskLevel.MEDIUM)
-        
+
     def test_process_advanced_safety_override(self):
         """Tests that a critical risk scenario triggers the safety override."""
-        self.engine.frustration_level = 0.9 # High frustration
+        self.engine.frustration_level = 0.9  # High frustration
         result = self.engine.process_advanced(
-            user_input="I hate this, just destroy the main database now!",
-            intent="destroy_database"
+            user_input="I hate this, just destroy the main database now!", intent="destroy_database"
         )
-        
+
         self.assertEqual(result.get("override"), SAFETY_OVERRIDE)
         self.assertEqual(result["risk_profile"].command_risk_level, CommandRiskLevel.CRITICAL)
 
     def test_process_updates_focus_context(self):
         """Tests that the main process loop correctly updates the focus context."""
         self.engine.focus = FocusContext(active_resource_id="vm-101", current_topic="compute")
-        
+
         # This input should trigger a context shift
         self.engine.process_advanced(
-            user_input="okay, now about the storage for the new NFS volume",
-            intent="create_storage"
+            user_input="okay, now about the storage for the new NFS volume", intent="create_storage"
         )
-        
+
         # Check that the engine's internal focus has been updated
         self.assertEqual(self.engine.focus.current_topic, "storage")
-        self.assertIsNone(self.engine.focus.active_resource_id, "Active resource should be cleared on topic shift")
+        self.assertIsNone(
+            self.engine.focus.active_resource_id, "Active resource should be cleared on topic shift"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

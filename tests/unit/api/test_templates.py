@@ -52,14 +52,9 @@ class TestTemplatesAPI:
 
     async def test_customize_template(self, client: AsyncClient) -> None:
         """Test customizing a template."""
-        params = {
-            "instance_count": 3,
-            "cpu": 4,
-            "memory": "8GB"
-        }
+        params = {"instance_count": 3, "cpu": 4, "memory": "8GB"}
         response = await client.post(
-            "/api/v1/templates/simple-web-app/customize",
-            json={"parameters": params}
+            "/api/v1/templates/simple-web-app/customize", json={"parameters": params}
         )
         assert response.status_code == 200
         data = response.json()

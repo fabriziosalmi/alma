@@ -12,9 +12,9 @@ def test_system_blueprint_creation():
         created_at="2025-11-20T12:00:00",
         updated_at="2025-11-20T12:00:00",
         name="test-blueprint",
-        resources=[]
+        resources=[],
     )
-    
+
     assert blueprint.name == "test-blueprint"
     assert blueprint.version == "1.0"
 
@@ -25,21 +25,17 @@ def test_blueprint_with_compute_node():
         type="compute",
         name="test-node",
         provider="fake",
-        specs={
-            "cpu": 4,
-            "memory": "8Gi",
-            "storage": "100GB"
-        }
+        specs={"cpu": 4, "memory": "8Gi", "storage": "100GB"},
     )
-    
+
     blueprint = SystemBlueprint(
         id=1,
         created_at="2025-11-20T12:00:00",
         updated_at="2025-11-20T12:00:00",
         name="test-with-node",
-        resources=[compute_node]
+        resources=[compute_node],
     )
-    
+
     assert len(blueprint.resources) == 1
     assert blueprint.resources[0].name == "test-node"
     assert blueprint.resources[0].type == "compute"
@@ -52,13 +48,13 @@ def test_blueprint_serialization():
         created_at="2025-11-20T12:00:00",
         updated_at="2025-11-20T12:00:00",
         name="serialize-test",
-        resources=[]
+        resources=[],
     )
-    
+
     json_data = blueprint.model_dump()
-    
+
     assert json_data["name"] == "serialize-test"
-    
+
     # Test deserialization
     blueprint_restored = SystemBlueprint(**json_data)
     assert blueprint_restored.name == "serialize-test"

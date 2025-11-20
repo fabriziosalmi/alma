@@ -7,7 +7,7 @@ from typing import Dict, Any
 def generate_grafana_dashboard() -> Dict[str, Any]:
     """
     Generate Grafana dashboard JSON for ALMA.
-    
+
     Returns:
         Grafana dashboard configuration
     """
@@ -29,9 +29,9 @@ def generate_grafana_dashboard() -> Dict[str, Any]:
                     "targets": [
                         {
                             "expr": "rate(aicdn_http_requests_total[5m])",
-                            "legendFormat": "{{method}} {{endpoint}} ({{status}})"
+                            "legendFormat": "{{method}} {{endpoint}} ({{status}})",
                         }
-                    ]
+                    ],
                 },
                 # HTTP Response Time
                 {
@@ -42,9 +42,9 @@ def generate_grafana_dashboard() -> Dict[str, Any]:
                     "targets": [
                         {
                             "expr": "histogram_quantile(0.95, rate(aicdn_http_request_duration_seconds_bucket[5m]))",
-                            "legendFormat": "{{method}} {{endpoint}}"
+                            "legendFormat": "{{method}} {{endpoint}}",
                         }
-                    ]
+                    ],
                 },
                 # LLM Requests
                 {
@@ -55,9 +55,9 @@ def generate_grafana_dashboard() -> Dict[str, Any]:
                     "targets": [
                         {
                             "expr": "rate(aicdn_llm_requests_total[5m])",
-                            "legendFormat": "{{operation}} ({{status}})"
+                            "legendFormat": "{{operation}} ({{status}})",
                         }
-                    ]
+                    ],
                 },
                 # LLM Generation Time
                 {
@@ -68,9 +68,9 @@ def generate_grafana_dashboard() -> Dict[str, Any]:
                     "targets": [
                         {
                             "expr": "histogram_quantile(0.95, rate(aicdn_llm_generation_duration_seconds_bucket[5m]))",
-                            "legendFormat": "{{model}} {{operation}}"
+                            "legendFormat": "{{model}} {{operation}}",
                         }
-                    ]
+                    ],
                 },
                 # Rate Limiting
                 {
@@ -81,9 +81,9 @@ def generate_grafana_dashboard() -> Dict[str, Any]:
                     "targets": [
                         {
                             "expr": "rate(aicdn_rate_limit_hits_total[5m])",
-                            "legendFormat": "{{endpoint}}"
+                            "legendFormat": "{{endpoint}}",
                         }
-                    ]
+                    ],
                 },
                 # Blueprint Operations
                 {
@@ -94,9 +94,9 @@ def generate_grafana_dashboard() -> Dict[str, Any]:
                     "targets": [
                         {
                             "expr": "rate(aicdn_blueprint_operations_total[5m])",
-                            "legendFormat": "{{operation}} ({{status}})"
+                            "legendFormat": "{{operation}} ({{status}})",
                         }
-                    ]
+                    ],
                 },
                 # Tool Executions
                 {
@@ -107,9 +107,9 @@ def generate_grafana_dashboard() -> Dict[str, Any]:
                     "targets": [
                         {
                             "expr": "rate(aicdn_tool_executions_total[5m])",
-                            "legendFormat": "{{tool_name}} ({{status}})"
+                            "legendFormat": "{{tool_name}} ({{status}})",
                         }
-                    ]
+                    ],
                 },
                 # Active Connections
                 {
@@ -118,11 +118,8 @@ def generate_grafana_dashboard() -> Dict[str, Any]:
                     "type": "graph",
                     "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
                     "targets": [
-                        {
-                            "expr": "aicdn_active_connections",
-                            "legendFormat": "Active Connections"
-                        }
-                    ]
+                        {"expr": "aicdn_active_connections", "legendFormat": "Active Connections"}
+                    ],
                 },
                 # Deployment Duration
                 {
@@ -133,11 +130,11 @@ def generate_grafana_dashboard() -> Dict[str, Any]:
                     "targets": [
                         {
                             "expr": "histogram_quantile(0.95, rate(aicdn_deployment_duration_seconds_bucket[5m]))",
-                            "legendFormat": "{{engine}}"
+                            "legendFormat": "{{engine}}",
                         }
-                    ]
-                }
-            ]
+                    ],
+                },
+            ],
         }
     }
 
@@ -145,15 +142,15 @@ def generate_grafana_dashboard() -> Dict[str, Any]:
 def save_dashboard(filepath: str = "grafana-dashboard.json") -> None:
     """
     Save Grafana dashboard to file.
-    
+
     Args:
         filepath: Output file path
     """
     dashboard = generate_grafana_dashboard()
-    
-    with open(filepath, 'w') as f:
+
+    with open(filepath, "w") as f:
         json.dump(dashboard, f, indent=2)
-    
+
     print(f"✓ Grafana dashboard saved to {filepath}")
     print("\nTo import:")
     print("1. Open Grafana")

@@ -25,12 +25,11 @@ class TemplateResponse(BaseModel):
 
 @router.get("/", response_model=TemplateListResponse)
 async def list_templates(
-    category: TemplateCategory | None = None,
-    complexity: str | None = None
+    category: TemplateCategory | None = None, complexity: str | None = None
 ) -> TemplateListResponse:
     """
     Get list of all available blueprint templates.
-    
+
     Args:
         category: Filter by category (optional)
         complexity: Filter by complexity level (optional)
@@ -39,18 +38,15 @@ async def list_templates(
         List of template metadata
     """
     templates = BlueprintTemplates.get_all_templates()
-    
+
     # Apply filters
     if category:
         templates = [t for t in templates if t["category"] == category]
-    
+
     if complexity:
         templates = [t for t in templates if t["complexity"] == complexity]
-    
-    return TemplateListResponse(
-        templates=templates,
-        count=len(templates)
-    )
+
+    return TemplateListResponse(templates=templates, count=len(templates))
 
 
 @router.get("/categories")
@@ -61,43 +57,35 @@ async def list_categories() -> Dict[str, List[str]]:
     Returns:
         Available categories
     """
-    return {
-        "categories": [cat.value for cat in TemplateCategory]
-    }
+    return {"categories": [cat.value for cat in TemplateCategory]}
 
 
 @router.get("/{template_id}", response_model=TemplateResponse)
 async def get_template(template_id: str) -> TemplateResponse:
     """
     Get a specific blueprint template.
-    
+
     Args:
         template_id: Template identifier
 
     Returns:
         Complete blueprint template
-        
+
     Raises:
         HTTPException: If template not found
     """
     try:
         blueprint = BlueprintTemplates.get_template(template_id)
-        return TemplateResponse(
-            template_id=template_id,
-            blueprint=blueprint
-        )
+        return TemplateResponse(template_id=template_id, blueprint=blueprint)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.post("/{template_id}/customize")
-async def customize_template(
-    template_id: str,
-    customizations: Dict[str, Any]
-) -> Dict[str, Any]:
+async def customize_template(template_id: str, customizations: Dict[str, Any]) -> Dict[str, Any]:
     """
     Customize a template with user-specific parameters.
-    
+
     Args:
         template_id: Template to customize
         customizations: Custom parameters to apply
@@ -107,14 +95,14 @@ async def customize_template(
     """
     try:
         blueprint = BlueprintTemplates.get_template(template_id)
-        
+
         # Apply customizations
         if "name" in customizations:
             blueprint["name"] = customizations["name"]
-        
+
         if "description" in customizations:
             blueprint["description"] = customizations["description"]
-        
+
         # Scale resources if requested
         if "scale_factor" in customizations:
             scale = customizations["scale_factor"]
@@ -130,26 +118,23 @@ async def customize_template(
                             specs["memory"] = f"{int(mem_val * scale)}GB"
                         except:
                             pass
-        
+
         # Update metadata
         blueprint.setdefault("metadata", {})
         blueprint["metadata"]["customized"] = True
         blueprint["metadata"]["base_template"] = template_id
-        
+
         return blueprint
-        
+
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.get("/search/")
-async def search_templates(
-    query: str,
-    limit: int = 10
-) -> TemplateListResponse:
+async def search_templates(query: str, limit: int = 10) -> TemplateListResponse:
     """
     Search templates by keyword.
-    
+
     Args:
         query: Search query
         limit: Maximum results to return
@@ -159,14 +144,12 @@ async def search_templates(
     """
     all_templates = BlueprintTemplates.get_all_templates()
     query_lower = query.lower()
-    
+
     # Search in name and description
     matching = [
-        t for t in all_templates
+        t
+        for t in all_templates
         if query_lower in t["name"].lower() or query_lower in t["description"].lower()
     ]
-    
-    return TemplateListResponse(
-        templates=matching[:limit],
-        count=len(matching)
-    )
+
+    return TemplateListResponse(templates=matching[:limit], count=len(matching))

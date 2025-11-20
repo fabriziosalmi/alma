@@ -15,59 +15,63 @@ from alma.core.database import get_session
 # Mock database session with async support
 class MockAsyncSession:
     """Mock async database session."""
-    
+
     def __init__(self):
         self.added_objects = []
         self.deleted_objects = []
-    
+
     def query(self, *args, **kwargs):
         return self
-    
+
     def filter(self, *args, **kwargs):
         return self
-    
+
     def offset(self, *args, **kwargs):
         return self
-    
+
     def limit(self, *args, **kwargs):
         return self
-    
+
     def all(self):
         return []
-    
+
     def first(self):
         return None
-    
+
     async def get(self, model, id):
         """Mock async get method."""
         return None
-    
+
     def add(self, obj):
         self.added_objects.append(obj)
-    
+
     async def commit(self):
         pass
-    
+
     async def refresh(self, obj):
         pass
-    
+
     async def delete(self, obj):
         self.deleted_objects.append(obj)
-    
+
     async def execute(self, stmt):
         """Mock execute for queries."""
+
         class MockResult:
             def scalars(self):
                 return self
+
             def all(self):
                 return []
+
             def first(self):
                 return None
+
         return MockResult()
-    
+
     async def __aenter__(self):
         return self
-    
+
     async def __aexit__(self, *args):
         pass
 
@@ -80,29 +84,20 @@ def get_mock_session():
 # Mock orchestrator
 class MockOrchestrator:
     """Mock LLM orchestrator."""
-    
+
     async def chat(self, message: str, context: dict = None):
-        return {
-            "response": "This is a test response",
-            "blueprint": None
-        }
-    
+        return {"response": "This is a test response", "blueprint": None}
+
     async def natural_language_to_blueprint(self, description: str, constraints: dict = None):
         return {
             "version": "1.0",
             "name": "test-blueprint",
             "description": description,
-            "resources": []
+            "resources": [],
         }
-    
+
     def get_available_tools(self):
-        return [
-            {
-                "name": "test_tool",
-                "description": "A test tool",
-                "parameters": {}
-            }
-        ]
+        return [{"name": "test_tool", "description": "A test tool", "parameters": {}}]
 
 
 def get_mock_orchestrator():
@@ -115,11 +110,11 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
     """Create test client with mocked dependencies."""
     # Override dependencies
     app.dependency_overrides[get_session] = get_mock_session
-    
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
-    
+
     # Clear overrides
     app.dependency_overrides.clear()
 
@@ -133,11 +128,8 @@ class TestConversationRoutes:
         mock_orchestrator = MockOrchestrator()
         mock_get_orch.return_value = mock_orchestrator
 
-        response = await client.post(
-            "/api/v1/conversation/chat",
-            json={"message": "Hello ALMA"}
-        )
-        
+        response = await client.post("/api/v1/conversation/chat", json={"message": "Hello ALMA"})
+
         assert response.status_code == 200
         data = response.json()
         assert "response" in data
@@ -150,12 +142,9 @@ class TestConversationRoutes:
 
         response = await client.post(
             "/api/v1/conversation/chat",
-            json={
-                "message": "Create a web server",
-                "context": {"previous_blueprints": [1, 2]}
-            }
+            json={"message": "Create a web server", "context": {"previous_blueprints": [1, 2]}},
         )
-        
+
         assert response.status_code == 200
 
     @patch("alma.core.llm_service.get_orchestrator")
@@ -164,21 +153,15 @@ class TestConversationRoutes:
         mock_orchestrator = MockOrchestrator()
         mock_get_orch.return_value = mock_orchestrator
 
-        response = await client.post(
-            "/api/v1/conversation/chat-stream",
-            json={"message": "Hello"}
-        )
-        
+        response = await client.post("/api/v1/conversation/chat-stream", json={"message": "Hello"})
+
         # Should start streaming or fail gracefully
         assert response.status_code in [200, 500]
 
     async def test_chat_missing_message(self, client: AsyncClient) -> None:
         """Test chat without message field."""
-        response = await client.post(
-            "/api/v1/conversation/chat",
-            json={}
-        )
-        
+        response = await client.post("/api/v1/conversation/chat", json={})
+
         assert response.status_code == 422  # Validation error
 
     @patch("alma.core.llm_service.get_orchestrator")
@@ -188,10 +171,9 @@ class TestConversationRoutes:
         mock_get_orch.return_value = mock_orchestrator
 
         response = await client.post(
-            "/api/v1/conversation/generate-blueprint",
-            json={"description": "Create a web app"}
+            "/api/v1/conversation/generate-blueprint", json={"description": "Create a web app"}
         )
-        
+
         assert response.status_code in [200, 400, 500]
 
     @patch("alma.core.llm_service.get_orchestrator")
@@ -202,9 +184,9 @@ class TestConversationRoutes:
 
         response = await client.post(
             "/api/v1/conversation/describe-blueprint",
-            json={"blueprint": {"version": "1.0", "resources": []}}
+            json={"blueprint": {"version": "1.0", "resources": []}},
         )
-        
+
         assert response.status_code in [200, 400, 500]
 
     @patch("alma.core.llm_service.get_orchestrator")
@@ -214,7 +196,7 @@ class TestConversationRoutes:
         mock_get_orch.return_value = mock_orchestrator
 
         response = await client.post("/api/v1/conversation/clear-history")
-        
+
         assert response.status_code in [200, 204, 500]
 
 
@@ -228,10 +210,10 @@ class TestIPRRoutes:
             json={
                 "title": "Test IPR",
                 "description": "Test infrastructure change",
-                "blueprint_id": 1
-            }
+                "blueprint_id": 1,
+            },
         )
-        
+
         # Should create or fail due to DB/blueprint not found
         assert response.status_code in [201, 404, 422, 500]
 
@@ -248,10 +230,9 @@ class TestBlueprintCRUDRoutes:
     async def test_deploy_blueprint(self, client: AsyncClient) -> None:
         """Test deploying a blueprint."""
         response = await client.post(
-            "/api/v1/blueprints/1/deploy",
-            json={"engine": "fake", "dry_run": False}
+            "/api/v1/blueprints/1/deploy", json={"engine": "fake", "dry_run": False}
         )
-        
+
         # Will fail due to blueprint not found
         assert response.status_code in [200, 404, 422, 500]
 
