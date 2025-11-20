@@ -113,3 +113,86 @@ class TestProxmoxEngine:
         ) as mock_print:
             await engine.destroy(plan)
             mock_print.assert_called_with("Fake deleting resource: vm/101")
+
+    async def test_destroy_authentication_failure(self, engine: ProxmoxEngine) -> None:
+        """Test destroy fails when authentication fails."""
+        resource_state = ResourceState(id="vm/101", type="compute", config={})
+        plan = Plan(to_delete=[resource_state])
+        with patch.object(engine, "_authenticate", return_value=False):
+            with pytest.raises(ConnectionError, match="Failed to authenticate"):
+                await engine.destroy(plan)
+
+    @pytest.mark.asyncio
+    async def test_authenticate_success(self, engine: ProxmoxEngine) -> None:
+        """Test successful authentication."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "data": {
+                "ticket": "test-ticket-123",
+                "CSRFPreventionToken": "test-csrf-token-456",
+            }
+        }
+        mock_response.raise_for_status = MagicMock()
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
+            result = await engine._authenticate()
+            assert result is True
+            assert engine.ticket == "test-ticket-123"
+            assert engine.csrf_token == "test-csrf-token-456"
+
+    @pytest.mark.asyncio
+    async def test_authenticate_failure(self, engine: ProxmoxEngine) -> None:
+        """Test failed authentication."""
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_client.return_value.__aenter__.return_value.post.side_effect = Exception(
+                "Connection refused"
+            )
+            result = await engine._authenticate()
+            assert result is False
+            assert engine.ticket is None
+            assert engine.csrf_token is None
+
+    @pytest.mark.asyncio
+    async def test_api_request_with_authentication(self, engine: ProxmoxEngine) -> None:
+        """Test API request with automatic authentication."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"data": {"status": "ok"}}
+        mock_response.raise_for_status = MagicMock()
+
+        with patch.object(engine, "_authenticate", return_value=True) as mock_auth:
+            engine.ticket = None  # Force authentication
+            with patch("httpx.AsyncClient") as mock_client:
+                mock_client.return_value.__aenter__.return_value.request.return_value = (
+                    mock_response
+                )
+                result = await engine._api_request("GET", "nodes/pve/status")
+                assert result == {"status": "ok"}
+                mock_auth.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_api_request_with_existing_ticket(self, engine: ProxmoxEngine) -> None:
+        """Test API request with existing ticket."""
+        engine.ticket = "existing-ticket"
+        engine.csrf_token = "existing-csrf"
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"data": {"nodes": []}}
+        mock_response.raise_for_status = MagicMock()
+
+        with patch("httpx.AsyncClient") as mock_client:
+            mock_client.return_value.__aenter__.return_value.request.return_value = mock_response
+            result = await engine._api_request("GET", "nodes")
+            assert result == {"nodes": []}
+
+    async def test_apply_update(
+        self, engine: ProxmoxEngine, sample_blueprint: SystemBlueprint
+    ) -> None:
+        """Test apply for resource updates."""
+        old_state = ResourceState(id="vm/101", type="compute", config={"cpu": 1})
+        plan = Plan(to_update=[(old_state, sample_blueprint.resources[0])])
+        with patch.object(engine, "_authenticate", return_value=True), patch(
+            "builtins.print"
+        ) as mock_print:
+            await engine.apply(plan)
+            mock_print.assert_called_with("Fake updating resource: test-vm")
