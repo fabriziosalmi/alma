@@ -1,6 +1,7 @@
 """
 FakeEngine - Mock engine for testing
 """
+
 import asyncio
 from typing import Dict, Any
 from aicdn.engines.base import BaseEngine, DeployResult, DeployStatus, ActionStatus, ResourceStatus

@@ -93,11 +93,12 @@ async def test_run_loop_exits_and_calls_wizard(mock_run_wizard, dashboard_app: D
 def test_recovery_wizard_saves_to_env(dashboard_app: DashboardApp):
     """Test the recovery wizard's data collection and saving logic."""
     # Patch targets must be where the objects are LOOKED UP, not where they are defined.
-    with patch("alma.cli.dashboard.Prompt.ask") as mock_prompt, patch(
-        "alma.cli.dashboard.Confirm.ask"
-    ) as mock_confirm, patch("alma.cli.dashboard.find_dotenv") as mock_find_dotenv, patch(
-        "alma.cli.dashboard.set_key"
-    ) as mock_set_key:
+    with (
+        patch("alma.cli.dashboard.Prompt.ask") as mock_prompt,
+        patch("alma.cli.dashboard.Confirm.ask") as mock_confirm,
+        patch("alma.cli.dashboard.find_dotenv") as mock_find_dotenv,
+        patch("alma.cli.dashboard.set_key") as mock_set_key,
+    ):
         # Simulate user input and file system behavior
         mock_prompt.side_effect = ["1", "sk-ollama-key"]
         mock_confirm.return_value = True
@@ -112,11 +113,12 @@ def test_recovery_wizard_saves_to_env(dashboard_app: DashboardApp):
 
 def test_recovery_wizard_handles_custom_url(dashboard_app: DashboardApp):
     """Test the wizard correctly prompts for a custom URL when '4' is selected."""
-    with patch("alma.cli.dashboard.Prompt.ask") as mock_prompt, patch(
-        "alma.cli.dashboard.Confirm.ask"
-    ) as mock_confirm, patch("alma.cli.dashboard.find_dotenv") as mock_find_dotenv, patch(
-        "alma.cli.dashboard.set_key"
-    ) as mock_set_key:
+    with (
+        patch("alma.cli.dashboard.Prompt.ask") as mock_prompt,
+        patch("alma.cli.dashboard.Confirm.ask") as mock_confirm,
+        patch("alma.cli.dashboard.find_dotenv") as mock_find_dotenv,
+        patch("alma.cli.dashboard.set_key") as mock_set_key,
+    ):
         mock_prompt.side_effect = ["4", "http://my.custom.endpoint/v1", "custom_api_key"]
         mock_confirm.return_value = True
         mock_find_dotenv.return_value = ".env"

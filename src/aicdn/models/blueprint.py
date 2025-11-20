@@ -1,6 +1,7 @@
 """
 SystemBlueprint model - the core declarative format
 """
+
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 from aicdn.models.resources import ResourceDefinition

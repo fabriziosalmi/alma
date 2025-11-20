@@ -1,4 +1,5 @@
 """Full API routes integration tests with rate limiting bypassed."""
+
 import pytest
 from httpx import AsyncClient, ASGITransport
 

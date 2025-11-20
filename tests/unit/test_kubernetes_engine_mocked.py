@@ -1,4 +1,5 @@
 """Tests for kubernetes.py engine with mocked async Kubernetes client."""
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from alma.engines.kubernetes import KubernetesEngine
@@ -9,9 +10,10 @@ from alma.core.state import Plan, ResourceState
 @pytest.fixture
 def mock_k8s_client():
     """Mock kubernetes_asyncio client with proper async context manager support."""
-    with patch("alma.engines.kubernetes.client") as mock_client, patch(
-        "alma.engines.kubernetes.config"
-    ) as mock_config:
+    with (
+        patch("alma.engines.kubernetes.client") as mock_client,
+        patch("alma.engines.kubernetes.config") as mock_config,
+    ):
         # Setup ApiClient as async context manager
         mock_api_instance = MagicMock()
         mock_api_context = AsyncMock()

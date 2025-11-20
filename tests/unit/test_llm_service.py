@@ -1,4 +1,5 @@
 """Tests for LLM service to boost coverage."""
+
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, patch, MagicMock

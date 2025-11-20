@@ -98,9 +98,10 @@ class TestProxmoxEngine:
     ) -> None:
         """Test apply for resource creation."""
         plan = Plan(to_create=sample_blueprint.resources)
-        with patch.object(engine, "_authenticate", return_value=True), patch(
-            "builtins.print"
-        ) as mock_print:
+        with (
+            patch.object(engine, "_authenticate", return_value=True),
+            patch("builtins.print") as mock_print,
+        ):
             await engine.apply(plan)
             mock_print.assert_called_with("Fake creating resource: test-vm")
 
@@ -108,9 +109,10 @@ class TestProxmoxEngine:
         """Test destroying a resource."""
         resource_state = ResourceState(id="vm/101", type="compute", config={})
         plan = Plan(to_delete=[resource_state])
-        with patch.object(engine, "_authenticate", return_value=True), patch(
-            "builtins.print"
-        ) as mock_print:
+        with (
+            patch.object(engine, "_authenticate", return_value=True),
+            patch("builtins.print") as mock_print,
+        ):
             await engine.destroy(plan)
             mock_print.assert_called_with("Fake deleting resource: vm/101")
 
@@ -191,8 +193,9 @@ class TestProxmoxEngine:
         """Test apply for resource updates."""
         old_state = ResourceState(id="vm/101", type="compute", config={"cpu": 1})
         plan = Plan(to_update=[(old_state, sample_blueprint.resources[0])])
-        with patch.object(engine, "_authenticate", return_value=True), patch(
-            "builtins.print"
-        ) as mock_print:
+        with (
+            patch.object(engine, "_authenticate", return_value=True),
+            patch("builtins.print") as mock_print,
+        ):
             await engine.apply(plan)
             mock_print.assert_called_with("Fake updating resource: test-vm")

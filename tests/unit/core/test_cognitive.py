@@ -1,6 +1,7 @@
 """
 Unit tests for the AdvancedCognitiveEngine and its components.
 """
+
 import unittest
 
 from alma.core.cognitive import (

@@ -1,4 +1,5 @@
 """Minimal blueprint API routes tests for coverage boost."""
+
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport

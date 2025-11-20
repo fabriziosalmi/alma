@@ -1,6 +1,7 @@
 """
 Integration test for API endpoints
 """
+
 import pytest
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession

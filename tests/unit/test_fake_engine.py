@@ -1,4 +1,5 @@
 """Unit tests for FakeEngine."""
+
 import pytest
 from alma.core.state import Plan, ResourceState
 from alma.engines.fake import FakeEngine

@@ -1,6 +1,7 @@
 """
 FastAPI application and endpoints
 """
+
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 from typing import List, Optional

@@ -1,6 +1,7 @@
 """
 Test for SystemBlueprint schema
 """
+
 import pytest
 from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
 

@@ -1,4 +1,5 @@
 """IPR API routes coverage tests with rate limiting bypassed."""
+
 import os
 import pytest
 from httpx import AsyncClient, ASGITransport
