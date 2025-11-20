@@ -18,12 +18,90 @@ https://api.alma.dev/v1
 
 ## Authentication
 
-ALMA currently implements IP-based rate limiting for API access control. Future releases will include:
+ALMA implements **header-based API Key authentication** to secure critical infrastructure operations.
 
-- **API Key Authentication** - Secure token-based access
+### API Key Authentication
+
+**Status:** ✅ **Active** (as of v0.4.3)
+
+All write operations (POST, PUT, DELETE) on critical endpoints require a valid API key passed via the `X-API-Key` header.
+
+#### Configuration
+
+Authentication is controlled via environment variables:
+
+```bash
+# Enable authentication (default: true in production)
+export ALMA_AUTH_ENABLED=true
+
+# Comma-separated list of valid API keys
+export ALMA_API_KEYS="prod-key-abc123,backup-key-xyz789"
+
+# Disable authentication (development only)
+export ALMA_AUTH_ENABLED=false
+```
+
+#### Usage Example
+
+```bash
+# With authentication
+curl -X POST http://localhost:8000/api/v1/blueprints/ \
+  -H "X-API-Key: your-api-key-here" \
+  -H "Content-Type: application/json" \
+  -d '{"version": "1.0", "name": "my-infrastructure", "resources": []}'
+```
+
+#### Protected Endpoints
+
+The following endpoints **require authentication**:
+
+**Blueprints:**
+- `POST /api/v1/blueprints/` - Create blueprint
+- `POST /api/v1/blueprints/{id}/deploy` - Deploy blueprint
+
+**Infrastructure Pull Requests:**
+- `POST /api/v1/ipr/` - Create IPR
+
+**Tools:**
+- `POST /api/v1/tools/execute` - Execute tool
+- `POST /api/v1/tools/execute-direct` - Execute tool directly
+
+#### Public Endpoints
+
+The following endpoints remain **public** (no authentication required):
+
+- `GET /api/v1/monitoring/health` - Basic health check
+- `GET /api/v1/monitoring/health/detailed` - Detailed health status
+- `GET /api/v1/monitoring/metrics` - Prometheus metrics
+- `GET /api/v1/monitoring/metrics/summary` - Metrics summary
+- All **GET** operations on blueprints, IPRs, templates
+
+#### Authentication Responses
+
+**Success (authenticated):**
+```http
+HTTP/1.1 201 Created
+```
+
+**Missing or invalid API key:**
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+
+{
+  "detail": "Invalid API key"
+}
+```
+
+### Future Authentication Features
+
+Planned enhancements for future releases:
+
 - **OAuth2 / JWT Tokens** - Industry-standard authorization
 - **Role-Based Access Control (RBAC)** - Granular permission management
 - **Multi-Factor Authentication (MFA)** - Enhanced security layer
+- **API Key Rotation** - Automated key management
+- **Per-Key Rate Limits** - Fine-grained access control
 
 ---
 
@@ -112,6 +190,14 @@ GET /api/v1/blueprints/{blueprint_id}
 POST /api/v1/blueprints
 ```
 
+🔒 **Requires Authentication** - Include `X-API-Key` header
+
+**Headers:**
+```
+X-API-Key: your-api-key-here
+Content-Type: application/json
+```
+
 **Request Body:**
 ```json
 {
@@ -141,6 +227,7 @@ POST /api/v1/blueprints
 **Status Codes:**
 - `201 Created`: Blueprint created successfully
 - `400 Bad Request`: Invalid blueprint format
+- `403 Forbidden`: Invalid or missing API key
 - `422 Unprocessable Entity`: Validation error
 - `500 Internal Server Error`: Database error
 
@@ -358,7 +445,15 @@ GET /api/v1/iprs
 ### Create IPR
 
 ```http
-POST /api/v1/iprs
+POST /api/v1/ipr
+```
+
+🔒 **Requires Authentication** - Include `X-API-Key` header
+
+**Headers:**
+```
+X-API-Key: your-api-key-here
+Content-Type: application/json
 ```
 
 **Request Body:**
@@ -380,6 +475,7 @@ POST /api/v1/iprs
 **Status Codes:**
 - `201 Created`: IPR created
 - `400 Bad Request`: Invalid data
+- `403 Forbidden`: Invalid or missing API key
 - `404 Not Found`: Blueprint not found
 
 ---
@@ -470,11 +566,19 @@ GET /api/v1/tools
 POST /api/v1/tools/execute
 ```
 
+🔒 **Requires Authentication** - Include `X-API-Key` header
+
+**Headers:**
+```
+X-API-Key: your-api-key-here
+Content-Type: application/json
+```
+
 **Request Body:**
 ```json
 {
-  "tool_name": "estimate_resources",
-  "parameters": {
+  "query": "Estimate resources for high traffic web application",
+  "context": {
     "blueprint_id": 5,
     "usage_pattern": "high_traffic",
     "peak_users": 10000
@@ -485,14 +589,15 @@ POST /api/v1/tools/execute
 **Response:**
 ```json
 {
+  "success": true,
+  "tool": "estimate_resources",
   "result": {
     "cpu_cores": 48,
     "memory_gb": 128,
     "storage_tb": 2,
     "estimated_cost_monthly": 850
   },
-  "execution_time": 0.45,
-  "status": "success"
+  "timestamp": "2025-11-20T10:30:00Z"
 }
 ```
 
@@ -514,6 +619,7 @@ POST /api/v1/tools/execute
 **Status Codes:**
 - `200 OK`: Tool executed
 - `400 Bad Request`: Invalid tool or parameters
+- `403 Forbidden`: Invalid or missing API key
 - `404 Not Found`: Tool not found
 - `429 Too Many Requests`: Rate limit (40 RPM)
 
@@ -740,13 +846,32 @@ Retry-After: 30
 ### Common Status Codes
 
 - `400 Bad Request`: Invalid input data
-- `401 Unauthorized`: Authentication required (future)
-- `403 Forbidden`: Insufficient permissions (future)
+- `401 Unauthorized`: Authentication required (reserved for future use)
+- `403 Forbidden`: Invalid or missing API key
 - `404 Not Found`: Resource not found
 - `422 Unprocessable Entity`: Validation error
 - `429 Too Many Requests`: Rate limit exceeded
 - `500 Internal Server Error`: Server error
 - `503 Service Unavailable`: Service temporarily down
+
+### Authentication Error Examples
+
+**Missing API Key:**
+```json
+{
+  "detail": "Invalid API key"
+}
+```
+
+**Invalid API Key:**
+```json
+{
+  "detail": "Invalid API key"
+}
+```
+
+**Authentication Disabled (Development):**
+When `ALMA_AUTH_ENABLED=false`, all endpoints are accessible without authentication. This should **only** be used in development environments.
 
 ---
 
@@ -755,8 +880,12 @@ Retry-After: 30
 ### Create and Deploy Infrastructure
 
 ```bash
+# Set API key as environment variable
+export API_KEY="your-api-key-here"
+
 # 1. Generate blueprint with AI
 curl -X POST http://localhost:8000/api/v1/blueprints/generate-blueprint \
+  -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "description": "Production web app with HA database",
@@ -764,23 +893,25 @@ curl -X POST http://localhost:8000/api/v1/blueprints/generate-blueprint \
   }'
 
 # 2. Create IPR for review
-curl -X POST http://localhost:8000/api/v1/iprs \
+curl -X POST http://localhost:8000/api/v1/ipr/ \
+  -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Production web app deployment",
     "blueprint_id": 1
   }'
 
-# 3. Review and approve
-curl -X POST http://localhost:8000/api/v1/iprs/1/review \
+# 3. Review and approve (public endpoint)
+curl -X POST http://localhost:8000/api/v1/ipr/1/review \
   -H "Content-Type: application/json" \
   -d '{
     "action": "approve",
     "reviewer": "ops-team"
   }'
 
-# 4. Deploy
-curl -X POST http://localhost:8000/api/v1/iprs/1/deploy \
+# 4. Deploy (requires auth)
+curl -X POST http://localhost:8000/api/v1/ipr/1/deploy \
+  -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "engine": "proxmox",
@@ -894,61 +1025,123 @@ ws.onclose = () => {
 ### Python SDK
 
 ```python
-from alma import ALMAClient
+import httpx
+import os
 
-# Initialize client
-client = ALMAClient(
-    base_url="http://localhost:8000",
-    api_key="your-api-key"  # Future feature
-)
+# Configuration
+BASE_URL = "http://localhost:8000/api/v1"
+API_KEY = os.getenv("ALMA_API_KEY", "your-api-key-here")
 
-# Generate infrastructure blueprint
-blueprint = client.blueprints.generate(
-    description="High availability web application with auto-scaling",
-    constraints={
-        "max_cost": 500,
-        "region": "us-east-1",
-        "compliance": "hipaa"
-    }
-)
+headers = {
+    "X-API-Key": API_KEY,
+    "Content-Type": "application/json"
+}
 
-# Create Infrastructure Pull Request
-ipr = client.iprs.create(
-    title="Deploy production load balancer",
-    blueprint_id=blueprint.id,
-    environment="production"
-)
+async def create_infrastructure():
+    async with httpx.AsyncClient() as client:
+        # Create blueprint
+        blueprint_response = await client.post(
+            f"{BASE_URL}/blueprints/",
+            json={
+                "version": "1.0",
+                "name": "production-web-app",
+                "description": "HA web application",
+                "resources": [
+                    {
+                        "name": "web-server-1",
+                        "type": "vm",
+                        "specs": {"cpu": 4, "memory": "8GB"}
+                    }
+                ]
+            },
+            headers=headers
+        )
+        blueprint = blueprint_response.json()
+        print(f"Created blueprint: {blueprint['id']}")
+        
+        # Create IPR
+        ipr_response = await client.post(
+            f"{BASE_URL}/ipr/",
+            json={
+                "title": "Deploy production infrastructure",
+                "blueprint_id": blueprint["id"]
+            },
+            headers=headers
+        )
+        ipr = ipr_response.json()
+        
+        # Deploy (with authentication)
+        deploy_response = await client.post(
+            f"{BASE_URL}/ipr/{ipr['id']}/deploy",
+            json={"engine": "proxmox", "dry_run": False},
+            headers=headers
+        )
+        
+        return deploy_response.json()
 
-# Deploy infrastructure
-deployment = client.iprs.deploy(
-    ipr.id,
-    engine="proxmox",
-    dry_run=False
-)
+# Run deployment
+import asyncio
+result = asyncio.run(create_infrastructure())
+print(f"Deployment status: {result['status']}")
 ```
 
 ### JavaScript/TypeScript SDK
 
 ```typescript
-import { ALMAClient } from '@alma/sdk';
+const BASE_URL = 'http://localhost:8000/api/v1';
+const API_KEY = process.env.ALMA_API_KEY || 'your-api-key-here';
 
-const client = new ALMAClient({
-  baseURL: 'http://localhost:8000',
-  apiKey: process.env.ALMA_API_KEY  // Future feature
-});
+const headers = {
+  'X-API-Key': API_KEY,
+  'Content-Type': 'application/json'
+};
 
-// Stream blueprint generation with real-time updates
-const stream = await client.blueprints.generateStream({
-  description: 'Microservices architecture with Kubernetes',
-  constraints: {
-    maxCost: 1000,
-    environment: 'production'
+// Create blueprint with authentication
+async function createBlueprint() {
+  const response = await fetch(`${BASE_URL}/blueprints/`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      version: '1.0',
+      name: 'microservices-k8s',
+      description: 'Kubernetes microservices architecture',
+      resources: [
+        {
+          name: 'k8s-cluster',
+          type: 'kubernetes',
+          specs: { nodes: 5, cpu_per_node: 4 }
+        }
+      ]
+    })
+  });
+  
+  if (response.status === 403) {
+    throw new Error('Invalid API key');
   }
-});
-
-for await (const event of stream) {
-  console.log(`[${event.type}]`, event.content);
+  
+  return response.json();
 }
+
+// Execute tool with authentication
+async function executeTool(query: string, context: object) {
+  const response = await fetch(`${BASE_URL}/tools/execute`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ query, context })
+  });
+  
+  return response.json();
+}
+
+// Example usage
+const blueprint = await createBlueprint();
+console.log('Blueprint created:', blueprint.id);
+
+const resources = await executeTool(
+  'Estimate resources for this blueprint',
+  { blueprint_id: blueprint.id }
+);
+console.log('Resource estimate:', resources.result);
 ```
 
 ---

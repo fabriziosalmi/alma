@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from alma.core.llm_orchestrator import EnhancedOrchestrator
 from alma.core.llm_service import get_orchestrator
+from alma.middleware.auth import verify_api_key
 
 router = APIRouter(prefix="/tools", tags=["tools"])
 
@@ -62,6 +63,7 @@ async def list_tools(
 async def execute_tool(
     request: ToolExecutionRequest,
     orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
+    api_key: str = Depends(verify_api_key),
 ) -> ToolExecutionResponse:
     """
     Execute a tool based on natural language query.
@@ -84,6 +86,7 @@ async def execute_tool(
 async def execute_tool_direct(
     request: DirectToolRequest,
     orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
+    api_key: str = Depends(verify_api_key),
 ) -> ToolExecutionResponse:
     """
     Directly execute a specific tool with provided arguments.

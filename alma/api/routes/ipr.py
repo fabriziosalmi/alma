@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from alma.core.database import get_session
 from alma.engines.fake import FakeEngine
+from alma.middleware.auth import verify_api_key
 from alma.models.blueprint import SystemBlueprintModel
 from alma.models.ipr import InfrastructurePullRequestModel, IPRStatus
 from alma.schemas.ipr import (
@@ -25,6 +26,7 @@ router = APIRouter(prefix="/ipr", tags=["Infrastructure Pull Requests"])
 async def create_ipr(
     ipr: IPRCreate,
     session: AsyncSession = Depends(get_session),
+    api_key: str = Depends(verify_api_key),
 ) -> IPR:
     """
     Create a new Infrastructure Pull Request.

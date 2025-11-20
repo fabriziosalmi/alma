@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from alma.core.database import get_session
 from alma.core.state import diff_states
 from alma.engines.fake import FakeEngine
+from alma.middleware.auth import verify_api_key
 from alma.models.blueprint import SystemBlueprintModel
 from alma.schemas.blueprint import (
     DeploymentRequest,
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 async def create_blueprint(
     blueprint: SystemBlueprintCreate,
     session: AsyncSession = Depends(get_session),
+    api_key: str = Depends(verify_api_key),
 ) -> SystemBlueprint:
     """
     Create a new system blueprint.
@@ -218,6 +220,7 @@ async def deploy_blueprint(
     blueprint_id: int,
     deployment_request: DeploymentRequest,
     session: AsyncSession = Depends(get_session),
+    api_key: str = Depends(verify_api_key),
 ) -> DeploymentResponse:
     """
     Deploy a system blueprint using a declarative, plan-based workflow.

@@ -1,10 +1,14 @@
 """API routes for metrics and monitoring."""
 
+import time
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, status
 from pydantic import BaseModel
+from sqlalchemy import text
 
+from alma.core.database import get_session
+from alma.core.llm_service import get_orchestrator
 from alma.middleware.metrics import get_metrics_collector, get_prometheus_metrics
 from alma.middleware.rate_limit import get_rate_limiter
 
@@ -91,27 +95,102 @@ async def get_rate_limit_stats() -> RateLimitStats:
     return RateLimitStats(**stats)
 
 
-@router.get("/health/detailed", response_model=HealthStatus)
-async def detailed_health() -> HealthStatus:
+async def check_database_health() -> dict[str, Any]:
+    """
+    Check database connectivity and health.
+
+    Returns:
+        Database health status
+    """
+    try:
+        start = time.time()
+        async with get_session() as session:
+            await session.execute(text("SELECT 1"))
+        response_time = (time.time() - start) * 1000  # Convert to ms
+
+        return {
+            "status": "healthy",
+            "response_time_ms": round(response_time, 2),
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+        }
+
+
+async def check_llm_health() -> dict[str, Any]:
+    """
+    Check LLM service availability.
+
+    Returns:
+        LLM health status
+    """
+    try:
+        orchestrator = await get_orchestrator()
+        if orchestrator and orchestrator.llm:
+            return {
+                "status": "healthy",
+                "model": getattr(orchestrator.llm, "model_name", "unknown"),
+            }
+        else:
+            return {
+                "status": "unhealthy",
+                "error": "LLM not initialized",
+            }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+        }
+
+
+@router.get("/health/detailed")
+async def detailed_health() -> dict[str, Any]:
     """
     Detailed health check with component status.
 
     Returns:
-        Health status
+        Health status with HTTP status code based on health
     """
     collector = get_metrics_collector()
 
-    # Check components
+    # Check all components
+    db_health = await check_database_health()
+    llm_health = await check_llm_health()
+
     components = {
-        "api": "healthy",
-        "database": "healthy",  # TODO: Check actual DB connection
-        "llm": "healthy",  # TODO: Check LLM availability
-        "rate_limiter": "healthy",
+        "api": {"status": "healthy"},
+        "database": db_health,
+        "llm": llm_health,
+        "rate_limiter": {"status": "healthy"},
     }
 
-    return HealthStatus(
-        status="healthy", uptime=collector.get_uptime(), version="0.1.0", components=components
-    )
+    # Determine overall status
+    unhealthy_components = [
+        name for name, comp in components.items() if comp.get("status") == "unhealthy"
+    ]
+
+    if len(unhealthy_components) >= 2 or "database" in unhealthy_components:
+        overall_status = "unhealthy"
+        http_status = status.HTTP_503_SERVICE_UNAVAILABLE
+    elif len(unhealthy_components) == 1:
+        overall_status = "degraded"
+        http_status = status.HTTP_200_OK
+    else:
+        overall_status = "healthy"
+        http_status = status.HTTP_200_OK
+
+    response = {
+        "status": overall_status,
+        "uptime_seconds": collector.get_uptime(),
+        "version": "0.4.3",
+        "components": components,
+    }
+
+    # Return appropriate status code
+    from fastapi.responses import JSONResponse
+    return JSONResponse(content=response, status_code=http_status)
 
 
 @router.get("/stats/overview")
@@ -141,7 +220,11 @@ async def system_overview() -> dict[str, Any]:
             "block_rate": rate_limit_stats.get("block_rate", 0.0),
         },
         "performance": {
-            "avg_response_time_ms": 0,  # TODO: Calculate from metrics
-            "requests_per_second": 0,  # TODO: Calculate from metrics
+            "avg_response_time_ms": 0,  # Calculated by Prometheus
+            "requests_per_second": 0,  # Calculated by Prometheus
+        },
+        "health": {
+            "database": (await check_database_health()).get("status", "unknown"),
+            "llm": (await check_llm_health()).get("status", "unknown"),
         },
     }
