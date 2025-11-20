@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     # Security
     secret_key: str = "change-me-in-production"
     access_token_expire_minutes: int = 60
+    api_key: str = Field(default="", description="API Key for authentication")
 
     # LLM
     llm_model_name: str = "Qwen/Qwen2-0.5B"

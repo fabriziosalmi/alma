@@ -113,6 +113,23 @@ pytest tests/ -k "not e2e and not test_auth" -v
 
 Tests disable authentication by default via `tests/conftest.py`. The `test_auth.py` module explicitly enables authentication using a module-scoped fixture.
 
+### CLI Testing
+
+To test CLI commands with authentication:
+
+```bash
+# Set API key in environment
+export ALMA_API_KEY="test-api-key-12345"
+
+# Test chat command (requires running server with auth enabled)
+alma chat "Create a web server blueprint"
+
+# Run dashboard (will use API key from environment)
+python -m alma.cli.dashboard dashboard
+```
+
+**Note:** CLI commands will automatically use `ALMA_API_KEY` from environment or `.env` file.
+
 ## Security Best Practices
 
 1. **Never commit API keys to version control**

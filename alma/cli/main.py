@@ -224,12 +224,29 @@ def chat(message: str):
     host = "127.0.0.1" if settings.api_host == "0.0.0.0" else settings.api_host
     api_url = f"http://{host}:{settings.api_port}{settings.api_prefix}"
 
+    # Prepare authentication headers
+    headers = {}
+    if settings.api_key:
+        headers["X-API-Key"] = settings.api_key
+
     # Show a spinner while thinking
     with console.status("[bold green]Thinking...", spinner="dots"):
         try:
             response = httpx.post(
-                f"{api_url}/conversation/chat", json={"message": message}, timeout=30.0
+                f"{api_url}/conversation/chat", 
+                json={"message": message}, 
+                headers=headers,
+                timeout=30.0
             )
+            
+            # Handle authentication errors
+            if response.status_code == 403:
+                console.print(
+                    "[bold red]🛑 Authentication Error:[/bold red] Invalid or missing API Key.\n"
+                    "[yellow]Please check ALMA_API_KEY in your .env file.[/yellow]"
+                )
+                return
+            
             response.raise_for_status()
             data = response.json()
         except httpx.ConnectError as e:
@@ -237,6 +254,15 @@ def chat(message: str):
             console.print(
                 "[yellow]Please ensure the API server is running (`alma serve`).[/yellow]"
             )
+            return
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 403:
+                console.print(
+                    "[bold red]🛑 Authentication Error:[/bold red] Invalid or missing API Key.\n"
+                    "[yellow]Please check ALMA_API_KEY in your .env file.[/yellow]"
+                )
+            else:
+                console.print(f"[bold red]HTTP Error:[/bold red] {e}")
             return
         except Exception as e:
             console.print(f"[bold red]An unexpected error occurred:[/bold red] {e}")

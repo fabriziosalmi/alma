@@ -4,6 +4,7 @@ Includes a self-healing/setup wizard for initial configuration.
 """
 
 import asyncio
+import os
 import time
 from collections import deque
 from typing import Any
@@ -23,11 +24,14 @@ from rich.spinner import Spinner
 from rich.table import Table
 from rich.text import Text
 
+from alma.core.config import get_settings
+
 # --- Configuration ---
 API_BASE_URL = "http://127.0.0.1:8000/api/v1"
 REFRESH_RATE_SECONDS = 1.5
 MAX_CONSECUTIVE_ERRORS = 3
 APP_VERSION = "0.1.0"
+settings = get_settings()
 
 # --- Main Application Class ---
 
@@ -49,7 +53,14 @@ class DashboardApp:
 
         # HTTP client for real mode
         if not self.mock:
-            self.http_client = httpx.AsyncClient(base_url=API_BASE_URL, timeout=5.0)
+            headers = {}
+            if settings.api_key:
+                headers["X-API-Key"] = settings.api_key
+            self.http_client = httpx.AsyncClient(
+                base_url=API_BASE_URL, 
+                timeout=5.0,
+                headers=headers
+            )
 
     def generate_layout(self) -> Layout:
         """Defines the visual layout of the dashboard."""
@@ -102,9 +113,14 @@ class DashboardApp:
         except httpx.HTTPStatusError as e:
             self.api_status = "Disconnected"
             self.consecutive_errors += 1
-            self.logs.append(
-                f"[dim]{time.strftime('%H:%M:%S')}[/] [red]API Error: {e.response.status_code} ({self.consecutive_errors}/{MAX_CONSECUTIVE_ERRORS})[/]"
-            )
+            if e.response.status_code == 403:
+                self.logs.append(
+                    f"[dim]{time.strftime('%H:%M:%S')}[/] [bold red]🛑 Authentication Error: Invalid API Key ({self.consecutive_errors}/{MAX_CONSECUTIVE_ERRORS})[/]"
+                )
+            else:
+                self.logs.append(
+                    f"[dim]{time.strftime('%H:%M:%S')}[/] [red]API Error: {e.response.status_code} ({self.consecutive_errors}/{MAX_CONSECUTIVE_ERRORS})[/]"
+                )
         except Exception:
             self.api_status = "Disconnected"
             self.consecutive_errors += 1
@@ -266,13 +282,25 @@ class DashboardApp:
         if choice == "4":
             base_url = Prompt.ask("[bold]Enter the custom OpenAI-compatible Base URL[/]")
 
-        # --- Step 3: API Key ---
-        self.console.print("\n[bold]Step 2: Enter the API Key[/]")
-        api_key = Prompt.ask(
-            "API Key", default="sk-dummy", password=(choice != "1" and choice != "2")
+        # --- Step 3: LLM API Key ---
+        self.console.print("\n[bold]Step 2: Enter the LLM API Key[/]")
+        llm_api_key = Prompt.ask(
+            "LLM API Key", default="sk-dummy", password=(choice != "1" and choice != "2")
         )
 
-        # --- Step 4: Save to .env ---
+        # --- Step 4: ALMA API Key ---
+        self.console.print("\n[bold]Step 3: ALMA API Key Configuration[/]")
+        self.console.print("This key is used to authenticate requests to ALMA API endpoints.")
+        
+        import secrets
+        default_alma_key = secrets.token_urlsafe(32)
+        
+        alma_api_key = Prompt.ask(
+            "🔑 Enter ALMA API Key (or press Enter to generate new random key)",
+            default=default_alma_key
+        )
+
+        # --- Step 5: Save to .env ---
         if Confirm.ask("\nSave these settings to the `.env` file?", default=True):
             dotenv_path = find_dotenv()
             if not dotenv_path:
@@ -282,8 +310,12 @@ class DashboardApp:
                 dotenv_path = find_dotenv()
 
             set_key(dotenv_path, "OPENAI_BASE_URL", base_url)
-            set_key(dotenv_path, "OPENAI_API_KEY", api_key)
+            set_key(dotenv_path, "OPENAI_API_KEY", llm_api_key)
+            set_key(dotenv_path, "ALMA_API_KEY", alma_api_key)
+            set_key(dotenv_path, "ALMA_AUTH_ENABLED", "true")
+            
             self.console.print("\n[bold green]✅ Configuration saved to .env file![/]")
+            self.console.print(f"[dim]ALMA API Key: {alma_api_key[:8]}...{alma_api_key[-8:]}[/]")
             self.console.print(
                 "Please restart the server (`python run_server.py`) to apply changes."
             )
