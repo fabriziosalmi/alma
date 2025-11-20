@@ -1,11 +1,12 @@
 """Enhanced conversational orchestrator with real LLM integration."""
 
-from typing import Any, Dict, List, Optional
 import json
-import yaml
 import re
+from typing import Any
 
-from alma.core.llm import LLMInterface, ConversationalOrchestrator
+import yaml
+
+from alma.core.llm import ConversationalOrchestrator, LLMInterface
 from alma.core.prompts import InfrastructurePrompts
 from alma.core.tools import InfrastructureTools
 
@@ -18,7 +19,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
     using Qwen3 or other LLM providers.
     """
 
-    def __init__(self, llm: Optional[LLMInterface] = None, use_llm: bool = True) -> None:
+    def __init__(self, llm: LLMInterface | None = None, use_llm: bool = True) -> None:
         """
         Initialize enhanced orchestrator.
 
@@ -31,8 +32,8 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
         self.tools = InfrastructureTools()
 
     async def execute_function_call(
-        self, user_input: str, context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, user_input: str, context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Execute function call based on user input using LLM.
 
@@ -66,7 +67,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
         except Exception as e:
             return {"success": False, "error": f"Function call execution failed: {e}"}
 
-    def get_available_tools(self) -> List[Dict[str, Any]]:
+    def get_available_tools(self) -> list[dict[str, Any]]:
         """
         Get list of available tools for function calling.
 
@@ -75,7 +76,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
         """
         return self.tools.get_available_tools()
 
-    async def parse_intent_with_llm(self, user_input: str) -> Dict[str, Any]:
+    async def parse_intent_with_llm(self, user_input: str) -> dict[str, Any]:
         """
         Parse user intent using LLM.
 
@@ -113,7 +114,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
         # Fallback
         return await self.parse_intent(user_input)
 
-    async def natural_language_to_blueprint(self, description: str) -> Dict[str, Any]:
+    async def natural_language_to_blueprint(self, description: str) -> dict[str, Any]:
         """
         Convert natural language description to blueprint using LLM.
 
@@ -157,7 +158,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
         # Fallback to rule-based
         return await super().natural_language_to_blueprint(description)
 
-    async def blueprint_to_natural_language(self, blueprint: Dict[str, Any]) -> str:
+    async def blueprint_to_natural_language(self, blueprint: dict[str, Any]) -> str:
         """
         Convert blueprint to natural language using LLM.
 
@@ -184,7 +185,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
         # Fallback
         return await super().blueprint_to_natural_language(blueprint)
 
-    async def suggest_improvements(self, blueprint: Dict[str, Any]) -> List[str]:
+    async def suggest_improvements(self, blueprint: dict[str, Any]) -> list[str]:
         """
         Suggest improvements using LLM.
 
@@ -216,7 +217,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
         # Fallback
         return await super().suggest_improvements(blueprint)
 
-    async def estimate_resources(self, workload: str, expected_load: str) -> Dict[str, Any]:
+    async def estimate_resources(self, workload: str, expected_load: str) -> dict[str, Any]:
         """
         Estimate resource requirements using LLM.
 
@@ -260,7 +261,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
             "reasoning": "Conservative default recommendations",
         }
 
-    async def security_audit(self, blueprint: Dict[str, Any]) -> List[Dict[str, str]]:
+    async def security_audit(self, blueprint: dict[str, Any]) -> list[dict[str, str]]:
         """
         Perform security audit using LLM.
 
@@ -312,7 +313,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
             print(f"LLM security audit failed: {e}")
             return [{"severity": "error", "issue": f"Audit failed: {str(e)}"}]
 
-    def _extract_json(self, text: str) -> Optional[Dict[str, Any]]:
+    def _extract_json(self, text: str) -> dict[str, Any] | None:
         """
         Extract JSON from text.
 
@@ -335,7 +336,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
 
         return None
 
-    def _extract_yaml(self, text: str) -> Optional[Dict[str, Any]]:
+    def _extract_yaml(self, text: str) -> dict[str, Any] | None:
         """
         Extract YAML from text.
 
@@ -363,7 +364,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
 
         return None
 
-    def _parse_numbered_list(self, text: str) -> List[str]:
+    def _parse_numbered_list(self, text: str) -> list[str]:
         """
         Parse numbered list from text.
 

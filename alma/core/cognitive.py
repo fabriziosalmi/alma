@@ -9,7 +9,7 @@ to provide a safer, more intuitive, and more aware conversational experience.
 
 import logging
 from enum import Enum
-from typing import Dict, Optional, Any
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -37,7 +37,7 @@ CONTEXT_KEYWORDS = {
 class FocusContext(BaseModel):
     """Tracks the user's current conversational focus."""
 
-    active_resource_id: Optional[str] = Field(
+    active_resource_id: str | None = Field(
         None, description="The specific resource being discussed."
     )
     current_topic: str = Field("general", description="The general topic of conversation.")
@@ -154,7 +154,7 @@ class AdvancedCognitiveEngine:
         self.focus = FocusContext()
         self.frustration_level = 0.0
 
-    def process_advanced(self, user_input: str, intent: str) -> Dict[str, Any]:
+    def process_advanced(self, user_input: str, intent: str) -> dict[str, Any]:
         """
         Runs the full meta-cognitive loop on a user request.
 

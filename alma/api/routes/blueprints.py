@@ -2,7 +2,6 @@
 
 import logging
 import time
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -10,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from alma.core.database import get_session
 from alma.core.state import diff_states
+from alma.engines.fake import FakeEngine
 from alma.models.blueprint import SystemBlueprintModel
 from alma.schemas.blueprint import (
     DeploymentRequest,
@@ -18,7 +18,6 @@ from alma.schemas.blueprint import (
     SystemBlueprintCreate,
     SystemBlueprintUpdate,
 )
-from alma.engines.fake import FakeEngine
 
 router = APIRouter(prefix="/blueprints", tags=["blueprints"])
 logger = logging.getLogger(__name__)
@@ -59,12 +58,12 @@ async def create_blueprint(
     )
 
 
-@router.get("/", response_model=List[SystemBlueprint])
+@router.get("/", response_model=list[SystemBlueprint])
 async def list_blueprints(
     skip: int = 0,
     limit: int = 100,
     session: AsyncSession = Depends(get_session),
-) -> List[SystemBlueprint]:
+) -> list[SystemBlueprint]:
     """
     List all system blueprints.
 
@@ -169,7 +168,7 @@ async def update_blueprint(
     for field, value in update_data.items():
         # Map metadata field to blueprint_metadata for the SQLAlchemy model
         if field == "metadata":
-            setattr(blueprint, "blueprint_metadata", value)
+            blueprint.blueprint_metadata = value
         else:
             setattr(blueprint, field, value)
 
@@ -281,4 +280,4 @@ async def deploy_blueprint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Deployment failed: {str(e)}",
-        )
+        ) from e

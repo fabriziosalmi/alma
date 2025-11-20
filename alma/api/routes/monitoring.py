@@ -1,7 +1,8 @@
 """API routes for metrics and monitoring."""
 
-from typing import Dict, Any
-from fastapi import APIRouter, Depends
+from typing import Any
+
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 from alma.middleware.metrics import get_metrics_collector, get_prometheus_metrics
@@ -15,7 +16,7 @@ class MetricsSummary(BaseModel):
 
     uptime_seconds: float
     timestamp: str
-    custom_metrics: Dict[str, Any]
+    custom_metrics: dict[str, Any]
 
 
 class RateLimitStats(BaseModel):
@@ -27,7 +28,7 @@ class RateLimitStats(BaseModel):
     active_clients: int
     requests_per_minute_limit: int
     burst_size: int
-    top_clients: list[Dict[str, Any]]
+    top_clients: list[dict[str, Any]]
 
 
 class HealthStatus(BaseModel):
@@ -36,7 +37,7 @@ class HealthStatus(BaseModel):
     status: str
     uptime: float
     version: str
-    components: Dict[str, str]
+    components: dict[str, str]
 
 
 @router.get("/metrics/summary", response_model=MetricsSummary)
@@ -114,7 +115,7 @@ async def detailed_health() -> HealthStatus:
 
 
 @router.get("/stats/overview")
-async def system_overview() -> Dict[str, Any]:
+async def system_overview() -> dict[str, Any]:
     """
     Get comprehensive system overview.
 

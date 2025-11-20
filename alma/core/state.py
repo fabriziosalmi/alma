@@ -1,12 +1,14 @@
 # alma/core/state.py
 
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from pydantic import BaseModel, Field
 
+from alma.schemas.blueprint import ResourceDefinition as Resource
+
 # Adapt to the existing schema by importing ResourceDefinition and aliasing it.
-from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition as Resource
+from alma.schemas.blueprint import SystemBlueprint
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +25,7 @@ class ResourceState(BaseModel):
         description="Unique identifier for the resource, matching the blueprint's resource name.",
     )
     type: str = Field(..., description="The type of the resource (e.g., 'compute', 'network').")
-    config: Dict[str, Any] = Field(
+    config: dict[str, Any] = Field(
         ..., description="The current configuration of the resource from the engine."
     )
 
@@ -37,14 +39,14 @@ class Plan(BaseModel):
     # Allow arbitrary types like the aliased Resource
     model_config = {"arbitrary_types_allowed": True}
 
-    to_create: List[Resource] = Field(
+    to_create: list[Resource] = Field(
         default_factory=list, description="List of resources to be created."
     )
-    to_update: List[Tuple[ResourceState, Resource]] = Field(
+    to_update: list[tuple[ResourceState, Resource]] = Field(
         default_factory=list,
         description="List of (current, desired) tuples for resources to be updated.",
     )
-    to_delete: List[ResourceState] = Field(
+    to_delete: list[ResourceState] = Field(
         default_factory=list, description="List of resources to be deleted."
     )
 
@@ -104,7 +106,7 @@ class Plan(BaseModel):
             lines.append("\n[bold red]Resources to DESTROY:[/]")
             for resource in self.to_delete:
                 lines.append(f"  [red][-][/] [bold]{resource.id}[/] ({resource.type})")
-                lines.append(f"      (Resource will be permanently deleted)")
+                lines.append("      (Resource will be permanently deleted)")
 
         summary = f"Plan: {len(self.to_create)} to create, {len(self.to_update)} to change, {len(self.to_delete)} to destroy."
         lines.append(f"\n[bold]Summary:[/bold] {summary}")
@@ -112,7 +114,7 @@ class Plan(BaseModel):
         return "\n".join(lines)
 
 
-def diff_states(desired_blueprint: SystemBlueprint, current_states: List[ResourceState]) -> Plan:
+def diff_states(desired_blueprint: SystemBlueprint, current_states: list[ResourceState]) -> Plan:
     """
     Compares the desired state (blueprint) with the current state (from an engine)
     and produces a plan of actions.
@@ -120,9 +122,9 @@ def diff_states(desired_blueprint: SystemBlueprint, current_states: List[Resourc
     logger.info("Starting state diff to calculate execution plan...")
 
     # Map desired resources by their 'name'
-    desired_resources: Dict[str, Resource] = {res.name: res for res in desired_blueprint.resources}
+    desired_resources: dict[str, Resource] = {res.name: res for res in desired_blueprint.resources}
     # Map current resources by their 'id'
-    current_resources: Dict[str, ResourceState] = {res.id: res for res in current_states}
+    current_resources: dict[str, ResourceState] = {res.id: res for res in current_states}
 
     desired_ids = set(desired_resources.keys())
     current_ids = set(current_resources.keys())
@@ -133,16 +135,16 @@ def diff_states(desired_blueprint: SystemBlueprint, current_states: List[Resourc
 
     plan = Plan()
 
-    for res_id in sorted(list(to_create_ids)):
+    for res_id in sorted(to_create_ids):
         plan.to_create.append(desired_resources[res_id])
     logger.info(f"Found {len(plan.to_create)} resources to create.")
 
-    for res_id in sorted(list(to_delete_ids)):
+    for res_id in sorted(to_delete_ids):
         plan.to_delete.append(current_resources[res_id])
     logger.info(f"Found {len(plan.to_delete)} resources to delete.")
 
     updates_found = 0
-    for res_id in sorted(list(to_check_ids)):
+    for res_id in sorted(to_check_ids):
         desired_res = desired_resources[res_id]
         current_res = current_resources[res_id]
 

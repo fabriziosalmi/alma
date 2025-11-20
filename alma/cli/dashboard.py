@@ -4,15 +4,14 @@ Includes a self-healing/setup wizard for initial configuration.
 """
 
 import asyncio
-import os
-import random
 import time
 from collections import deque
-from typing import Deque, Dict, Any, List, Optional
+from typing import Any
 
 import httpx
 import typer
 from dotenv import find_dotenv, set_key
+from pyfiglet import Figlet
 from rich.align import Align
 from rich.console import Console
 from rich.layout import Layout
@@ -23,8 +22,6 @@ from rich.prompt import Confirm, Prompt
 from rich.spinner import Spinner
 from rich.table import Table
 from rich.text import Text
-
-from pyfiglet import Figlet
 
 # --- Configuration ---
 API_BASE_URL = "http://127.0.0.1:8000/api/v1"
@@ -46,9 +43,9 @@ class DashboardApp:
         # State
         self.api_status: str = "connecting"
         self.consecutive_errors: int = 0
-        self.metrics: Dict[str, Any] = {}
-        self.iprs: List[Dict[str, Any]] = []
-        self.logs: Deque[str] = deque(maxlen=10)
+        self.metrics: dict[str, Any] = {}
+        self.iprs: list[dict[str, Any]] = []
+        self.logs: deque[str] = deque(maxlen=10)
 
         # HTTP client for real mode
         if not self.mock:
@@ -108,7 +105,7 @@ class DashboardApp:
             self.logs.append(
                 f"[dim]{time.strftime('%H:%M:%S')}[/] [red]API Error: {e.response.status_code} ({self.consecutive_errors}/{MAX_CONSECUTIVE_ERRORS})[/]"
             )
-        except Exception as e:
+        except Exception:
             self.api_status = "Disconnected"
             self.consecutive_errors += 1
             self.logs.append(
@@ -276,11 +273,11 @@ class DashboardApp:
         )
 
         # --- Step 4: Save to .env ---
-        if Confirm.ask(f"\nSave these settings to the `.env` file?", default=True):
+        if Confirm.ask("\nSave these settings to the `.env` file?", default=True):
             dotenv_path = find_dotenv()
             if not dotenv_path:
                 # Create .env if it doesn't exist
-                with open(".env", "w") as f:
+                with open(".env", "w"):
                     pass
                 dotenv_path = find_dotenv()
 

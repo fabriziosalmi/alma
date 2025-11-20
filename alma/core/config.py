@@ -1,6 +1,5 @@
 """Configuration management for ALMA."""
 
-from typing import Optional
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 

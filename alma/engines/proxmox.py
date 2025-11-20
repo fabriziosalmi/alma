@@ -1,6 +1,7 @@
 """Proxmox VE engine for managing virtual machines and containers."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 import httpx
 
 from alma.core.state import Plan, ResourceState
@@ -15,7 +16,7 @@ class ProxmoxEngine(Engine):
     Manages VMs, containers, and storage through the Proxmox API.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """
         Initialize Proxmox engine.
 
@@ -33,8 +34,8 @@ class ProxmoxEngine(Engine):
         self.password = self.config.get("password", "")
         self.verify_ssl = self.config.get("verify_ssl", True)
         self.node = self.config.get("node", "pve")
-        self.ticket: Optional[str] = None
-        self.csrf_token: Optional[str] = None
+        self.ticket: str | None = None
+        self.csrf_token: str | None = None
 
     async def _authenticate(self) -> bool:
         # ... (internal logic remains the same)
@@ -54,8 +55,8 @@ class ProxmoxEngine(Engine):
                 return False
 
     async def _api_request(
-        self, method: str, endpoint: str, data: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, data: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         # ... (internal logic remains the same)
         if not self.ticket:
             await self._authenticate()
@@ -69,7 +70,7 @@ class ProxmoxEngine(Engine):
             response.raise_for_status()
             return response.json().get("data", {})
 
-    async def get_state(self, blueprint: SystemBlueprint) -> List[ResourceState]:
+    async def get_state(self, blueprint: SystemBlueprint) -> list[ResourceState]:
         """
         Get state of all Proxmox resources for a blueprint.
 
@@ -123,7 +124,7 @@ class ProxmoxEngine(Engine):
         except Exception:
             return False
 
-    def get_supported_resource_types(self) -> List[str]:
+    def get_supported_resource_types(self) -> list[str]:
         """
         Get supported resource types.
         """

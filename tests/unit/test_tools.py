@@ -1,6 +1,7 @@
 """Tests for enhanced function calling tools."""
 
 import pytest
+
 from alma.core.tools import InfrastructureTools
 
 
@@ -262,8 +263,8 @@ def test_tool_execution_error():
 @pytest.mark.asyncio
 async def test_orchestrator_integration():
     """Test integration with orchestrator."""
-    from alma.core.llm_orchestrator import EnhancedOrchestrator
     from alma.core.llm import MockLLM
+    from alma.core.llm_orchestrator import EnhancedOrchestrator
 
     llm = MockLLM()
     orchestrator = EnhancedOrchestrator(llm=llm, use_llm=True)

@@ -1,10 +1,10 @@
 """Grafana dashboard configuration for ALMA metrics."""
 
 import json
-from typing import Dict, Any
+from typing import Any
 
 
-def generate_grafana_dashboard() -> Dict[str, Any]:
+def generate_grafana_dashboard() -> dict[str, Any]:
     """
     Generate Grafana dashboard JSON for ALMA.
 

@@ -2,8 +2,7 @@
 Test for SystemBlueprint schema
 """
 
-import pytest
-from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
+from alma.schemas.blueprint import ResourceDefinition, SystemBlueprint
 
 
 def test_system_blueprint_creation():

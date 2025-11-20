@@ -1,13 +1,11 @@
 """End-to-end tests for complete deployment workflow."""
 
+
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-import yaml
-from pathlib import Path
 
 from alma.api.main import app
-from alma.engines.fake import FakeEngine
 
 
 @pytest.fixture

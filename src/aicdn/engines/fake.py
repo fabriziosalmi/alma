@@ -3,8 +3,9 @@ FakeEngine - Mock engine for testing
 """
 
 import asyncio
-from typing import Dict, Any
-from aicdn.engines.base import BaseEngine, DeployResult, DeployStatus, ActionStatus, ResourceStatus
+from typing import Any
+
+from aicdn.engines.base import ActionStatus, BaseEngine, DeployResult, DeployStatus, ResourceStatus
 
 
 class FakeEngine(BaseEngine):
@@ -15,11 +16,11 @@ class FakeEngine(BaseEngine):
     Useful for testing the controller logic and API.
     """
 
-    def __init__(self, config: Dict[str, Any] | None = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         super().__init__(config)
-        self._deployed_resources: Dict[str, Dict[str, Any]] = {}
+        self._deployed_resources: dict[str, dict[str, Any]] = {}
 
-    async def deploy(self, resource_config: Dict[str, Any]) -> DeployResult:
+    async def deploy(self, resource_config: dict[str, Any]) -> DeployResult:
         """
         Simulate a deployment with a short delay
         """
@@ -42,7 +43,7 @@ class FakeEngine(BaseEngine):
             metadata={"engine": "fake", "resource_name": resource_name},
         )
 
-    async def destroy(self, resource_config: Dict[str, Any]) -> ActionStatus:
+    async def destroy(self, resource_config: dict[str, Any]) -> ActionStatus:
         """
         Simulate resource destruction
         """
@@ -59,7 +60,7 @@ class FakeEngine(BaseEngine):
 
         return ActionStatus(success=False, message=f"Resource {resource_name} not found")
 
-    async def get_status(self, resource_config: Dict[str, Any]) -> ResourceStatus:
+    async def get_status(self, resource_config: dict[str, Any]) -> ResourceStatus:
         """
         Get status of a fake resource
         """
@@ -76,7 +77,7 @@ class FakeEngine(BaseEngine):
 
         return ResourceStatus(state="not_found", ready=False, metadata={"engine": "fake"})
 
-    async def dry_run(self, resource_config: Dict[str, Any]) -> Dict[str, Any]:
+    async def dry_run(self, resource_config: dict[str, Any]) -> dict[str, Any]:
         """
         Show what would be deployed
         """

@@ -1,10 +1,11 @@
 """API routes for conversational interface."""
 
-from typing import Dict, Any
-from fastapi import APIRouter, HTTPException, Depends
+import json
+from typing import Any
+
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-import json
 
 from alma.core.llm_orchestrator import EnhancedOrchestrator
 from alma.core.llm_service import get_orchestrator
@@ -16,7 +17,7 @@ class ConversationRequest(BaseModel):
     """Request for conversational interaction."""
 
     message: str
-    context: Dict[str, Any] = {}
+    context: dict[str, Any] = {}
 
 
 class ConversationResponse(BaseModel):
@@ -25,7 +26,7 @@ class ConversationResponse(BaseModel):
     intent: str
     confidence: float
     response: str
-    blueprint: Dict[str, Any] | None = None
+    blueprint: dict[str, Any] | None = None
 
 
 class BlueprintGenerationRequest(BaseModel):
@@ -37,13 +38,13 @@ class BlueprintGenerationRequest(BaseModel):
 class BlueprintDescriptionRequest(BaseModel):
     """Request to describe a blueprint."""
 
-    blueprint: Dict[str, Any]
+    blueprint: dict[str, Any]
 
 
 class ImprovementRequest(BaseModel):
     """Request for blueprint improvements."""
 
-    blueprint: Dict[str, Any]
+    blueprint: dict[str, Any]
 
 
 class ImprovementResponse(BaseModel):
@@ -62,7 +63,7 @@ class ResourceSizingRequest(BaseModel):
 class SecurityAuditRequest(BaseModel):
     """Request for security audit."""
 
-    blueprint: Dict[str, Any]
+    blueprint: dict[str, Any]
 
 
 @router.post("/chat", response_model=ConversationResponse)
@@ -106,11 +107,11 @@ async def chat(
     )
 
 
-@router.post("/generate-blueprint", response_model=Dict[str, Any])
+@router.post("/generate-blueprint", response_model=dict[str, Any])
 async def generate_blueprint(
     request: BlueprintGenerationRequest,
     orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Generate a blueprint from natural language description.
 
@@ -125,11 +126,11 @@ async def generate_blueprint(
     return blueprint
 
 
-@router.post("/describe-blueprint", response_model=Dict[str, str])
+@router.post("/describe-blueprint", response_model=dict[str, str])
 async def describe_blueprint(
     request: BlueprintDescriptionRequest,
     orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     Convert blueprint to natural language description.
 
@@ -166,7 +167,7 @@ async def suggest_improvements(
 @router.post("/clear-history")
 async def clear_history(
     orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     Clear conversation history.
 
@@ -180,11 +181,11 @@ async def clear_history(
     return {"message": "Conversation history cleared"}
 
 
-@router.post("/resource-sizing", response_model=Dict[str, Any])
+@router.post("/resource-sizing", response_model=dict[str, Any])
 async def resource_sizing(
     request: ResourceSizingRequest,
     orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get AI-powered resource sizing recommendations.
 
@@ -199,11 +200,11 @@ async def resource_sizing(
     return sizing
 
 
-@router.post("/security-audit", response_model=Dict[str, Any])
+@router.post("/security-audit", response_model=dict[str, Any])
 async def security_audit(
     request: SecurityAuditRequest,
     orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Perform AI-powered security audit of a blueprint.
 
@@ -338,7 +339,7 @@ async def generate_blueprint_stream(
                         blueprint = yaml.safe_load(full_response)
 
                     yield f"data: {json.dumps({'type': 'blueprint', 'data': blueprint})}\\n\\n"
-                except:
+                except Exception:
                     yield f"data: {json.dumps({'type': 'warning', 'data': 'Could not parse as YAML'})}\\n\\n"
 
             except Exception as e:

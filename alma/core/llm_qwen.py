@@ -1,13 +1,13 @@
 """Qwen3 LLM implementation for infrastructure orchestration."""
 
-import json
 import asyncio
-from typing import Any, Dict, List, Optional
-from pathlib import Path
+import json
+from typing import Any
+
 import torch
 
-from alma.core.llm import LLMInterface
 from alma.core.config import get_settings
+from alma.core.llm import LLMInterface
 
 settings = get_settings()
 
@@ -23,7 +23,7 @@ class Qwen3LLM(LLMInterface):
     def __init__(
         self,
         model_name: str = "Qwen/Qwen2.5-0.5B-Instruct",
-        device: Optional[str] = None,
+        device: str | None = None,
         max_tokens: int = 512,
     ) -> None:
         """
@@ -87,11 +87,11 @@ class Qwen3LLM(LLMInterface):
             raise ImportError(
                 "transformers and torch are required for Qwen3LLM. "
                 "Install with: pip install transformers torch"
-            )
+            ) from None
         except Exception as e:
-            raise RuntimeError(f"Failed to initialize Qwen3 model: {e}")
+            raise RuntimeError(f"Failed to initialize Qwen3 model: {e}") from e
 
-    async def stream_generate(self, prompt: str, context: Optional[Dict[str, Any]] = None):
+    async def stream_generate(self, prompt: str, context: dict[str, Any] | None = None):
         """
         Stream text generation from prompt.
 
@@ -123,8 +123,9 @@ class Qwen3LLM(LLMInterface):
             inputs = self.tokenizer([text], return_tensors="pt").to(self.device)
 
             # Generate with streaming
-            from transformers import TextIteratorStreamer
             from threading import Thread
+
+            from transformers import TextIteratorStreamer
 
             streamer = TextIteratorStreamer(
                 self.tokenizer, skip_prompt=True, skip_special_tokens=True
@@ -142,8 +143,7 @@ class Qwen3LLM(LLMInterface):
             thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
             thread.start()
 
-            for text_chunk in streamer:
-                yield text_chunk
+            yield from streamer
 
             thread.join()
 
@@ -151,7 +151,7 @@ class Qwen3LLM(LLMInterface):
         for chunk in await loop.run_in_executor(None, lambda: list(_stream())):
             yield chunk
 
-    async def generate(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> str:
+    async def generate(self, prompt: str, context: dict[str, Any] | None = None) -> str:
         """
         Generate text from prompt.
 
@@ -227,7 +227,7 @@ class Qwen3LLM(LLMInterface):
 
         return await loop.run_in_executor(None, _generate)
 
-    async def function_call(self, prompt: str, functions: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def function_call(self, prompt: str, functions: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Generate function call from prompt.
 
@@ -310,7 +310,7 @@ Guidelines:
 - Suggest redundancy and high availability when appropriate
 - Explain trade-offs clearly"""
 
-    def _format_functions(self, functions: List[Dict[str, Any]]) -> str:
+    def _format_functions(self, functions: list[dict[str, Any]]) -> str:
         """
         Format function definitions for prompt.
 
@@ -347,7 +347,7 @@ Guidelines:
 
 
 # Singleton instance
-_qwen_instance: Optional[Qwen3LLM] = None
+_qwen_instance: Qwen3LLM | None = None
 
 
 async def get_qwen_llm() -> Qwen3LLM:

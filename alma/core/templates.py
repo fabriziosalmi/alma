@@ -1,7 +1,7 @@
 """Blueprint templates library for common infrastructure patterns."""
 
-from typing import Dict, Any, List, Optional
 from enum import Enum
+from typing import Any
 
 
 class TemplateCategory(str, Enum):
@@ -25,7 +25,7 @@ class BlueprintTemplates:
     """
 
     @staticmethod
-    def get_all_templates() -> List[Dict[str, Any]]:
+    def get_all_templates() -> list[dict[str, Any]]:
         """
         Get list of all available templates.
 
@@ -116,7 +116,7 @@ class BlueprintTemplates:
         ]
 
     @staticmethod
-    def get_template(template_id: str) -> Dict[str, Any]:
+    def get_template(template_id: str) -> dict[str, Any]:
         """
         Get specific template blueprint.
 
@@ -157,7 +157,7 @@ class BlueprintTemplates:
         return templates[actual_template_id]
 
     @staticmethod
-    def list_templates(category: Optional[TemplateCategory] = None) -> List[Dict[str, Any]]:
+    def list_templates(category: TemplateCategory | None = None) -> list[dict[str, Any]]:
         """
         List all available templates, optionally filtered by category.
 
@@ -175,7 +175,7 @@ class BlueprintTemplates:
         return templates
 
     @staticmethod
-    def customize_template(template_id: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    def customize_template(template_id: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """
         Customize a template with provided parameters.
 
@@ -228,7 +228,7 @@ class BlueprintTemplates:
         return blueprint
 
     @staticmethod
-    def _simple_web_app() -> Dict[str, Any]:
+    def _simple_web_app() -> dict[str, Any]:
         """Simple web application template."""
         return {
             "version": "1.0",
@@ -271,7 +271,7 @@ class BlueprintTemplates:
         }
 
     @staticmethod
-    def _ha_web_app() -> Dict[str, Any]:
+    def _ha_web_app() -> dict[str, Any]:
         """High-availability web application template."""
         return {
             "version": "1.0",
@@ -356,7 +356,7 @@ class BlueprintTemplates:
         }
 
     @staticmethod
-    def _microservices_k8s() -> Dict[str, Any]:
+    def _microservices_k8s() -> dict[str, Any]:
         """Kubernetes microservices platform template."""
         return {
             "version": "1.0",
@@ -435,7 +435,7 @@ class BlueprintTemplates:
         }
 
     @staticmethod
-    def _postgres_ha() -> Dict[str, Any]:
+    def _postgres_ha() -> dict[str, Any]:
         """PostgreSQL HA cluster template."""
         return {
             "version": "1.0",
@@ -501,7 +501,7 @@ class BlueprintTemplates:
         }
 
     @staticmethod
-    def _data_pipeline() -> Dict[str, Any]:
+    def _data_pipeline() -> dict[str, Any]:
         """Data processing pipeline template."""
         return {
             "version": "1.0",
@@ -552,7 +552,7 @@ class BlueprintTemplates:
         }
 
     @staticmethod
-    def _ml_training() -> Dict[str, Any]:
+    def _ml_training() -> dict[str, Any]:
         """ML training infrastructure template."""
         return {
             "version": "1.0",
@@ -604,7 +604,7 @@ class BlueprintTemplates:
         }
 
     @staticmethod
-    def _zero_trust_network() -> Dict[str, Any]:
+    def _zero_trust_network() -> dict[str, Any]:
         """Zero-trust network template."""
         return {
             "version": "1.0",
@@ -648,7 +648,7 @@ class BlueprintTemplates:
         }
 
     @staticmethod
-    def _observability_stack() -> Dict[str, Any]:
+    def _observability_stack() -> dict[str, Any]:
         """Full observability stack template."""
         return {
             "version": "1.0",
@@ -702,7 +702,7 @@ class BlueprintTemplates:
         }
 
     @staticmethod
-    def _api_gateway() -> Dict[str, Any]:
+    def _api_gateway() -> dict[str, Any]:
         """API gateway platform template."""
         return {
             "version": "1.0",
@@ -740,7 +740,7 @@ class BlueprintTemplates:
         }
 
     @staticmethod
-    def _redis_cluster() -> Dict[str, Any]:
+    def _redis_cluster() -> dict[str, Any]:
         """Redis high-performance cache template."""
         return {
             "version": "1.0",

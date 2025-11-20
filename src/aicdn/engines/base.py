@@ -3,9 +3,10 @@ Base Engine interface - Abstract Base Class for all engines
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
-from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Any
+
+from pydantic import BaseModel, Field
 
 
 class DeployStatus(str, Enum):
@@ -22,18 +23,18 @@ class DeployResult(BaseModel):
     """Result of a deploy operation"""
 
     status: DeployStatus
-    endpoint: Optional[str] = Field(None, description="Endpoint URL if applicable")
-    message: Optional[str] = Field(None, description="Status message")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Provider-specific metadata")
-    error: Optional[str] = Field(None, description="Error message if failed")
+    endpoint: str | None = Field(None, description="Endpoint URL if applicable")
+    message: str | None = Field(None, description="Status message")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Provider-specific metadata")
+    error: str | None = Field(None, description="Error message if failed")
 
 
 class ActionStatus(BaseModel):
     """Status of generic actions (destroy, update, etc.)"""
 
     success: bool
-    message: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    message: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class ResourceStatus(BaseModel):
@@ -41,8 +42,8 @@ class ResourceStatus(BaseModel):
 
     state: str
     ready: bool = False
-    endpoint: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    endpoint: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class BaseEngine(ABC):
@@ -53,7 +54,7 @@ class BaseEngine(ABC):
     and implement all abstract methods.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """
         Initialize the engine with configuration
 
@@ -63,7 +64,7 @@ class BaseEngine(ABC):
         self.config = config or {}
 
     @abstractmethod
-    async def deploy(self, resource_config: Dict[str, Any]) -> DeployResult:
+    async def deploy(self, resource_config: dict[str, Any]) -> DeployResult:
         """
         Deploy a resource based on its configuration
 
@@ -76,7 +77,7 @@ class BaseEngine(ABC):
         pass
 
     @abstractmethod
-    async def destroy(self, resource_config: Dict[str, Any]) -> ActionStatus:
+    async def destroy(self, resource_config: dict[str, Any]) -> ActionStatus:
         """
         Destroy a deployed resource
 
@@ -89,7 +90,7 @@ class BaseEngine(ABC):
         pass
 
     @abstractmethod
-    async def get_status(self, resource_config: Dict[str, Any]) -> ResourceStatus:
+    async def get_status(self, resource_config: dict[str, Any]) -> ResourceStatus:
         """
         Get the current status of a resource
 
@@ -102,7 +103,7 @@ class BaseEngine(ABC):
         pass
 
     @abstractmethod
-    async def dry_run(self, resource_config: Dict[str, Any]) -> Dict[str, Any]:
+    async def dry_run(self, resource_config: dict[str, Any]) -> dict[str, Any]:
         """
         Perform a dry run to show what would be changed
 
@@ -114,7 +115,7 @@ class BaseEngine(ABC):
         """
         pass
 
-    def validate_config(self, resource_config: Dict[str, Any]) -> bool:
+    def validate_config(self, resource_config: dict[str, Any]) -> bool:
         """
         Validate resource configuration (can be overridden)
 

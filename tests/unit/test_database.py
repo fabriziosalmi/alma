@@ -2,7 +2,8 @@
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
-from alma.core.database import get_session, init_db, close_db, engine
+
+from alma.core.database import close_db, engine, get_session, init_db
 
 
 class TestDatabase:

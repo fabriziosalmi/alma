@@ -1,14 +1,12 @@
 """Extended tests for API routes with mocked dependencies."""
 
+from collections.abc import AsyncGenerator
+from unittest.mock import Mock, patch
+
 import pytest
-from typing import AsyncGenerator, Dict, Any
-from httpx import AsyncClient, ASGITransport
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-from fastapi import FastAPI
-from sqlalchemy.ext.asyncio import AsyncSession
+from httpx import ASGITransport, AsyncClient
 
 from alma.api.main import app
-from alma.core.llm_orchestrator import EnhancedOrchestrator
 from alma.core.database import get_session
 
 

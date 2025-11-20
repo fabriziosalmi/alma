@@ -1,6 +1,5 @@
 """Tests for configuration module."""
 
-import os
 from alma.core.config import Settings, get_settings
 
 

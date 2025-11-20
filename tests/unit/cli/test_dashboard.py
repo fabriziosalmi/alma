@@ -2,14 +2,12 @@
 Unit tests for the DashboardApp data logic and recovery wizard.
 """
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch, ANY
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
-from rich.layout import Layout
 
-from alma.cli.dashboard import DashboardApp, MAX_CONSECUTIVE_ERRORS
+from alma.cli.dashboard import MAX_CONSECUTIVE_ERRORS, DashboardApp
 
 # --- Fixtures ---
 

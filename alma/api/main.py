@@ -1,17 +1,17 @@
 """FastAPI application main module."""
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from alma.api.routes import blueprints, conversation, ipr, monitoring, templates, tools
 from alma.core.config import get_settings
-from alma.core.database import init_db, close_db
+from alma.core.database import close_db, init_db
 from alma.core.llm_service import initialize_llm, shutdown_llm, warmup_llm
-from alma.api.routes import blueprints, conversation, ipr, tools, templates, monitoring
-from alma.middleware.rate_limit import rate_limit_middleware
 from alma.middleware.metrics import metrics_middleware
+from alma.middleware.rate_limit import rate_limit_middleware
 
 settings = get_settings()
 

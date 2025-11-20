@@ -5,15 +5,14 @@ Unit tests for the AdvancedCognitiveEngine and its components.
 import unittest
 
 from alma.core.cognitive import (
-    AdvancedCognitiveEngine,
-    FocusContext,
-    RiskProfile,
-    CommandRiskLevel,
-    UserEmotionalStability,
-    detect_context_shift,
-    assess_risk,
-    select_persona,
     SAFETY_OVERRIDE,
+    AdvancedCognitiveEngine,
+    CommandRiskLevel,
+    FocusContext,
+    UserEmotionalStability,
+    assess_risk,
+    detect_context_shift,
+    select_persona,
 )
 
 

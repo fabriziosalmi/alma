@@ -1,7 +1,7 @@
 """Fake engine for testing and development."""
 
 import asyncio
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from alma.core.state import Plan, ResourceState
 from alma.engines.base import Engine
@@ -16,9 +16,9 @@ class FakeEngine(Engine):
     """
 
     # Class-level storage to persist state across instances for testing purposes
-    _resources: Dict[str, ResourceState] = {}
+    _resources: dict[str, ResourceState] = {}
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize the fake engine."""
         super().__init__(config)
         # Point instance-level resources to the class-level storage
@@ -30,7 +30,7 @@ class FakeEngine(Engine):
         """Clears all resources from the fake engine's state."""
         cls._resources.clear()
 
-    async def get_state(self, blueprint: SystemBlueprint) -> List[ResourceState]:
+    async def get_state(self, blueprint: SystemBlueprint) -> list[ResourceState]:
         """
         Get simulated state of all resources for a given blueprint.
 
@@ -58,7 +58,7 @@ class FakeEngine(Engine):
             self.resources[resource_def.name] = state
 
         # Simulate update
-        for current_state, resource_def in plan.to_update:
+        for _current_state, resource_def in plan.to_update:
             await asyncio.sleep(0.02)
             state = ResourceState(
                 id=resource_def.name,
@@ -80,7 +80,7 @@ class FakeEngine(Engine):
 
         return
 
-    def get_supported_resource_types(self) -> List[str]:
+    def get_supported_resource_types(self) -> list[str]:
         """
 
         Returns:

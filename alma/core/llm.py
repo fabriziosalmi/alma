@@ -1,15 +1,14 @@
 """LLM integration for conversational infrastructure management."""
 
-from typing import Any, Dict, List, Optional
-import json
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class LLMInterface(ABC):
     """Abstract interface for LLM providers."""
 
     @abstractmethod
-    async def generate(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> str:
+    async def generate(self, prompt: str, context: dict[str, Any] | None = None) -> str:
         """
         Generate text from prompt.
 
@@ -23,7 +22,7 @@ class LLMInterface(ABC):
         pass
 
     @abstractmethod
-    async def function_call(self, prompt: str, functions: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def function_call(self, prompt: str, functions: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Generate function call from prompt.
 
@@ -36,7 +35,7 @@ class LLMInterface(ABC):
         """
         pass
 
-    async def stream_generate(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> Any:
+    async def stream_generate(self, prompt: str, context: dict[str, Any] | None = None) -> Any:
         """
         Stream text generation from prompt (optional, falls back to generate).
 
@@ -60,7 +59,7 @@ class ConversationalOrchestrator:
     and operations.
     """
 
-    def __init__(self, llm: Optional[LLMInterface] = None) -> None:
+    def __init__(self, llm: LLMInterface | None = None) -> None:
         """
         Initialize orchestrator.
 
@@ -68,7 +67,7 @@ class ConversationalOrchestrator:
             llm: LLM interface instance
         """
         self.llm = llm
-        self.conversation_history: List[Dict[str, str]] = []
+        self.conversation_history: list[dict[str, str]] = []
 
     def add_to_history(self, role: str, content: str) -> None:
         """
@@ -80,7 +79,7 @@ class ConversationalOrchestrator:
         """
         self.conversation_history.append({"role": role, "content": content})
 
-    async def parse_intent(self, user_input: str) -> Dict[str, Any]:
+    async def parse_intent(self, user_input: str) -> dict[str, Any]:
         """
         Parse user intent from natural language.
 
@@ -139,7 +138,7 @@ class ConversationalOrchestrator:
             "raw_input": user_input,
         }
 
-    async def natural_language_to_blueprint(self, description: str) -> Dict[str, Any]:
+    async def natural_language_to_blueprint(self, description: str) -> dict[str, Any]:
         """
         Convert natural language description to blueprint.
 
@@ -205,7 +204,7 @@ class ConversationalOrchestrator:
 
         return blueprint
 
-    async def blueprint_to_natural_language(self, blueprint: Dict[str, Any]) -> str:
+    async def blueprint_to_natural_language(self, blueprint: dict[str, Any]) -> str:
         """
         Convert blueprint to natural language description.
 
@@ -242,7 +241,7 @@ class ConversationalOrchestrator:
 
         return "\n".join(description_parts)
 
-    async def suggest_improvements(self, blueprint: Dict[str, Any]) -> List[str]:
+    async def suggest_improvements(self, blueprint: dict[str, Any]) -> list[str]:
         """
         Suggest improvements to a blueprint.
 
@@ -313,11 +312,11 @@ class ConversationalOrchestrator:
 class MockLLM(LLMInterface):
     """Mock LLM implementation for testing."""
 
-    async def generate(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> str:
+    async def generate(self, prompt: str, context: dict[str, Any] | None = None) -> str:
         """Generate mock response."""
         return f"Mock response to: {prompt}"
 
-    async def function_call(self, prompt: str, functions: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def function_call(self, prompt: str, functions: list[dict[str, Any]]) -> dict[str, Any]:
         """Generate mock function call."""
         if functions:
             return {

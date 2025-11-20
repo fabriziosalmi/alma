@@ -1,13 +1,13 @@
 """Prometheus metrics collection for ALMA."""
 
-from typing import Dict, Any, Optional
-from datetime import datetime
 import time
 from collections import defaultdict
-from prometheus_client import Counter, Histogram, Gauge, Info, generate_latest, CONTENT_TYPE_LATEST
+from datetime import datetime
+from typing import Any
+
 from fastapi import Request, Response
 from fastapi.responses import Response as FastAPIResponse
-
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, Info, generate_latest
 
 # Request metrics
 http_requests_total = Counter(
@@ -106,7 +106,7 @@ class MetricsCollector:
     def __init__(self):
         """Initialize metrics collector."""
         self.start_time = time.time()
-        self.custom_metrics: Dict[str, Any] = defaultdict(int)
+        self.custom_metrics: dict[str, Any] = defaultdict(int)
 
     def record_http_request(
         self,
@@ -240,7 +240,7 @@ class MetricsCollector:
         """
         return time.time() - self.start_time
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """
         Get metrics summary.
 
@@ -255,7 +255,7 @@ class MetricsCollector:
 
 
 # Global metrics collector instance
-_metrics_collector: Optional[MetricsCollector] = None
+_metrics_collector: MetricsCollector | None = None
 
 
 def get_metrics_collector() -> MetricsCollector:
@@ -300,7 +300,7 @@ async def metrics_middleware(request: Request, call_next) -> Response:
     if request.headers.get("content-length"):
         try:
             request_size = int(request.headers["content-length"])
-        except:
+        except (KeyError, ValueError):
             pass
 
     # Process request
@@ -314,7 +314,7 @@ async def metrics_middleware(request: Request, call_next) -> Response:
     if hasattr(response, "headers") and response.headers.get("content-length"):
         try:
             response_size = int(response.headers["content-length"])
-        except:
+        except (KeyError, ValueError):
             pass
 
     # Simplify endpoint for metrics (remove IDs)

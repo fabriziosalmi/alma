@@ -3,8 +3,9 @@ Integration test for API endpoints
 """
 
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from alma.api.main import app
 
 

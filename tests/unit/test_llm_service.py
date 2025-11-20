@@ -1,16 +1,18 @@
 """Tests for LLM service to boost coverage."""
 
-import pytest
 import asyncio
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
 from alma.core import llm_service
 from alma.core.llm_service import (
     _get_lock,
-    initialize_llm,
     get_llm,
     get_orchestrator,
-    shutdown_llm,
+    initialize_llm,
     is_llm_enabled,
+    shutdown_llm,
     warmup_llm,
 )
 

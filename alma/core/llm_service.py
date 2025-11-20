@@ -1,18 +1,17 @@
 """LLM service initialization and management."""
 
-from typing import Optional
 import asyncio
 
+from alma.core.config import get_settings
 from alma.core.llm import LLMInterface, MockLLM
 from alma.core.llm_orchestrator import EnhancedOrchestrator
-from alma.core.config import get_settings
 
 settings = get_settings()
 
 # Global instances
-_llm_instance: Optional[LLMInterface] = None
-_orchestrator_instance: Optional[EnhancedOrchestrator] = None
-_initialization_lock: Optional[asyncio.Lock] = None
+_llm_instance: LLMInterface | None = None
+_orchestrator_instance: EnhancedOrchestrator | None = None
+_initialization_lock: asyncio.Lock | None = None
 
 
 def _get_lock() -> asyncio.Lock:

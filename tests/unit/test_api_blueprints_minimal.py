@@ -1,9 +1,10 @@
 """Minimal blueprint API routes tests for coverage boost."""
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import MagicMock
+
+from httpx import ASGITransport, AsyncClient
+
 from alma.api.main import app
 from alma.core.database import get_session
 from alma.models.blueprint import SystemBlueprintModel

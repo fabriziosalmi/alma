@@ -1,9 +1,9 @@
 """SQLAlchemy models for System Blueprints."""
 
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
-from sqlalchemy import Column, Integer, String, DateTime, JSON, Text
+from sqlalchemy import JSON, Column, DateTime, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -27,7 +27,7 @@ class SystemBlueprintModel(Base):
         """String representation."""
         return f"<SystemBlueprint(id={self.id}, name={self.name}, version={self.version})>"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert model to dictionary."""
         return {
             "id": self.id,

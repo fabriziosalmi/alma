@@ -4,7 +4,7 @@ import unittest
 from datetime import datetime
 
 from alma.core.exporters.terraform import TerraformExporter
-from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
+from alma.schemas.blueprint import ResourceDefinition, SystemBlueprint
 
 
 class TestTerraformExporter(unittest.TestCase):

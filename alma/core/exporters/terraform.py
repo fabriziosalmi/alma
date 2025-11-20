@@ -4,11 +4,11 @@ Terraform HCL code exporter.
 
 import logging
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
 
-from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
+from alma.schemas.blueprint import SystemBlueprint
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class TerraformExporter:
             loader=FileSystemLoader(str(TEMPLATE_DIR)), trim_blocks=True, lstrip_blocks=True
         )
 
-    def export(self) -> Dict[str, str]:
+    def export(self) -> dict[str, str]:
         """
         Renders the blueprint into a dictionary of Terraform file contents.
 
@@ -53,7 +53,7 @@ class TerraformExporter:
             # provider.tf and outputs.tf could be rendered here as well
         }
 
-    def _process_resources(self) -> List[Dict[str, Any]]:
+    def _process_resources(self) -> list[dict[str, Any]]:
         """
         Processes blueprint resources into a format suitable for the Jinja2 template.
         """

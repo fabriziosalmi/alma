@@ -1,7 +1,7 @@
 """Base engine interface for infrastructure providers."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List
+from typing import Any
 
 # These are now the primary models for state and planning.
 from alma.core.state import Plan, ResourceState
@@ -16,7 +16,7 @@ class Engine(ABC):
     actions on a specific infrastructure provider (e.g., Kubernetes, Proxmox).
     """
 
-    def __init__(self, config: Dict[str, Any] | None = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """
         Initialize the engine.
 
@@ -48,7 +48,7 @@ class Engine(ABC):
         pass
 
     @abstractmethod
-    async def get_state(self, blueprint: SystemBlueprint) -> List[ResourceState]:
+    async def get_state(self, blueprint: SystemBlueprint) -> list[ResourceState]:
         """
         Get the current state of all resources managed by a blueprint.
 
@@ -69,7 +69,7 @@ class Engine(ABC):
         """
         return True
 
-    def get_supported_resource_types(self) -> List[str]:
+    def get_supported_resource_types(self) -> list[str]:
         """
         Get list of resource types supported by this engine.
 

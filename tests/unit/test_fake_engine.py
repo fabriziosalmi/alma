@@ -1,9 +1,10 @@
 """Unit tests for FakeEngine."""
 
 import pytest
-from alma.core.state import Plan, ResourceState
+
+from alma.core.state import Plan
 from alma.engines.fake import FakeEngine
-from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
+from alma.schemas.blueprint import ResourceDefinition, SystemBlueprint
 
 
 @pytest.fixture(autouse=True)

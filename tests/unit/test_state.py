@@ -1,16 +1,13 @@
 # tests/unit/test_state.py
 
 import unittest
-from typing import List, Dict, Any
 from datetime import datetime
 
-from pydantic import BaseModel, Field
-
 # Module to be tested
-from alma.core.state import diff_states, ResourceState
+from alma.core.state import ResourceState, diff_states
 
 # The real schemas that our state module is now designed to work with
-from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
+from alma.schemas.blueprint import ResourceDefinition, SystemBlueprint
 
 
 class TestStateDiffer(unittest.TestCase):

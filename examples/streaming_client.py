@@ -1,8 +1,9 @@
 """Client example for streaming API responses."""
 
 import asyncio
-import httpx
 import json
+
+import httpx
 
 
 async def stream_chat():
@@ -129,7 +130,7 @@ async def compare_streaming_vs_blocking():
                         event = json.loads(line[6:])
                         if event.get("type") == "done":
                             break
-                    except:
+                    except json.JSONDecodeError:
                         pass
 
     streaming_time = time.time() - start

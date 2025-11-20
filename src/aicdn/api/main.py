@@ -2,13 +2,13 @@
 FastAPI application and endpoints
 """
 
-from fastapi import FastAPI, HTTPException, status
-from fastapi.responses import JSONResponse
-from typing import List, Optional
-from aicdn.models.blueprint import SystemBlueprint
-from aicdn.engines.fake import FakeEngine
 import uuid
 from datetime import datetime
+
+from fastapi import FastAPI, HTTPException, status
+
+from aicdn.engines.fake import FakeEngine
+from aicdn.models.blueprint import SystemBlueprint
 
 # Initialize FastAPI app
 app = FastAPI(

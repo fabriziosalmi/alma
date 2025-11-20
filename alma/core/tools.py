@@ -1,8 +1,7 @@
 """Function calling tools for LLM infrastructure operations."""
 
-from typing import Any, Dict, List, Optional
 from datetime import datetime
-import json
+from typing import Any
 
 
 class InfrastructureTools:
@@ -14,7 +13,7 @@ class InfrastructureTools:
     """
 
     @staticmethod
-    def get_available_tools() -> List[Dict[str, Any]]:
+    def get_available_tools() -> list[dict[str, Any]]:
         """
         Get list of available tools for LLM function calling.
 
@@ -321,8 +320,8 @@ class InfrastructureTools:
 
     @staticmethod
     def execute_tool(
-        tool_name: str, arguments: Dict[str, Any], context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        tool_name: str, arguments: dict[str, Any], context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Execute a tool with given arguments.
 
@@ -378,7 +377,7 @@ class InfrastructureTools:
     # Tool implementations
 
     @staticmethod
-    def _create_blueprint(args: Dict[str, Any], ctx: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _create_blueprint(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Create blueprint implementation."""
         return {
             "blueprint": {
@@ -391,7 +390,7 @@ class InfrastructureTools:
         }
 
     @staticmethod
-    def _validate_blueprint(args: Dict[str, Any], ctx: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _validate_blueprint(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Validate blueprint implementation."""
         blueprint = args.get("blueprint", {})
         strict = args.get("strict", False)
@@ -425,7 +424,7 @@ class InfrastructureTools:
         }
 
     @staticmethod
-    def _estimate_resources(args: Dict[str, Any], ctx: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _estimate_resources(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Estimate resources implementation."""
         workload = args.get("workload_type")
         load = args.get("expected_load")
@@ -460,9 +459,9 @@ class InfrastructureTools:
         }
 
     @staticmethod
-    def _optimize_costs(args: Dict[str, Any], ctx: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _optimize_costs(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Cost optimization implementation."""
-        blueprint = args.get("blueprint", {})
+        args.get("blueprint", {})
         provider = args.get("provider", "aws")
         goal = args.get("optimization_goal", "balanced")
 
@@ -483,11 +482,11 @@ class InfrastructureTools:
         }
 
     @staticmethod
-    def _security_audit(args: Dict[str, Any], ctx: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _security_audit(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Security audit implementation."""
-        blueprint = args.get("blueprint", {})
+        args.get("blueprint", {})
         framework = args.get("compliance_framework", "general")
-        threshold = args.get("severity_threshold", "medium")
+        args.get("severity_threshold", "medium")
 
         findings = [
             {
@@ -519,10 +518,10 @@ class InfrastructureTools:
 
     @staticmethod
     def _generate_deployment_plan(
-        args: Dict[str, Any], ctx: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        args: dict[str, Any], ctx: dict[str, Any] | None
+    ) -> dict[str, Any]:
         """Generate deployment plan implementation."""
-        blueprint = args.get("blueprint", {})
+        args.get("blueprint", {})
         strategy = args.get("strategy", "rolling")
         rollback = args.get("rollback_enabled", True)
 
@@ -545,11 +544,11 @@ class InfrastructureTools:
         }
 
     @staticmethod
-    def _troubleshoot_issue(args: Dict[str, Any], ctx: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _troubleshoot_issue(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Troubleshoot implementation."""
-        issue = args.get("issue_description")
-        resources = args.get("affected_resources", [])
-        symptoms = args.get("symptoms", [])
+        args.get("issue_description")
+        args.get("affected_resources", [])
+        args.get("symptoms", [])
 
         return {
             "diagnosis": "Possible resource exhaustion or network connectivity issue",
@@ -569,7 +568,7 @@ class InfrastructureTools:
         }
 
     @staticmethod
-    def _compare_blueprints(args: Dict[str, Any], ctx: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _compare_blueprints(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Compare blueprints implementation."""
         bp_a = args.get("blueprint_a", {})
         bp_b = args.get("blueprint_b", {})
@@ -589,11 +588,11 @@ class InfrastructureTools:
 
     @staticmethod
     def _suggest_architecture(
-        args: Dict[str, Any], ctx: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        args: dict[str, Any], ctx: dict[str, Any] | None
+    ) -> dict[str, Any]:
         """Suggest architecture implementation."""
-        requirements = args.get("requirements", {})
-        constraints = args.get("constraints", {})
+        args.get("requirements", {})
+        args.get("constraints", {})
 
         return {
             "suggested_architecture": "3-tier web application",
@@ -608,7 +607,7 @@ class InfrastructureTools:
         }
 
     @staticmethod
-    def _calculate_capacity(args: Dict[str, Any], ctx: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _calculate_capacity(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Calculate capacity implementation."""
         current = args.get("current_metrics", {})
         growth = args.get("growth_rate", 0)
@@ -627,11 +626,11 @@ class InfrastructureTools:
 
     @staticmethod
     def _migrate_infrastructure(
-        args: Dict[str, Any], ctx: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        args: dict[str, Any], ctx: dict[str, Any] | None
+    ) -> dict[str, Any]:
         """Migrate infrastructure implementation."""
-        source = args.get("source_platform")
-        target = args.get("target_platform")
+        args.get("source_platform")
+        args.get("target_platform")
         strategy = args.get("migration_strategy", "replatform")
 
         return {
@@ -647,14 +646,14 @@ class InfrastructureTools:
         }
 
     @staticmethod
-    def _check_compliance(args: Dict[str, Any], ctx: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _check_compliance(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Check compliance implementation."""
-        blueprint = args.get("blueprint", {})
+        args.get("blueprint", {})
         standards = args.get("standards", [])
 
         return {
             "standards_checked": standards,
-            "compliance_status": {standard: "partial" for standard in standards},
+            "compliance_status": dict.fromkeys(standards, "partial"),
             "gaps": [
                 "Missing encryption configuration",
                 "Incomplete access logging",
@@ -668,9 +667,9 @@ class InfrastructureTools:
         }
 
     @staticmethod
-    def _forecast_metrics(args: Dict[str, Any], ctx: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _forecast_metrics(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Forecast metrics implementation."""
-        historical = args.get("historical_data", [])
+        args.get("historical_data", [])
         period = args.get("forecast_period")
         confidence = args.get("confidence_level", 0.95)
 

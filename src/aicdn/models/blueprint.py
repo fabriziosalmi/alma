@@ -2,8 +2,10 @@
 SystemBlueprint model - the core declarative format
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
+
 from aicdn.models.resources import ResourceDefinition
 
 
@@ -11,19 +13,19 @@ class BlueprintMetadata(BaseModel):
     """Metadata for SystemBlueprint"""
 
     name: str = Field(..., description="Blueprint name")
-    description: Optional[str] = Field(None, description="Blueprint description")
+    description: str | None = Field(None, description="Blueprint description")
     version: str = Field(default="v1", description="Blueprint API version")
-    labels: Dict[str, str] = Field(default_factory=dict, description="Labels for organization")
-    annotations: Dict[str, str] = Field(default_factory=dict, description="Annotations")
+    labels: dict[str, str] = Field(default_factory=dict, description="Labels for organization")
+    annotations: dict[str, str] = Field(default_factory=dict, description="Annotations")
 
 
 class BlueprintSpec(BaseModel):
     """Specification for SystemBlueprint"""
 
-    resources: List[ResourceDefinition] = Field(
+    resources: list[ResourceDefinition] = Field(
         default_factory=list, description="List of resources"
     )
-    variables: Dict[str, Any] = Field(default_factory=dict, description="Blueprint variables")
+    variables: dict[str, Any] = Field(default_factory=dict, description="Blueprint variables")
 
 
 class SystemBlueprint(BaseModel):

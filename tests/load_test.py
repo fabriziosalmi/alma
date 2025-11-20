@@ -1,9 +1,9 @@
 """Load testing and integration tests for rate limiting and metrics."""
 
-import time
 import asyncio
+import time
+
 import httpx
-from typing import List, Dict, Any
 
 
 async def test_rate_limiting():
@@ -45,7 +45,7 @@ async def test_rate_limiting():
         rate_limited = responses.count(429)
         successful = responses.count(200) + responses.count(404)
 
-        print(f"\n  Summary:")
+        print("\n  Summary:")
         print(f"    Total requests: {len(responses)}")
         print(f"    Successful: {successful}")
         print(f"    Rate limited: {rate_limited}")
@@ -100,7 +100,7 @@ async def test_metrics_collection():
                 llm_metrics = metrics_text.count("llm_requests_total")
                 rate_limit_metrics = metrics_text.count("rate_limit_hits_total")
 
-                print(f"  ✅ Metrics endpoint accessible")
+                print("  ✅ Metrics endpoint accessible")
                 print(f"  HTTP metrics found: {http_metrics > 0}")
                 print(f"  LLM metrics found: {llm_metrics > 0}")
                 print(f"  Rate limit metrics found: {rate_limit_metrics > 0}")
@@ -128,7 +128,7 @@ async def test_metrics_collection():
             response = await client.get("/api/v1/monitoring/metrics/summary")
             if response.status_code == 200:
                 data = response.json()
-                print(f"  ✅ /api/v1/monitoring/metrics/summary")
+                print("  ✅ /api/v1/monitoring/metrics/summary")
                 print(f"    {data}")
             else:
                 print(f"  ⚠️  /api/v1/monitoring/metrics/summary returned {response.status_code}")
@@ -140,7 +140,7 @@ async def test_metrics_collection():
             response = await client.get("/api/v1/monitoring/rate-limit/stats")
             if response.status_code == 200:
                 data = response.json()
-                print(f"  ✅ /api/v1/monitoring/rate-limit/stats")
+                print("  ✅ /api/v1/monitoring/rate-limit/stats")
                 print(f"    {data}")
             else:
                 print(f"  ⚠️  /api/v1/monitoring/rate-limit/stats returned {response.status_code}")
@@ -161,12 +161,12 @@ async def test_performance():
         for i in range(100):
             start = time.time()
             try:
-                response = await client.get(
+                await client.get(
                     "/api/v1/blueprints", headers={"X-Forwarded-For": f"192.168.100.{i % 50}"}
                 )
                 latency = (time.time() - start) * 1000  # Convert to ms
                 latencies.append(latency)
-            except Exception as e:
+            except Exception:
                 pass
 
         if latencies:
@@ -184,9 +184,9 @@ async def test_performance():
             middleware_overhead = avg_latency - 10  # Assuming ~10ms base latency
             print(f"\n  Estimated middleware overhead: ~{middleware_overhead:.2f}ms")
             if middleware_overhead < 5:
-                print(f"  ✅ Excellent performance (<5ms overhead)")
+                print("  ✅ Excellent performance (<5ms overhead)")
             elif middleware_overhead < 10:
-                print(f"  ✅ Good performance (<10ms overhead)")
+                print("  ✅ Good performance (<10ms overhead)")
             else:
                 print(f"  ⚠️  High overhead (>{middleware_overhead:.0f}ms)")
 
@@ -218,9 +218,9 @@ async def test_end_to_end():
         try:
             response = await client.get("/metrics")
             if response.status_code == 200 and "http_requests_total" in response.text:
-                print(f"  ✅ HTTP metrics recorded")
+                print("  ✅ HTTP metrics recorded")
             else:
-                print(f"  ⚠️  HTTP metrics not found")
+                print("  ⚠️  HTTP metrics not found")
         except Exception as e:
             print(f"  ❌ Error: {e}")
 
@@ -228,7 +228,7 @@ async def test_end_to_end():
 
         # Rapid fire requests
         limited_count = 0
-        for i in range(100):
+        for _i in range(100):
             try:
                 response = await client.get(
                     "/api/v1/blueprints", headers={"X-Forwarded-For": "10.0.0.1"}
@@ -241,7 +241,7 @@ async def test_end_to_end():
         if limited_count > 0:
             print(f"  ✅ Rate limiting active ({limited_count}/100 requests limited)")
         else:
-            print(f"  ⚠️  No rate limiting detected (may need higher request rate)")
+            print("  ⚠️  No rate limiting detected (may need higher request rate)")
 
         print("\n4️⃣  Checking rate limit headers...")
 

@@ -1,8 +1,9 @@
 """Tests for base engine functionality."""
 
 import pytest
+
 from alma.engines.base import Engine
-from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
+from alma.schemas.blueprint import ResourceDefinition, SystemBlueprint
 
 
 class MockEngine(Engine):

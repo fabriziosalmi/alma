@@ -2,15 +2,13 @@
 
 import os
 import tempfile
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 import httpx
-import pytest
 import yaml
 from typer.testing import CliRunner
 
 from alma.cli.main import app
-
 
 runner = CliRunner()
 
@@ -296,7 +294,7 @@ class TestServeCommand:
     @patch("uvicorn.run")
     def test_serve_custom_host_port(self, mock_run: Mock) -> None:
         """Test serve with custom host and port."""
-        result = runner.invoke(app, ["serve", "--host", "0.0.0.0", "--port", "9000"])
+        runner.invoke(app, ["serve", "--host", "0.0.0.0", "--port", "9000"])
         assert mock_run.called
         call_kwargs = mock_run.call_args[1]
         assert call_kwargs["host"] == "0.0.0.0"
@@ -305,7 +303,7 @@ class TestServeCommand:
     @patch("uvicorn.run")
     def test_serve_with_reload(self, mock_run: Mock) -> None:
         """Test serve with reload enabled."""
-        result = runner.invoke(app, ["serve", "--reload"])
+        runner.invoke(app, ["serve", "--reload"])
         assert mock_run.called
         call_kwargs = mock_run.call_args[1]
         assert call_kwargs["reload"] is True

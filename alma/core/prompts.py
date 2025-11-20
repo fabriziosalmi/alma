@@ -1,6 +1,6 @@
 """Prompt templates for LLM infrastructure tasks."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 
 class InfrastructurePrompts:
@@ -51,7 +51,7 @@ Guidelines:
 Respond with ONLY the YAML blueprint, no additional text."""
 
     @staticmethod
-    def blueprint_description(blueprint: Dict[str, Any]) -> str:
+    def blueprint_description(blueprint: dict[str, Any]) -> str:
         """
         Generate prompt for describing a blueprint.
 
@@ -80,7 +80,7 @@ Provide:
 Keep it concise and easy to understand."""
 
     @staticmethod
-    def improvement_suggestions(blueprint: Dict[str, Any]) -> str:
+    def improvement_suggestions(blueprint: dict[str, Any]) -> str:
         """
         Generate prompt for suggesting improvements.
 
@@ -157,7 +157,7 @@ Respond in JSON format:
 }}"""
 
     @staticmethod
-    def troubleshooting(issue: str, context: Dict[str, Any]) -> str:
+    def troubleshooting(issue: str, context: dict[str, Any]) -> str:
         """
         Generate prompt for troubleshooting.
 
@@ -188,7 +188,7 @@ Provide:
 Be specific and technical."""
 
     @staticmethod
-    def security_audit(blueprint: Dict[str, Any]) -> str:
+    def security_audit(blueprint: dict[str, Any]) -> str:
         """
         Generate prompt for security audit.
 
@@ -225,7 +225,7 @@ For each finding:
 Format as a structured list."""
 
     @staticmethod
-    def cost_estimation(blueprint: Dict[str, Any], provider: str = "aws") -> str:
+    def cost_estimation(blueprint: dict[str, Any], provider: str = "aws") -> str:
         """
         Generate prompt for cost estimation.
 
@@ -271,7 +271,7 @@ Respond in JSON format:
 }}"""
 
     @staticmethod
-    def migration_plan(source: str, target: str, blueprint: Dict[str, Any]) -> str:
+    def migration_plan(source: str, target: str, blueprint: dict[str, Any]) -> str:
         """
         Generate prompt for migration planning.
 
@@ -350,12 +350,12 @@ def get_blueprint_prompt(description: str) -> str:
     return InfrastructurePrompts.blueprint_generation(description)
 
 
-def get_description_prompt(blueprint: Dict[str, Any]) -> str:
+def get_description_prompt(blueprint: dict[str, Any]) -> str:
     """Get blueprint description prompt."""
     return InfrastructurePrompts.blueprint_description(blueprint)
 
 
-def get_improvement_prompt(blueprint: Dict[str, Any]) -> str:
+def get_improvement_prompt(blueprint: dict[str, Any]) -> str:
     """Get improvement suggestions prompt."""
     return InfrastructurePrompts.improvement_suggestions(blueprint)
 

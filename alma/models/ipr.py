@@ -1,10 +1,11 @@
 """SQLAlchemy models for Infrastructure Pull Requests (IPR)."""
 
-from datetime import datetime
-from typing import Any, Dict
 import enum
+from datetime import datetime
+from typing import Any
 
-from sqlalchemy import Column, Integer, String, DateTime, JSON, Text, Enum as SQLEnum
+from sqlalchemy import JSON, Column, DateTime, Integer, String, Text
+from sqlalchemy import Enum as SQLEnum
 
 from alma.models.blueprint import Base
 
@@ -51,7 +52,7 @@ class InfrastructurePullRequestModel(Base):
         """String representation."""
         return f"<IPR(id={self.id}, title={self.title}, status={self.status})>"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert model to dictionary."""
         return {
             "id": self.id,

@@ -1,7 +1,8 @@
 """API routes for LLM tool execution."""
 
-from typing import Dict, Any, List
-from fastapi import APIRouter, HTTPException, Depends
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from alma.core.llm_orchestrator import EnhancedOrchestrator
@@ -14,15 +15,15 @@ class ToolExecutionRequest(BaseModel):
     """Request to execute a tool."""
 
     query: str
-    context: Dict[str, Any] = {}
+    context: dict[str, Any] = {}
 
 
 class DirectToolRequest(BaseModel):
     """Request to directly execute a specific tool."""
 
     tool_name: str
-    arguments: Dict[str, Any]
-    context: Dict[str, Any] = {}
+    arguments: dict[str, Any]
+    context: dict[str, Any] = {}
 
 
 class ToolExecutionResponse(BaseModel):
@@ -30,7 +31,7 @@ class ToolExecutionResponse(BaseModel):
 
     success: bool
     tool: str | None = None
-    result: Dict[str, Any] | None = None
+    result: dict[str, Any] | None = None
     error: str | None = None
     timestamp: str
 
@@ -38,7 +39,7 @@ class ToolExecutionResponse(BaseModel):
 class ToolsListResponse(BaseModel):
     """List of available tools."""
 
-    tools: List[Dict[str, Any]]
+    tools: list[dict[str, Any]]
     count: int
 
 
@@ -104,11 +105,11 @@ async def execute_tool_direct(
     return ToolExecutionResponse(**result)
 
 
-@router.get("/{tool_name}", response_model=Dict[str, Any])
+@router.get("/{tool_name}", response_model=dict[str, Any])
 async def get_tool_info(
     tool_name: str,
     orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get detailed information about a specific tool.
 
@@ -130,9 +131,9 @@ async def get_tool_info(
 
 @router.post("/validate-blueprint")
 async def validate_blueprint(
-    blueprint: Dict[str, Any],
+    blueprint: dict[str, Any],
     strict: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Validate a blueprint using the validation tool.
 
@@ -156,7 +157,7 @@ async def validate_blueprint(
 @router.post("/estimate-resources")
 async def estimate_resources(
     workload_type: str, expected_load: str, availability: str = "standard"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Estimate resource requirements for a workload.
 
@@ -187,10 +188,10 @@ async def estimate_resources(
 
 @router.post("/security-audit")
 async def security_audit(
-    blueprint: Dict[str, Any],
+    blueprint: dict[str, Any],
     compliance_framework: str = "general",
     severity_threshold: str = "medium",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Perform security audit on a blueprint.
 

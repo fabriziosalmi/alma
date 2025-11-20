@@ -1,27 +1,23 @@
 """Unit tests for the KubernetesEngine."""
 
-import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from kubernetes_asyncio.client import (
     ApiException,
-    V1Deployment,
-    V1DeploymentSpec,
-    V1Service,
-    V1ServiceSpec,
-    V1ObjectMeta,
-    V1PodTemplateSpec,
-    V1PodSpec,
     V1Container,
     V1ContainerPort,
+    V1Deployment,
+    V1DeploymentSpec,
     V1LabelSelector,
-    V1ServicePort,
+    V1ObjectMeta,
+    V1PodSpec,
+    V1PodTemplateSpec,
 )
 
-from alma.engines.kubernetes import KubernetesEngine
 from alma.core.state import Plan, ResourceState
-from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
+from alma.engines.kubernetes import KubernetesEngine
+from alma.schemas.blueprint import ResourceDefinition, SystemBlueprint
 
 pytestmark = pytest.mark.asyncio
 
@@ -29,7 +25,7 @@ pytestmark = pytest.mark.asyncio
 @pytest.fixture
 def k8s_engine():
     """Fixture to provide a mocked KubernetesEngine."""
-    with patch("alma.engines.kubernetes.config") as mock_k8s_config:
+    with patch("alma.engines.kubernetes.config"):
         engine = KubernetesEngine(config_dict={"namespace": "test-ns"})
 
         # Mock the entire client so we don't need a real cluster

@@ -1,7 +1,5 @@
 """Simple coverage boost tests that actually work."""
 
-import pytest
-from unittest.mock import MagicMock
 from alma.core.llm_orchestrator import EnhancedOrchestrator
 
 

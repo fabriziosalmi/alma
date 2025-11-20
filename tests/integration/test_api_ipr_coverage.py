@@ -1,10 +1,10 @@
 """IPR API routes coverage tests with rate limiting bypassed."""
 
 import os
-import pytest
-from httpx import AsyncClient, ASGITransport
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
+import pytest
+from httpx import ASGITransport, AsyncClient
 
 # Set testing environment
 os.environ["TESTING"] = "true"

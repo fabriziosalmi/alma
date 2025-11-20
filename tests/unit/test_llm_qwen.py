@@ -1,7 +1,8 @@
 """Unit tests for Qwen3 LLM implementation."""
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 # Skip all tests if torch is not available
 pytest.importorskip("torch", reason="torch not installed")

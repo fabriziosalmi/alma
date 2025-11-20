@@ -1,12 +1,12 @@
 """Rate limiting middleware for API protection."""
 
 import time
-from typing import Dict, Any, Optional, Callable
 from collections import defaultdict
-from datetime import datetime, timedelta
-from fastapi import Request, HTTPException, status
+from collections.abc import Callable
+from typing import Any
+
+from fastapi import Request, status
 from fastapi.responses import JSONResponse
-import asyncio
 
 
 class RateLimiter:
@@ -37,14 +37,14 @@ class RateLimiter:
         self.enable_adaptive = enable_adaptive
 
         # Token buckets: {client_id: {'tokens': float, 'last_update': float}}
-        self.buckets: Dict[str, Dict[str, float]] = {}
+        self.buckets: dict[str, dict[str, float]] = {}
 
         # Request tracking for metrics
-        self.request_counts: Dict[str, int] = defaultdict(int)
-        self.blocked_counts: Dict[str, int] = defaultdict(int)
+        self.request_counts: dict[str, int] = defaultdict(int)
+        self.blocked_counts: dict[str, int] = defaultdict(int)
 
         # Adaptive rate limiting state
-        self.adaptive_limits: Dict[str, int] = {}
+        self.adaptive_limits: dict[str, int] = {}
 
         # Cleanup old buckets periodically
         self._last_cleanup = time.time()
@@ -132,7 +132,7 @@ class RateLimiter:
 
         self._last_cleanup = now
 
-    async def check_rate_limit(self, request: Request) -> Optional[JSONResponse]:
+    async def check_rate_limit(self, request: Request) -> JSONResponse | None:
         """
         Check if request should be rate limited.
 
@@ -187,7 +187,7 @@ class RateLimiter:
 
         return None
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Get rate limiter statistics.
 
@@ -227,8 +227,8 @@ class EndpointRateLimiter:
             default_rpm: Default requests per minute
         """
         self.default_rpm = default_rpm
-        self.endpoint_limits: Dict[str, int] = {}
-        self.limiters: Dict[str, RateLimiter] = {}
+        self.endpoint_limits: dict[str, int] = {}
+        self.limiters: dict[str, RateLimiter] = {}
 
     def set_endpoint_limit(self, endpoint: str, rpm: int) -> None:
         """
@@ -264,7 +264,7 @@ class EndpointRateLimiter:
 
         return self.limiters["default"]
 
-    async def check_rate_limit(self, request: Request) -> Optional[JSONResponse]:
+    async def check_rate_limit(self, request: Request) -> JSONResponse | None:
         """
         Check rate limit for request.
 
@@ -279,7 +279,7 @@ class EndpointRateLimiter:
 
 
 # Global rate limiter instance
-_global_limiter: Optional[EndpointRateLimiter] = None
+_global_limiter: EndpointRateLimiter | None = None
 
 
 def get_rate_limiter() -> EndpointRateLimiter:

@@ -1,6 +1,7 @@
 """API routes for blueprint templates."""
 
-from typing import List, Dict, Any
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -12,7 +13,7 @@ router = APIRouter(prefix="/templates", tags=["templates"])
 class TemplateListResponse(BaseModel):
     """Response containing list of templates."""
 
-    templates: List[Dict[str, Any]]
+    templates: list[dict[str, Any]]
     count: int
 
 
@@ -20,7 +21,7 @@ class TemplateResponse(BaseModel):
     """Response containing a single template blueprint."""
 
     template_id: str
-    blueprint: Dict[str, Any]
+    blueprint: dict[str, Any]
 
 
 @router.get("/", response_model=TemplateListResponse)
@@ -50,7 +51,7 @@ async def list_templates(
 
 
 @router.get("/categories")
-async def list_categories() -> Dict[str, List[str]]:
+async def list_categories() -> dict[str, list[str]]:
     """
     Get list of template categories.
 
@@ -78,11 +79,11 @@ async def get_template(template_id: str) -> TemplateResponse:
         blueprint = BlueprintTemplates.get_template(template_id)
         return TemplateResponse(template_id=template_id, blueprint=blueprint)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.post("/{template_id}/customize")
-async def customize_template(template_id: str, customizations: Dict[str, Any]) -> Dict[str, Any]:
+async def customize_template(template_id: str, customizations: dict[str, Any]) -> dict[str, Any]:
     """
     Customize a template with user-specific parameters.
 
@@ -116,7 +117,7 @@ async def customize_template(template_id: str, customizations: Dict[str, Any]) -
                         try:
                             mem_val = int(specs["memory"].replace("GB", ""))
                             specs["memory"] = f"{int(mem_val * scale)}GB"
-                        except:
+                        except ValueError:
                             pass
 
         # Update metadata
@@ -127,7 +128,7 @@ async def customize_template(template_id: str, customizations: Dict[str, Any]) -
         return blueprint
 
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.get("/search/")

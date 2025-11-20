@@ -1,10 +1,12 @@
 """Tests for kubernetes.py engine with mocked async Kubernetes client."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from alma.engines.kubernetes import KubernetesEngine
-from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
+
+import pytest
+
 from alma.core.state import Plan, ResourceState
+from alma.engines.kubernetes import KubernetesEngine
+from alma.schemas.blueprint import ResourceDefinition, SystemBlueprint
 
 
 @pytest.fixture

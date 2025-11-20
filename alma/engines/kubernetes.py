@@ -1,7 +1,7 @@
 """Kubernetes engine for managing cluster resources."""
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from kubernetes_asyncio import client, config
 from kubernetes_asyncio.client.exceptions import ApiException
@@ -23,10 +23,10 @@ class KubernetesEngine(Engine):
     Manages Deployments, Services, and other resources through the Kubernetes API.
     """
 
-    def __init__(self, config_dict: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, config_dict: dict[str, Any] | None = None) -> None:
         super().__init__(config_dict)
         self.namespace = self.config.get("namespace", "default")
-        self.api_client: Optional[client.ApiClient] = None
+        self.api_client: client.ApiClient | None = None
 
     async def _initialize_clients(self) -> None:
         """Load Kubernetes configuration and initialize API clients."""
@@ -54,13 +54,13 @@ class KubernetesEngine(Engine):
             logger.error(f"Kubernetes API health check failed: {e}", exc_info=True)
             return False
 
-    async def get_state(self, blueprint: SystemBlueprint) -> List[ResourceState]:
+    async def get_state(self, blueprint: SystemBlueprint) -> list[ResourceState]:
         """
         Get the current state of all resources managed by a blueprint in the cluster.
         """
         await self._initialize_clients()
         label_selector = f"{alma_BLUEPRINT_LABEL}={blueprint.name}"
-        states: List[ResourceState] = []
+        states: list[ResourceState] = []
 
         # Get Deployments
         try:
@@ -273,5 +273,5 @@ class KubernetesEngine(Engine):
             },
         )
 
-    def get_supported_resource_types(self) -> List[str]:
+    def get_supported_resource_types(self) -> list[str]:
         return ["compute", "network"]

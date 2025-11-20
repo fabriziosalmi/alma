@@ -1,10 +1,12 @@
 "Unit tests for ProxmoxEngine."
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+
 from alma.core.state import Plan, ResourceState
 from alma.engines.proxmox import ProxmoxEngine
-from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
+from alma.schemas.blueprint import ResourceDefinition, SystemBlueprint
 
 
 @pytest.fixture

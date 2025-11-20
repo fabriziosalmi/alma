@@ -4,10 +4,10 @@ import pytest
 from pydantic import ValidationError
 
 from alma.schemas.blueprint import (
+    DeploymentRequest,
     ResourceDefinition,
     SystemBlueprintCreate,
     SystemBlueprintUpdate,
-    DeploymentRequest,
 )
 
 

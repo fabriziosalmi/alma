@@ -2,9 +2,10 @@
 """
 Quick start script to run the ALMA API server
 """
-import uvicorn
 import sys
 from pathlib import Path
+
+import uvicorn
 
 # Add src to path
 src_path = Path(__file__).parent / "src"

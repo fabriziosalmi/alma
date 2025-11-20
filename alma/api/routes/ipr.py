@@ -1,22 +1,22 @@
 """API routes for Infrastructure Pull Requests (IPR)."""
 
-from typing import List
 from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import Integer, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, Integer
 
 from alma.core.database import get_session
-from alma.models.ipr import InfrastructurePullRequestModel, IPRStatus
+from alma.engines.fake import FakeEngine
 from alma.models.blueprint import SystemBlueprintModel
+from alma.models.ipr import InfrastructurePullRequestModel, IPRStatus
 from alma.schemas.ipr import (
     IPR,
     IPRCreate,
-    IPRUpdate,
-    IPRReview,
     IPRListResponse,
+    IPRReview,
+    IPRUpdate,
 )
-from alma.engines.fake import FakeEngine
 
 router = APIRouter(prefix="/ipr", tags=["Infrastructure Pull Requests"])
 
@@ -327,7 +327,7 @@ async def deploy_ipr(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Deployment failed: {str(e)}",
-        )
+        ) from e
 
     return IPR.model_validate(ipr)
 

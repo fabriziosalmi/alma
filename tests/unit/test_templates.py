@@ -1,6 +1,7 @@
 """Tests for blueprint templates."""
 
 import pytest
+
 from alma.core.templates import BlueprintTemplates, TemplateCategory
 
 
