@@ -30,10 +30,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Run Black
+      - name: Format with Black
         run: |
           black --version
-          black --diff --check .
+          black .
+          
+      - name: Check for formatting changes
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "Code was reformatted. Please run 'black .' locally and commit."
+            git diff
+            exit 1
+          fi
 
       - name: Run Ruff
         run: ruff check .
