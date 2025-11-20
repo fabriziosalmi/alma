@@ -1,6 +1,9 @@
 # API Reference - ALMA
 
-Complete API documentation for ALMA Infrastructure as Conversation platform.
+> **ALMA** - Autonomous Language Model Architecture  
+> Infrastructure as Conversation Platform
+
+Complete API documentation for the ALMA platform, enabling natural language infrastructure management through advanced AI capabilities.
 
 ## Base URL
 
@@ -8,12 +11,19 @@ Complete API documentation for ALMA Infrastructure as Conversation platform.
 http://localhost:8000/api/v1
 ```
 
+**Production Environment:**
+```
+https://api.alma.dev/v1
+```
+
 ## Authentication
 
-Currently, ALMA uses IP-based rate limiting. Future versions will include:
-- API Key authentication
-- OAuth2 / JWT tokens
-- Role-based access control (RBAC)
+ALMA currently implements IP-based rate limiting for API access control. Future releases will include:
+
+- **API Key Authentication** - Secure token-based access
+- **OAuth2 / JWT Tokens** - Industry-standard authorization
+- **Role-Based Access Control (RBAC)** - Granular permission management
+- **Multi-Factor Authentication (MFA)** - Enhanced security layer
 
 ---
 
@@ -807,60 +817,137 @@ curl -X POST http://localhost:8000/api/v1/templates/ha-web-app/customize \
 
 ---
 
-## WebSocket API (Future)
+## WebSocket API (Beta)
 
-Real-time updates for deployments and monitoring.
+Real-time infrastructure monitoring and deployment status updates via WebSocket connections.
+
+### Connection Endpoint
+
+```
+ws://localhost:8000/ws/deployments
+wss://api.alma.dev/ws/deployments  # Production (Secure)
+```
+
+### Example Implementation
 
 ```javascript
+// Establish WebSocket connection
 const ws = new WebSocket('ws://localhost:8000/ws/deployments');
 
+// Handle connection events
+ws.onopen = () => {
+  console.log('Connected to ALMA deployment stream');
+  
+  // Subscribe to specific deployment
+  ws.send(JSON.stringify({
+    action: 'subscribe',
+    deployment_id: 'deploy-abc123'
+  }));
+};
+
+// Receive real-time updates
 ws.onmessage = (event) => {
   const update = JSON.parse(event.data);
-  console.log('Deployment status:', update);
+  
+  switch(update.type) {
+    case 'status_change':
+      console.log(`Status: ${update.status}`);
+      break;
+    case 'progress':
+      console.log(`Progress: ${update.percentage}%`);
+      break;
+    case 'error':
+      console.error(`Error: ${update.message}`);
+      break;
+    case 'complete':
+      console.log('Deployment completed successfully');
+      ws.close();
+      break;
+  }
+};
+
+// Handle connection errors
+ws.onerror = (error) => {
+  console.error('WebSocket error:', error);
+};
+
+// Handle disconnections
+ws.onclose = () => {
+  console.log('Disconnected from deployment stream');
 };
 ```
+
+### Message Types
+
+| Type | Description | Payload Example |
+|------|-------------|-----------------|
+| `status_change` | Deployment status updated | `{"status": "in_progress"}` |
+| `progress` | Progress percentage | `{"percentage": 45, "step": "provisioning"}` |
+| `log` | Real-time log entry | `{"message": "Creating VM...", "level": "info"}` |
+| `error` | Error occurred | `{"message": "Failed to allocate IP", "code": "NET_001"}` |
+| `complete` | Deployment finished | `{"duration_seconds": 342, "resources_created": 5}` |
 
 ---
 
 ## SDK Examples
 
-### Python
+### Python SDK
 
 ```python
-from aicdn import AIClient
+from alma import ALMAClient
 
-client = AIClient(base_url="http://localhost:8000")
+# Initialize client
+client = ALMAClient(
+    base_url="http://localhost:8000",
+    api_key="your-api-key"  # Future feature
+)
 
-# Generate blueprint
+# Generate infrastructure blueprint
 blueprint = client.blueprints.generate(
-    description="High availability web application",
-    constraints={"max_cost": 500}
+    description="High availability web application with auto-scaling",
+    constraints={
+        "max_cost": 500,
+        "region": "us-east-1",
+        "compliance": "hipaa"
+    }
 )
 
-# Create IPR
+# Create Infrastructure Pull Request
 ipr = client.iprs.create(
-    title="Add load balancer",
-    blueprint_id=blueprint.id
+    title="Deploy production load balancer",
+    blueprint_id=blueprint.id,
+    environment="production"
 )
 
-# Deploy
-deployment = client.iprs.deploy(ipr.id, engine="proxmox")
+# Deploy infrastructure
+deployment = client.iprs.deploy(
+    ipr.id,
+    engine="proxmox",
+    dry_run=False
+)
 ```
 
-### JavaScript
+### JavaScript/TypeScript SDK
 
-```javascript
-import { AIClient } from 'aicdn-js';
+```typescript
+import { ALMAClient } from '@alma/sdk';
 
-const client = new AIClient({ baseURL: 'http://localhost:8000' });
-
-// Stream blueprint generation
-const stream = await client.blueprints.generateStream({
-  description: 'Microservices architecture',
+const client = new ALMAClient({
+  baseURL: 'http://localhost:8000',
+  apiKey: process.env.ALMA_API_KEY  // Future feature
 });
 
-for await (const chunk of stream) {
-  console.log(chunk);
+// Stream blueprint generation with real-time updates
+const stream = await client.blueprints.generateStream({
+  description: 'Microservices architecture with Kubernetes',
+  constraints: {
+    maxCost: 1000,
+    environment: 'production'
+  }
+});
+
+for await (const event of stream) {
+  console.log(`[${event.type}]`, event.content);
 }
 ```
 
@@ -868,17 +955,61 @@ for await (const chunk of stream) {
 
 ## Versioning
 
-API versioning through URL path: `/api/v1/`, `/api/v2/`, etc.
+ALMA API follows semantic versioning principles through URL path versioning:
 
-Current version: **v1** (stable)
+- **Current Stable:** `/api/v1/` (Production Ready)
+- **Future Releases:** `/api/v2/`, `/api/v3/`, etc.
 
-Future versions will maintain backward compatibility for at least 12 months.
+### Backwards Compatibility Policy
+
+- All stable API versions maintain **backwards compatibility for minimum 12 months**
+- Deprecated features receive advance notice with migration guides
+- Breaking changes are introduced only in major version increments
+- Legacy endpoints remain accessible during deprecation period
+
+### Version History
+
+| Version | Status | Release Date | End of Support |
+|---------|--------|--------------|----------------|
+| v1      | Stable | 2025-01-01   | Active         |
 
 ---
 
-## Support
+## Support & Resources
 
-- **Documentation**: https://docs.ALMA.dev
-- **GitHub**: https://github.com/fabriziosalmi/cdn-sdk
-- **Issues**: https://github.com/fabriziosalmi/cdn-sdk/issues
-- **Discord**: https://discord.gg/ALMA
+### Developer Support
+
+- **Documentation Portal**: https://alma-docs.dev
+- **GitHub Repository**: https://github.com/fabriziosalmi/alma
+- **Issue Tracker**: https://github.com/fabriziosalmi/alma/issues
+- **Community Discussions**: https://github.com/fabriziosalmi/alma/discussions
+
+### Enterprise Support
+
+For production deployments and enterprise licensing:
+- **Email**: enterprise@alma.dev
+- **SLA Response Times**: 4-hour critical, 24-hour standard
+- **Dedicated Support Channel**: Available on request
+
+### Contributing
+
+ALMA is open-source and welcomes community contributions:
+- Review our [Contributing Guidelines](../CONTRIBUTING.md)
+- Submit pull requests for bug fixes and features
+- Report security vulnerabilities responsibly
+- Join our developer community
+
+---
+
+## Legal & Compliance
+
+- **License**: Apache 2.0 (Open Source)
+- **Privacy Policy**: https://alma.dev/privacy
+- **Terms of Service**: https://alma.dev/terms
+- **Security Disclosures**: security@alma.dev
+
+---
+
+**Last Updated**: November 2025  
+**API Version**: 1.0.0  
+**Documentation Version**: 1.0.0

@@ -271,8 +271,8 @@ sudo usermod -aG sudo aicdn
 sudo su - aicdn
 
 # Clone repository
-git clone https://github.com/fabriziosalmi/cdn-sdk.git
-cd cdn-sdk
+git clone https://github.com/fabriziosalmi/alma.git
+cd alma
 
 # Create virtual environment
 python3 -m venv venv
@@ -298,15 +298,15 @@ After=network.target postgresql.service redis.service
 Type=notify
 User=aicdn
 Group=aicdn
-WorkingDirectory=/home/aicdn/cdn-sdk
-Environment="PATH=/home/aicdn/cdn-sdk/venv/bin"
+WorkingDirectory=/home/alma/alma
+Environment="PATH=/home/alma/alma/venv/bin"
 Environment="DATABASE_URL=postgresql://aicdn:password@localhost/aicdn"
-ExecStart=/home/aicdn/cdn-sdk/venv/bin/gunicorn alma.api.main:app \
+ExecStart=/home/alma/alma/venv/bin/gunicorn alma.api.main:app \
     --workers 4 \
     --worker-class uvicorn.workers.UvicornWorker \
     --bind 0.0.0.0:8000 \
-    --access-logfile /home/aicdn/cdn-sdk/logs/access.log \
-    --error-logfile /home/aicdn/cdn-sdk/logs/error.log \
+    --access-logfile /home/alma/alma/logs/access.log \
+    --error-logfile /home/alma/alma/logs/error.log \
     --log-level info
 Restart=always
 RestartSec=10
@@ -789,7 +789,7 @@ DATE=$(date +%Y%m%d_%H%M%S)
 pg_dump -U aicdn aicdn | gzip > $BACKUP_DIR/db_$DATE.sql.gz
 
 # Application files
-tar -czf $BACKUP_DIR/app_$DATE.tar.gz /home/aicdn/cdn-sdk
+tar -czf $BACKUP_DIR/app_$DATE.tar.gz /home/alma/alma
 
 # Upload to S3
 aws s3 cp $BACKUP_DIR/db_$DATE.sql.gz s3://aicdn-backups/
@@ -950,4 +950,4 @@ LIMIT 10;
 For production support:
 - Enterprise support: enterprise@ALMA.dev
 - Security issues: security@ALMA.dev
-- GitHub: https://github.com/fabriziosalmi/cdn-sdk/issues
+- GitHub: https://github.com/fabriziosalmi/alma/issues

@@ -55,8 +55,8 @@ Real-time terminal UI (`ALMA monitor`) featuring:
 
 ### Installation
 ```bash
-git clone https://github.com/fabriziosalmi/cdn-sdk.git
-cd cdn-sdk
+git clone https://github.com/fabriziosalmi/alma.git
+cd alma
 pip install -e .
 ```
 

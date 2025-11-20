@@ -131,8 +131,8 @@ Comprehensive observability with Prometheus:
 ### 1. Installation (5 minutes)
 
 ```bash
-git clone https://github.com/fabriziosalmi/cdn-sdk.git
-cd cdn-sdk
+git clone https://github.com/fabriziosalmi/alma.git
+cd alma
 python3 -m venv venv
 source venv/bin/activate
 pip install -e .
@@ -350,9 +350,9 @@ Multi-cloud abstraction:
 ### Resources
 
 - **Documentation**: [docs/](.)
-- **GitHub**: https://github.com/fabriziosalmi/cdn-sdk
-- **Issues**: https://github.com/fabriziosalmi/cdn-sdk/issues
-- **Discussions**: https://github.com/fabriziosalmi/cdn-sdk/discussions
+- **GitHub**: https://github.com/fabriziosalmi/alma
+- **Issues**: https://github.com/fabriziosalmi/alma/issues
+- **Discussions**: https://github.com/fabriziosalmi/alma/discussions
 
 ### Getting Help
 

@@ -7,7 +7,7 @@ This guide will help you get started with ALMA in 5 minutes.
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd cdn-sdk
+cd alma
 
 # Create virtual environment
 python -m venv venv
