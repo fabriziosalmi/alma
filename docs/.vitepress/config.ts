@@ -12,7 +12,8 @@ export default defineConfig({
   ignoreDeadLinks: true,
   
   head: [
-    ['link', { rel: 'icon', href: '/alma/favicon.ico' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/alma/favicon.svg' }],
+    ['link', { rel: 'alternate icon', href: '/alma/favicon.ico' }],
     ['meta', { name: 'theme-color', content: '#ff6b35' }],
     ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
     ['meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'black' }]

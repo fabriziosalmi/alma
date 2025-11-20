@@ -95,9 +95,177 @@ test: add tests for FakeEngine rollback
 
 We use the following tools to maintain code quality:
 
-- **Black**: Code formatting (line length: 100)
-- **Ruff**: Fast Python linter
-- **MyPy**: Static type checking
+### Black - Code Formatting
+
+**Configuration** (automatic via `pyproject.toml`):
+```toml
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.venv
+  | build
+  | dist
+)/
+'''
+```
+
+**Usage**:
+```bash
+# Format all files
+black .
+
+# Check without modifying
+black --check .
+
+# Format specific file
+black alma/core/llm.py
+```
+
+### Ruff - Fast Python Linter
+
+**Configuration** (`pyproject.toml`):
+```toml
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # unused imports
+"tests/**/*.py" = ["S101"]  # assert usage
+```
+
+**Usage**:
+```bash
+# Lint all files
+ruff check .
+
+# Auto-fix issues
+ruff check --fix .
+
+# Lint specific file
+ruff check alma/api/routes.py
+```
+
+### MyPy - Static Type Checking
+
+**Configuration** (`pyproject.toml`):
+```toml
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "kubernetes_asyncio.*",
+    "prometheus_client.*",
+]
+ignore_missing_imports = true
+```
+
+**Usage**:
+```bash
+# Type check entire project
+mypy alma
+
+# Check specific module
+mypy alma/core
+
+# Show error codes
+mypy --show-error-codes alma
+```
+
+### Pytest - Testing Standards
+
+**Configuration** (`pyproject.toml`):
+```toml
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=alma",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]
+```
+
+**Writing Tests**:
+```python
+import pytest
+from alma.core.blueprint import Blueprint
+
+class TestBlueprint:
+    """Test suite for Blueprint class."""
+    
+    def test_create_blueprint(self):
+        """Test blueprint creation with valid data."""
+        blueprint = Blueprint(
+            version="1.0",
+            name="test-blueprint",
+            description="Test description"
+        )
+        assert blueprint.name == "test-blueprint"
+    
+    @pytest.mark.asyncio
+    async def test_async_operation(self):
+        """Test asynchronous blueprint operation."""
+        result = await some_async_function()
+        assert result is not None
+```
+
+### Code Quality Checklist
+
+Before submitting a PR, ensure:
+
+- [ ] Code formatted with Black (`black .`)
+- [ ] No linting errors (`ruff check .`)
+- [ ] Type hints added (`mypy alma`)
+- [ ] Tests written and passing (`pytest`)
+- [ ] Test coverage > 75% (`pytest --cov`)
+- [ ] Documentation updated
+- [ ] Commit messages follow conventions
+- [ ] No security issues (`bandit -r alma`)
+- [ ] No sensitive data in code
 - **Bandit**: Security vulnerability scanning
 
 All of these run automatically via pre-commit hooks.

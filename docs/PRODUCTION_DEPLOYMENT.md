@@ -544,7 +544,106 @@ psql -U aicdn -d aicdn -c "\dt"
 
 ## Security Hardening
 
-### 1. API Key Authentication
+### Overview
+
+Security is critical for production deployments. ALMA implements multiple layers of defense:
+
+1. **Rate Limiting** - Prevents abuse and DoS attacks
+2. **Input Validation** - Protects against injection attacks
+3. **SQL Injection Protection** - ORM-based queries only
+4. **TLS/SSL Encryption** - All traffic encrypted
+5. **Secrets Management** - Secure credential storage
+
+### 1. Rate Limiting as Security Feature
+
+**Purpose**: Rate limiting is not just for performance - it's a critical security control that prevents:
+
+- **Denial of Service (DoS)**: Prevents attackers from overwhelming your API
+- **Brute Force Attacks**: Limits password/API key guessing attempts
+- **Resource Exhaustion**: Protects expensive LLM operations from abuse
+- **Data Scraping**: Prevents unauthorized bulk data extraction
+
+**Implementation**:
+
+ALMA uses token bucket algorithm with per-IP tracking:
+
+```python
+# Configuration in alma/middleware/rate_limit.py
+RATE_LIMITS = {
+    "default": {"rate": 60, "burst": 10},                    # General endpoints
+    "/conversation/chat-stream": {"rate": 20, "burst": 5},   # LLM expensive
+    "/blueprints/generate-blueprint": {"rate": 30, "burst": 8},
+    "/tools/execute": {"rate": 40, "burst": 10},
+    "/blueprints": {"rate": 100, "burst": 15},               # CRUD operations
+}
+```
+
+**Monitoring Rate Limit Attacks**:
+
+```bash
+# Check rate limit stats
+curl http://localhost:8000/api/v1/monitoring/rate-limit/stats
+
+# Response shows potential attacks
+{
+  "total_clients": 45,
+  "rate_limited_clients": 12,  # High number indicates attack
+  "endpoint_stats": {
+    "/api/v1/conversation/chat-stream": {
+      "rejected_requests": 234  # Blocked attack attempts
+    }
+  }
+}
+```
+
+**Response Headers**:
+```http
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 45
+X-RateLimit-Reset: 1700140800
+```
+
+**Protection Strategies**:
+
+```nginx
+# Nginx rate limiting (additional layer)
+http {
+    limit_req_zone $binary_remote_addr zone=api_limit:10m rate=50r/m;
+    limit_req_zone $binary_remote_addr zone=auth_limit:10m rate=5r/m;
+    
+    server {
+        location /api/ {
+            limit_req zone=api_limit burst=10 nodelay;
+        }
+        
+        location /api/v1/auth/ {
+            limit_req zone=auth_limit burst=2 nodelay;
+        }
+    }
+}
+```
+
+**Security Alerts**:
+
+```yaml
+# Prometheus alert for rate limit abuse
+groups:
+  - name: security
+    rules:
+      - alert: HighRateLimitRejections
+        expr: rate(http_rate_limit_rejections_total[5m]) > 10
+        for: 5m
+        annotations:
+          summary: "Possible DoS attack detected"
+          description: "{{ $value }} requests/sec being rate limited"
+```
+
+### 2. API Key Authentication
+
+**Current Status**: Not yet implemented (v0.2.0 planned)
+
+**Future Implementation**:
 
 ```python
 # alma/core/security.py
@@ -559,13 +658,77 @@ async def verify_api_key(api_key: str = Security(API_KEY_HEADER)):
     return api_key
 ```
 
-### 2. Firewall Configuration
+### 3. Input Validation Protection
+
+**Pydantic Models** prevent injection attacks:
+
+```python
+from pydantic import BaseModel, Field, validator
+
+class BlueprintCreate(BaseModel):
+    version: str = Field(..., pattern=r"^\d+\.\d+$")
+    name: str = Field(..., min_length=1, max_length=100, 
+                     pattern=r"^[a-zA-Z0-9-_]+$")
+    description: str = Field(..., max_length=500)
+    
+    @validator('name')
+    def validate_no_sql_injection(cls, v):
+        dangerous_chars = ["'", '"', ";", "--", "/*", "*/"]
+        if any(char in v for char in dangerous_chars):
+            raise ValueError("Invalid characters in name")
+        return v
+```
+
+**YAML Validation**:
+
+```python
+import yaml
+from yaml.loader import SafeLoader
+
+# Always use SafeLoader to prevent code execution
+def load_blueprint(yaml_content: str):
+    try:
+        data = yaml.load(yaml_content, Loader=SafeLoader)
+        # Validate against schema
+        BlueprintSchema.validate(data)
+        return data
+    except yaml.YAMLError as e:
+        raise ValueError(f"Invalid YAML: {e}")
+```
+
+### 4. SQL Injection Protection
+
+**ORM Usage** - All database operations use SQLAlchemy ORM:
+
+```python
+# SAFE - Using ORM
+from alma.models import Blueprint
+
+blueprint = db.query(Blueprint).filter(
+    Blueprint.id == blueprint_id
+).first()
+
+# DANGEROUS - Never use raw SQL with string formatting
+# db.execute(f"SELECT * FROM blueprints WHERE id = {blueprint_id}")  # NO!
+```
+
+**Prepared Statements**:
+
+```python
+# If raw SQL is absolutely necessary, use parameterized queries
+from sqlalchemy import text
+
+stmt = text("SELECT * FROM blueprints WHERE id = :id")
+result = db.execute(stmt, {"id": blueprint_id})
+```
+
+### 5. Firewall Configuration
 
 ```bash
 # UFW (Ubuntu)
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
-sudo ufw allow 22/tcp     # SSH
+sudo ufw allow 22/tcp     # SSH (consider changing port)
 sudo ufw allow 80/tcp     # HTTP
 sudo ufw allow 443/tcp    # HTTPS
 sudo ufw enable
@@ -573,31 +736,95 @@ sudo ufw enable
 # Allow internal network for database
 sudo ufw allow from 10.0.0.0/8 to any port 5432
 sudo ufw allow from 10.0.0.0/8 to any port 6379
+
+# Log denied connections
+sudo ufw logging on
 ```
 
-### 3. Secrets Management
+**IPTables Rules** (alternative):
+
+```bash
+# Block common attack patterns
+iptables -A INPUT -p tcp --tcp-flags ALL NONE -j DROP
+iptables -A INPUT -p tcp ! --syn -m state --state NEW -j DROP
+iptables -A INPUT -p tcp --tcp-flags ALL ALL -j DROP
+
+# Rate limit SSH connections
+iptables -A INPUT -p tcp --dport 22 -m state --state NEW -m recent --set
+iptables -A INPUT -p tcp --dport 22 -m state --state NEW -m recent \
+    --update --seconds 60 --hitcount 4 -j DROP
+```
+
+### 6. Secrets Management
 
 Use environment variables or secret manager:
 
 ```bash
 # AWS Secrets Manager
 aws secretsmanager get-secret-value \
-    --secret-id aicdn/production/db-password \
+    --secret-id alma/production/db-password \
     --query SecretString --output text
 
 # HashiCorp Vault
-vault kv get secret/aicdn/production/database
+vault kv get secret/alma/production/database
+
+# Kubernetes Secrets
+kubectl create secret generic alma-secrets \
+    --from-literal=db-password='<password>' \
+    --from-literal=api-key='<key>'
 ```
 
-### 4. SSL/TLS Certificates
+**Environment Variables**:
+
+```bash
+# .env (never commit to git!)
+ALMA_DB_PASSWORD=<strong-password>
+ALMA_SECRET_KEY=<random-256-bit-key>
+ALMA_API_KEYS=key1,key2,key3
+
+# Generate secure keys
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+### 7. SSL/TLS Certificates
 
 ```bash
 # Let's Encrypt with auto-renewal
 sudo certbot --nginx -d api.your-domain.com
 sudo systemctl enable certbot.timer
+
+# Manual certificate installation
+sudo cp server.crt /etc/ssl/certs/
+sudo cp server.key /etc/ssl/private/
+sudo chmod 600 /etc/ssl/private/server.key
 ```
 
-### 5. Database Encryption
+**Nginx TLS Configuration**:
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name api.your-domain.com;
+    
+    ssl_certificate /etc/letsencrypt/live/api.your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.your-domain.com/privkey.pem;
+    
+    # Modern TLS configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256';
+    ssl_prefer_server_ciphers off;
+    
+    # HSTS
+    add_header Strict-Transport-Security "max-age=63072000" always;
+    
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+}
+```
+
+### 8. Database Encryption
 
 ```sql
 -- Enable SSL in PostgreSQL
@@ -605,7 +832,76 @@ ALTER SYSTEM SET ssl = on;
 ALTER SYSTEM SET ssl_cert_file = '/etc/ssl/certs/server.crt';
 ALTER SYSTEM SET ssl_key_file = '/etc/ssl/private/server.key';
 SELECT pg_reload_conf();
+
+-- Verify SSL is enabled
+SHOW ssl;
+
+-- Create encrypted backup
+pg_dump -Fc alma_production | gpg --encrypt --recipient admin@alma.dev > backup.pgdump.gpg
 ```
+
+### 9. Security Audit Logging
+
+**Enable comprehensive logging**:
+
+```python
+# alma/middleware/security_logger.py
+import logging
+from fastapi import Request
+
+logger = logging.getLogger("alma.security")
+
+async def log_security_event(request: Request, event_type: str, details: dict):
+    logger.warning(
+        f"Security Event: {event_type}",
+        extra={
+            "client_ip": request.client.host,
+            "path": request.url.path,
+            "method": request.method,
+            "user_agent": request.headers.get("user-agent"),
+            **details
+        }
+    )
+```
+
+**Events to log**:
+- Failed authentication attempts
+- Rate limit violations
+- Unusual request patterns
+- Error responses (400, 401, 403, 429)
+- Blueprint validation failures
+- Database connection errors
+
+### 10. Security Checklist
+
+**Pre-Deployment**:
+- [ ] All secrets stored securely (no hardcoded passwords)
+- [ ] Database credentials rotated
+- [ ] TLS/SSL certificates installed
+- [ ] Firewall rules configured
+- [ ] Rate limiting enabled
+- [ ] Input validation implemented
+- [ ] SQL injection protection verified
+- [ ] Security headers configured
+- [ ] Debug mode disabled
+- [ ] Error messages sanitized (no stack traces to users)
+
+**Post-Deployment**:
+- [ ] Security audit logging enabled
+- [ ] Monitoring alerts configured
+- [ ] Backup encryption verified
+- [ ] Incident response plan documented
+- [ ] Security updates automated
+- [ ] Penetration testing scheduled
+- [ ] Compliance requirements met
+- [ ] Security training completed
+
+**Continuous Security**:
+- [ ] Weekly security update checks
+- [ ] Monthly dependency vulnerability scans
+- [ ] Quarterly security audits
+- [ ] Annual penetration testing
+- [ ] Incident response drills
 
 ---
 

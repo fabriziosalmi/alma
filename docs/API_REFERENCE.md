@@ -1003,7 +1003,7 @@ ALMA is open-source and welcomes community contributions:
 
 ## Legal & Compliance
 
-- **License**: Apache 2.0 (Open Source)
+- **License**: MIT (Open Source)
 - **Privacy Policy**: https://alma.dev/privacy
 - **Terms of Service**: https://alma.dev/terms
 - **Security Disclosures**: security@alma.dev

@@ -1,33 +1,33 @@
-# ALMA: Infrastructure as Conversation 🧠
+# ALMA: Infrastructure as Conversation
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Status](https://img.shields.io/badge/Status-Sentient_Beta-purple.svg)]()
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Stop writing YAML. Start conversing.**
 ALMA is the first **Cognitive Infrastructure Platform**. It doesn't just execute commands; it understands context, assesses risk, and adapts its persona to your emotional state.
 
-## ✨ The "Wow" Factors
+## Key Features
 
-### 🧠 Cognitive Engine (New!)
+### Cognitive Engine
 ALMA is not a stateless chatbot. It has a "Brain":
 - **Risk Assessment**: Detects frustration + high-risk commands (e.g., "DELETE DB") and activates safety overrides.
 - **Context Awareness**: Understands if you are shifting topics (e.g., from Network to Storage) and adjusts focus.
 - **Adaptive Persona**: Switches dynamically between **Architect** (Creative), **Operator** (Precise), and **Medic** (Troubleshooter) based on your intent.
 
-### 🖥️ TUI Dashboard (New!)
+### TUI Dashboard
 Real-time terminal UI (`ALMA monitor`) featuring:
 - **Live Neural Status**: Watch the LLM think in real-time.
 - **Deployment Tracking**: Progress bars for your infrastructure rollouts.
 - **System Health**: API latency, tokens/sec, and resource usage.
 
-### 🚀 Core Capabilities
+### Core Capabilities
 - **Natural Language**: "Deploy a K8s cluster with monitoring" -> Done.
 - **IPR System**: Infrastructure Pull Requests for human-in-the-loop safety.
 - **Streaming**: Real-time responses (SSE) for instant feedback.
 - **Templates**: 10+ production-ready blueprints included.
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -51,7 +51,7 @@ Real-time terminal UI (`ALMA monitor`) featuring:
 └──────────────────────────────────────────────────────┘
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 ```bash
@@ -78,7 +78,7 @@ ALMA chat "Design a high-availability redis cluster"
 
 # Execute a risky command (Risk Guard activates)
 ALMA chat "DESTROY THE PRODUCTION DATABASE NOW"
-# Response: "🛑 CRITICAL RISK: High frustration detected. Operation blocked."
+# Response: "CRITICAL RISK: High frustration detected. Operation blocked."
 ```
 
 ### 📚 Documentation
