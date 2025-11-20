@@ -148,3 +148,10 @@ data/
 *.pth
 aicdn_demo.mp4
 demo.tape
+
+# Node.js / VitePress
+node_modules/
+package-lock.json
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+.npm

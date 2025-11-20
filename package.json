@@ -1,0 +1,28 @@
+{
+  "name": "alma-docs",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Documentation for ALMA - Autonomous Language Model Architecture",
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "keywords": [
+    "alma",
+    "infrastructure",
+    "ai",
+    "documentation",
+    "vitepress"
+  ],
+  "author": "ALMA Team",
+  "license": "MIT",
+  "devDependencies": {
+    "vitepress": "^1.0.0",
+    "vue": "^3.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fabriziosalmi/alma"
+  }
+}
