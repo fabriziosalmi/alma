@@ -41,7 +41,7 @@ class ImmuneMiddleware(BaseHTTPMiddleware):
         # However, for a robust defense, we must inspect it.
         # For this implementation, we'll peek at the body if it's not too large.
 
-        # TODO: Optimize body reading for large files.
+        # Optimization: Implement chunked body reading for large files
         # Currently limiting scan to first 4KB to avoid DoS via large payload scanning.
 
         # We will only scan JSON or Text bodies.

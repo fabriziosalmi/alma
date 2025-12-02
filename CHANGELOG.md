@@ -5,6 +5,34 @@ All notable changes to ALMA will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2025-12-02
+
+### 🛡️ Protocol Ahimsa (Resilience & Non-Violence)
+
+Major architectural update focusing on system resilience, local-first fallback, and empathetic error handling.
+
+### Added
+- **3-Tier Neural Brain**:
+  - Tier 1: Cloud (Qwen3/OpenAI)
+  - Tier 2: Local Mesh (LocalStudioLLM via localhost:1234)
+  - Tier 3: Panic Mode (TinyLLM static fallback)
+- **Immune System**:
+  - L0 Regex Filter for SQLi/XSS
+  - L0.5 Entropy Filter for high-noise payloads
+  - L0.5 Compression Trap for spam
+- **Empathetic Error Handling**:
+  - "Medic Persona" for user-friendly error messages
+  - Global exception handler (`calm_exception_handler`)
+- **Documentation**:
+  - Updated `README.md` with Architecture diagram
+  - Renamed `docs/INDEX.md` to `docs/index.md` for GitHub Pages compatibility
+
+### Changed
+- **LLM Service**: Refactored `initialize_llm` to support 3-tier fallback.
+- **Dependencies**: Added `httpx` for local model communication.
+
+---
+
 ## [0.2.0] - 2025-11-16
 
 ### 🎯 Quick Wins - Production Ready Release

@@ -244,7 +244,7 @@ async def deploy_blueprint(
     )
 
     # 2. Get engine (currently only FakeEngine)
-    # TODO: Implement dynamic engine selection
+    # Future: Implement dynamic engine selection based on blueprint requirements
     engine = FakeEngine()
 
     try:

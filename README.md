@@ -42,3 +42,64 @@ Real-time terminal UI (`ALMA monitor`) featuring:
 - **System Health**: Latency, tokens/sec, and resource usage.
 
 ## Architecture
+
+```mermaid
+graph TD
+    User[User / CLI] --> API[ALMA API (FastAPI)]
+    API --> Immune[Immune System (L0/L0.5)]
+    Immune --> Auth[Auth & Rate Limit]
+    Auth --> Orch[Cognitive Orchestrator (L4)]
+    
+    subgraph "The Brain (L3)"
+        Orch --> Cloud[Tier 1: Cloud LLM (Qwen/OpenAI)]
+        Orch --> Local[Tier 2: Local Mesh (LM Studio)]
+        Orch --> Panic[Tier 3: Panic Mode (TinyLLM)]
+    end
+    
+    Orch --> Tools[Infrastructure Tools]
+    Tools --> Engines[Execution Layer (L1)]
+    Engines --> K8s[Kubernetes]
+    Engines --> Prox[Proxmox]
+    Engines --> Docker[Docker]
+```
+
+## Quick Start
+
+### Prerequisites
+- Python 3.10+
+- Docker (for metrics stack)
+- LM Studio (optional, for local fallback)
+
+### Installation
+
+1.  **Install via PyPI**:
+    ```bash
+    pip install alma
+    ```
+
+2.  **Initialize the Brain**:
+    ```bash
+    # Start the API Server
+    alma start-server
+    ```
+
+3.  **Launch the Dashboard**:
+    ```bash
+    # In a new terminal
+    alma monitor
+    ```
+
+## Documentation
+
+- **[User Guide](docs/USER_GUIDE.md)**: Complete manual for daily usage.
+- **[API Reference](docs/API_REFERENCE.md)**: Detailed endpoint documentation.
+- **[Security Policy](SECURITY.md)**: Vulnerability reporting and security features.
+- **[Contributing](CONTRIBUTING.md)**: Setup guide for developers.
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to set up your development environment and submit Pull Requests.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

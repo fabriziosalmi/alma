@@ -31,9 +31,8 @@ class LocalStudioLLM(LLMInterface):
         """
         print(f"  -> Pinging Local Studio at {self.base_url}...")
         async with httpx.AsyncClient(timeout=5.0) as client:
-            # Simple check to see if the server is up.
-            # We use a dummy request or just check if the port is open.
-            # For LM Studio, a GET to /v1/models is a good check.
+            # Check if the server is responsive.
+            # For LM Studio, a GET to /v1/models confirms availability.
             models_url = self.base_url.replace("/chat/completions", "/models")
             resp = await client.get(models_url)
             resp.raise_for_status()
@@ -138,7 +137,7 @@ def _get_lock() -> asyncio.Lock:
     try:
         # Check if lock exists and belongs to current loop
         # Note: _loop is internal, but we need to ensure thread safety across event loops if using multiple
-        # For now, just checking existence is usually enough in single-threaded async
+        # Checking existence is sufficient for single-threaded async contexts.
         if _initialization_lock is None:
             _initialization_lock = asyncio.Lock()
     except RuntimeError:
