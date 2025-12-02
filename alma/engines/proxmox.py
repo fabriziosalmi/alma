@@ -72,50 +72,183 @@ class ProxmoxEngine(Engine):
             response.raise_for_status()
             return response.json().get("data", {})
 
+    async def _get_next_vmid(self) -> int:
+        """Get next available VMID."""
+        data = await self._api_request("GET", "cluster/nextid")
+        return int(data)
+
+    async def _get_vm_by_name(self, name: str) -> dict[str, Any] | None:
+        """Find VM/CT by name."""
+        # Check QEMU
+        vms = await self._api_request("GET", f"nodes/{self.node}/qemu")
+        for vm in vms:
+            if vm.get("name") == name:
+                vm["type"] = "qemu"
+                return vm
+        
+        # Check LXC
+        cts = await self._api_request("GET", f"nodes/{self.node}/lxc")
+        for ct in cts:
+            if ct.get("name") == name:
+                ct["type"] = "lxc"
+                return ct
+                
+        return None
+
     async def get_state(self, blueprint: SystemBlueprint) -> list[ResourceState]:
         """
         Get state of all Proxmox resources for a blueprint.
-
-        TODO: Implement actual state retrieval. This would involve listing all VMs/CTs
-        and filtering them based on a naming convention or tag derived from the blueprint.
-        For each found resource, it should construct a ResourceState object.
         """
-        # For now, returns an empty list, indicating no resources exist.
-        return []
+        resources = []
+        
+        # Get all VMs and CTs
+        try:
+            vms = await self._api_request("GET", f"nodes/{self.node}/qemu")
+            cts = await self._api_request("GET", f"nodes/{self.node}/lxc")
+        except Exception as e:
+            print(f"Failed to list resources: {e}")
+            return []
+
+        all_resources = vms + cts
+        
+        # Filter resources that match blueprint naming convention or just all?
+        # For now, we return all resources that match names in the blueprint
+        blueprint_names = {r.name for r in blueprint.resources}
+        
+        for res in all_resources:
+            name = res.get("name")
+            if name in blueprint_names:
+                # Fetch detailed config
+                vmid = res.get("vmid")
+                res_type = "qemu" if res in vms else "lxc"
+                
+                try:
+                    config = await self._api_request("GET", f"nodes/{self.node}/{res_type}/{vmid}/config")
+                    
+                    resources.append(ResourceState(
+                        id=name,
+                        type="compute", # Generic type for now
+                        config=config
+                    ))
+                except Exception:
+                    continue
+                    
+        return resources
 
     async def apply(self, plan: Plan) -> None:
         """
         Deploy or update resources in Proxmox based on a plan.
-
-        TODO: Implement the logic to create/update VMs and other resources.
         """
         if not await self._authenticate():
             raise ConnectionError("Failed to authenticate with Proxmox API")
 
+        # Create new resources
         for resource_def in plan.to_create:
-            # TODO: Add logic to create a VM/CT from resource_def
-            print(f"Fake creating resource: {resource_def.name}")
+            print(f"Creating resource: {resource_def.name}")
+            
+            # We assume cloning from a template
+            template_name = resource_def.specs.get("template")
+            if not template_name:
+                print(f"Skipping {resource_def.name}: No template specified")
+                continue
+                
+            template = await self._get_vm_by_name(template_name)
+            if not template:
+                print(f"Skipping {resource_def.name}: Template '{template_name}' not found")
+                continue
+                
+            new_vmid = await self._get_next_vmid()
+            template_id = template.get("vmid")
+            
+            # Clone
+            print(f"Cloning template {template_id} to VMID {new_vmid}...")
+            await self._api_request(
+                "POST", 
+                f"nodes/{self.node}/qemu/{template_id}/clone",
+                data={
+                    "newid": new_vmid,
+                    "name": resource_def.name,
+                    "full": 1
+                }
+            )
+            
+            # Apply specs (CPU, Memory)
+            # Wait for clone to finish? In async API, we might need to poll task.
+            # For simplicity, we fire and forget config update (might fail if locked)
+            # In production, we should wait for task completion.
+            
+            config_data = {}
+            if "cpu" in resource_def.specs:
+                config_data["cores"] = resource_def.specs["cpu"]
+            if "memory" in resource_def.specs:
+                # Convert GB to MB if needed, assuming specs are in MB or raw
+                config_data["memory"] = resource_def.specs["memory"]
+                
+            if config_data:
+                await self._api_request(
+                    "POST",
+                    f"nodes/{self.node}/qemu/{new_vmid}/config",
+                    data=config_data
+                )
+                
+            # Start VM
+            await self._api_request(
+                "POST",
+                f"nodes/{self.node}/qemu/{new_vmid}/status/start"
+            )
 
-        for _, resource_def in plan.to_update:
-            # TODO: Add logic to update a VM/CT from resource_def
-            print(f"Fake updating resource: {resource_def.name}")
-
-        return
+        # Update existing resources
+        for current_state, resource_def in plan.to_update:
+            print(f"Updating resource: {resource_def.name}")
+            vm = await self._get_vm_by_name(resource_def.name)
+            if not vm:
+                continue
+                
+            vmid = vm.get("vmid")
+            
+            config_data = {}
+            # Compare and update
+            if "cpu" in resource_def.specs and str(resource_def.specs["cpu"]) != str(current_state.config.get("cores")):
+                config_data["cores"] = resource_def.specs["cpu"]
+            
+            if config_data:
+                await self._api_request(
+                    "POST",
+                    f"nodes/{self.node}/qemu/{vmid}/config",
+                    data=config_data
+                )
 
     async def destroy(self, plan: Plan) -> None:
         """
         Destroy Proxmox resources based on a plan.
-
-        TODO: Implement actual VM/CT deletion.
         """
         if not await self._authenticate():
             raise ConnectionError("Failed to authenticate with Proxmox API")
 
         for resource_state in plan.to_delete:
-            # TODO: Add logic to delete a VM/CT using resource_state.id
-            print(f"Fake deleting resource: {resource_state.id}")
-
-        return
+            print(f"Destroying resource: {resource_state.id}")
+            vm = await self._get_vm_by_name(resource_state.id)
+            if not vm:
+                print(f"Resource {resource_state.id} not found")
+                continue
+                
+            vmid = vm.get("vmid")
+            res_type = vm.get("type", "qemu")
+            
+            # Stop first
+            try:
+                await self._api_request(
+                    "POST",
+                    f"nodes/{self.node}/{res_type}/{vmid}/status/stop"
+                )
+            except Exception:
+                pass # Already stopped?
+                
+            # Delete
+            await self._api_request(
+                "DELETE",
+                f"nodes/{self.node}/{res_type}/{vmid}"
+            )
 
     async def health_check(self) -> bool:
         """

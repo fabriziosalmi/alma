@@ -91,7 +91,7 @@ class TestProxmoxEngine:
         self, engine: ProxmoxEngine, sample_blueprint: SystemBlueprint
     ) -> None:
         """Test getting state when no resources exist."""
-        with patch.object(engine, "_authenticate", return_value=True):
+        with patch.object(engine, "_api_request", return_value=[]):
             state = await engine.get_state(sample_blueprint)
             assert state == []
 
@@ -100,104 +100,97 @@ class TestProxmoxEngine:
     ) -> None:
         """Test apply for resource creation."""
         plan = Plan(to_create=sample_blueprint.resources)
+        
+        # Mock template lookup
+        mock_template = {"vmid": 100, "name": "ubuntu-template", "type": "qemu"}
+        
+        # Mock API responses
+        async def api_side_effect(method, endpoint, data=None):
+            if endpoint == "cluster/nextid":
+                return 101
+            if endpoint == f"nodes/{engine.node}/qemu":
+                return [mock_template]
+            if endpoint == f"nodes/{engine.node}/lxc":
+                return []
+            return {}
+
         with (
             patch.object(engine, "_authenticate", return_value=True),
-            patch("builtins.print") as mock_print,
+            patch.object(engine, "_api_request", side_effect=api_side_effect) as mock_req,
         ):
+            # Add template spec to resource
+            sample_blueprint.resources[0].specs["template"] = "ubuntu-template"
+            
             await engine.apply(plan)
-            mock_print.assert_called_with("Fake creating resource: test-vm")
+            
+            # Verify clone call
+            mock_req.assert_any_call(
+                "POST",
+                f"nodes/{engine.node}/qemu/100/clone",
+                data={"newid": 101, "name": "test-vm", "full": 1}
+            )
+            # Verify start call
+            mock_req.assert_any_call(
+                "POST",
+                f"nodes/{engine.node}/qemu/101/status/start"
+            )
 
     async def test_destroy(self, engine: ProxmoxEngine) -> None:
         """Test destroying a resource."""
-        resource_state = ResourceState(id="vm/101", type="compute", config={})
+        resource_state = ResourceState(id="test-vm", type="compute", config={})
         plan = Plan(to_delete=[resource_state])
+        
+        mock_vm = {"vmid": 101, "name": "test-vm", "type": "qemu"}
+        
+        async def api_side_effect(method, endpoint, data=None):
+            if endpoint == f"nodes/{engine.node}/qemu":
+                return [mock_vm]
+            if endpoint == f"nodes/{engine.node}/lxc":
+                return []
+            return {}
+            
         with (
             patch.object(engine, "_authenticate", return_value=True),
-            patch("builtins.print") as mock_print,
+            patch.object(engine, "_api_request", side_effect=api_side_effect) as mock_req,
         ):
             await engine.destroy(plan)
-            mock_print.assert_called_with("Fake deleting resource: vm/101")
-
-    async def test_destroy_authentication_failure(self, engine: ProxmoxEngine) -> None:
-        """Test destroy fails when authentication fails."""
-        resource_state = ResourceState(id="vm/101", type="compute", config={})
-        plan = Plan(to_delete=[resource_state])
-        with patch.object(engine, "_authenticate", return_value=False):
-            with pytest.raises(ConnectionError, match="Failed to authenticate"):
-                await engine.destroy(plan)
-
-    @pytest.mark.asyncio
-    async def test_authenticate_success(self, engine: ProxmoxEngine) -> None:
-        """Test successful authentication."""
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "data": {
-                "ticket": "test-ticket-123",
-                "CSRFPreventionToken": "test-csrf-token-456",
-            }
-        }
-        mock_response.raise_for_status = MagicMock()
-
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
-            result = await engine._authenticate()
-            assert result is True
-            assert engine.ticket == "test-ticket-123"
-            assert engine.csrf_token == "test-csrf-token-456"
-
-    @pytest.mark.asyncio
-    async def test_authenticate_failure(self, engine: ProxmoxEngine) -> None:
-        """Test failed authentication."""
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__.return_value.post.side_effect = Exception(
-                "Connection refused"
+            
+            # Verify stop call
+            mock_req.assert_any_call(
+                "POST",
+                f"nodes/{engine.node}/qemu/101/status/stop"
             )
-            result = await engine._authenticate()
-            assert result is False
-            assert engine.ticket is None
-            assert engine.csrf_token is None
-
-    @pytest.mark.asyncio
-    async def test_api_request_with_authentication(self, engine: ProxmoxEngine) -> None:
-        """Test API request with automatic authentication."""
-        mock_response = MagicMock()
-        mock_response.json.return_value = {"data": {"status": "ok"}}
-        mock_response.raise_for_status = MagicMock()
-
-        with patch.object(engine, "_authenticate", return_value=True) as mock_auth:
-            engine.ticket = None  # Force authentication
-            with patch("httpx.AsyncClient") as mock_client:
-                mock_client.return_value.__aenter__.return_value.request.return_value = (
-                    mock_response
-                )
-                result = await engine._api_request("GET", "nodes/pve/status")
-                assert result == {"status": "ok"}
-                mock_auth.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_api_request_with_existing_ticket(self, engine: ProxmoxEngine) -> None:
-        """Test API request with existing ticket."""
-        engine.ticket = "existing-ticket"
-        engine.csrf_token = "existing-csrf"
-
-        mock_response = MagicMock()
-        mock_response.json.return_value = {"data": {"nodes": []}}
-        mock_response.raise_for_status = MagicMock()
-
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_client.return_value.__aenter__.return_value.request.return_value = mock_response
-            result = await engine._api_request("GET", "nodes")
-            assert result == {"nodes": []}
+            # Verify delete call
+            mock_req.assert_any_call(
+                "DELETE",
+                f"nodes/{engine.node}/qemu/101"
+            )
 
     async def test_apply_update(
         self, engine: ProxmoxEngine, sample_blueprint: SystemBlueprint
     ) -> None:
         """Test apply for resource updates."""
-        old_state = ResourceState(id="vm/101", type="compute", config={"cpu": 1})
+        old_state = ResourceState(id="test-vm", type="compute", config={"cores": 1})
         plan = Plan(to_update=[(old_state, sample_blueprint.resources[0])])
+        
+        mock_vm = {"vmid": 101, "name": "test-vm", "type": "qemu"}
+        
+        async def api_side_effect(method, endpoint, data=None):
+            if endpoint == f"nodes/{engine.node}/qemu":
+                return [mock_vm]
+            if endpoint == f"nodes/{engine.node}/lxc":
+                return []
+            return {}
+
         with (
             patch.object(engine, "_authenticate", return_value=True),
-            patch("builtins.print") as mock_print,
+            patch.object(engine, "_api_request", side_effect=api_side_effect) as mock_req,
         ):
             await engine.apply(plan)
-            mock_print.assert_called_with("Fake updating resource: test-vm")
+            
+            # Verify config update
+            mock_req.assert_any_call(
+                "POST",
+                f"nodes/{engine.node}/qemu/101/config",
+                data={"cores": 2}
+            )

@@ -40,6 +40,8 @@ dependencies = [
     "Jinja2>=3.0",
     "pyfiglet>=0.8.post1",
     "redis>=5.0.0",
+    "docker>=7.0.0",
+    "ansible-runner>=2.3.0",
 ]
 
 [project.optional-dependencies]
