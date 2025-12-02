@@ -24,6 +24,11 @@ class LocalStudioLLM(LLMInterface):
         self.base_url = base_url
         self.model_name = model_name
         self.timeout = 30.0  # Longer timeout for generation
+        
+        # Resilience
+        from alma.core.resilience import CircuitBreaker, Retrier
+        self.circuit_breaker = CircuitBreaker(name="LocalStudioLLM")
+        self.retrier = Retrier(max_attempts=3, base_delay=1.0)
 
     async def _initialize(self) -> None:
         """
@@ -58,12 +63,18 @@ class LocalStudioLLM(LLMInterface):
             "stream": False,
         }
 
-        try:
+        async def _request():
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 resp = await client.post(self.base_url, json=payload)
                 resp.raise_for_status()
                 data = resp.json()
                 return str(data["choices"][0]["message"]["content"])
+
+        try:
+            # Wrap request with Retrier -> CircuitBreaker -> Request
+            return await self.retrier.call(
+                lambda: self.circuit_breaker.call(_request)
+            )
         except Exception as e:
             print(f"Error generating with LocalStudioLLM: {e}")
             raise  # Re-raise to trigger fallback to Tier 3

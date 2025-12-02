@@ -113,6 +113,73 @@ class EntropyFilter(BaseFilter):
 
         return ImmuneResponse(blocked=False)
 
+        return ImmuneResponse(blocked=False)
+
+
+class BloomFilter(BaseFilter):
+    """
+    L1 Filter: Probabilistic set membership check for known bad actors.
+    Uses standard library only (no bitarray dependency).
+    """
+
+    def __init__(self, capacity: int = 1000, error_rate: float = 0.01):
+        self.capacity = capacity
+        self.error_rate = error_rate
+        self.bit_size = self._get_size(capacity, error_rate)
+        self.hash_count = self._get_hash_count(self.bit_size, capacity)
+        self.bit_array = 0  # Use integer as bit array
+
+        # Pre-populate with some known bad signatures (mock)
+        self.add("malicious_bot_user_agent")
+        self.add("known_bad_ip_1.2.3.4")
+
+    def _get_size(self, n: int, p: float) -> int:
+        """Calculate optimal bit size (m)."""
+        m = -(n * math.log(p)) / (math.log(2) ** 2)
+        return int(m)
+
+    def _get_hash_count(self, m: int, n: int) -> int:
+        """Calculate optimal hash functions (k)."""
+        k = (m / n) * math.log(2)
+        return int(k)
+
+    def _hashes(self, item: str) -> list[int]:
+        """Generate k hash values."""
+        import hashlib
+        
+        hashes = []
+        digest = hashlib.md5(item.encode("utf-8")).hexdigest()
+        # Use simple slicing of md5 for multiple hashes (simulation)
+        # Real implementation would use double hashing or mmh3
+        base_hash = int(digest, 16)
+        for i in range(self.hash_count):
+            hashes.append((base_hash + i * (base_hash >> 5)) % self.bit_size)
+        return hashes
+
+    def add(self, item: str) -> None:
+        """Add item to filter."""
+        for index in self._hashes(item):
+            self.bit_array |= (1 << index)
+
+    def check(self, item: str) -> ImmuneResponse:
+        """Check if item is in filter."""
+        # We check if the content matches any known bad signatures.
+        # In a real system, we'd extract features (IP, UA) and check those.
+        # Here we check the content itself for demonstration.
+        
+        # If content is too long, we skip bloom check or hash the whole thing
+        if len(item) > 100: 
+             return ImmuneResponse(blocked=False)
+
+        for index in self._hashes(item):
+            if not (self.bit_array & (1 << index)):
+                return ImmuneResponse(blocked=False)
+        
+        return ImmuneResponse(
+            blocked=True, 
+            reason="Bloom Filter match (Probable known bad actor)", 
+            layer="L1"
+        )
 
 class ImmuneSystem:
     """Facade for the entire immune defense system."""
@@ -121,6 +188,7 @@ class ImmuneSystem:
         self.filters: list[BaseFilter] = [
             RegexFilter(),
             EntropyFilter(),
+            BloomFilter(),
         ]
 
     def scan(self, content: str) -> ImmuneResponse:

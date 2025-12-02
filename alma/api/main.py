@@ -11,6 +11,7 @@ from alma.core.config import get_settings
 from alma.core.database import close_db, init_db
 from alma.core.error_handling import calm_exception_handler
 from alma.core.llm_service import initialize_llm, shutdown_llm, warmup_llm
+from alma.middleware.idempotency import IdempotencyMiddleware
 from alma.middleware.immune import ImmuneMiddleware
 from alma.middleware.metrics import metrics_middleware
 from alma.middleware.rate_limit import rate_limit_middleware
@@ -77,6 +78,7 @@ app.include_router(monitoring.router, prefix=settings.api_prefix)
 app.middleware("http")(rate_limit_middleware)
 app.middleware("http")(metrics_middleware)
 app.add_middleware(ImmuneMiddleware)
+app.add_middleware(IdempotencyMiddleware)
 
 
 @app.get("/")
