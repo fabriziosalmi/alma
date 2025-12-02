@@ -4,13 +4,13 @@ export default defineConfig({
   title: 'ALMA Documentation',
   description: 'Autonomous Language Model Architecture - Infrastructure as Conversation',
   lang: 'en-US',
-  
+
   // GitHub Pages deployment
   base: '/alma/',
-  
+
   // Ignore dead links during build
   ignoreDeadLinks: true,
-  
+
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/alma/favicon.svg' }],
     ['link', { rel: 'alternate icon', href: '/alma/favicon.ico' }],
@@ -21,12 +21,12 @@ export default defineConfig({
 
   themeConfig: {
     logo: '/logo.svg',
-    
+
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/QUICKSTART' },
       { text: 'API Reference', link: '/API_REFERENCE' },
-      { 
+      {
         text: 'Resources',
         items: [
           { text: 'Architecture', link: '/ARCHITECTURE' },
@@ -41,7 +41,7 @@ export default defineConfig({
         text: 'Getting Started',
         collapsed: false,
         items: [
-          { text: 'Introduction', link: '/INDEX' },
+          { text: 'Introduction', link: '/index' },
           { text: 'Quick Start', link: '/QUICKSTART' },
           { text: 'User Guide', link: '/USER_GUIDE' }
         ]
