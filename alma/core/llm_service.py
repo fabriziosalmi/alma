@@ -8,9 +8,81 @@ from alma.core.config import get_settings
 from alma.core.llm import LLMInterface, MockLLM
 from alma.core.llm_orchestrator import EnhancedOrchestrator
 
-# --- TinyLLM Implementation ---
+import httpx
+from typing import Any
+
+# --- Local Studio LLM Implementation (Tier 2) ---
+class LocalStudioLLM(LLMInterface):
+    """
+    Tier 2: Local Mesh.
+    Connects to a local LLM instance (e.g., LM Studio) via HTTP.
+    Provides a resilient fallback when the cloud is unreachable.
+    """
+
+    def __init__(self, base_url: str, model_name: str):
+        self.base_url = base_url
+        self.model_name = model_name
+        self.timeout = 30.0  # Longer timeout for generation
+
+    async def _initialize(self):
+        """
+        Checks connectivity to the local LLM service.
+        """
+        print(f"  -> Pinging Local Studio at {self.base_url}...")
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            # Simple check to see if the server is up.
+            # We use a dummy request or just check if the port is open.
+            # For LM Studio, a GET to /v1/models is a good check.
+            models_url = self.base_url.replace("/chat/completions", "/models")
+            resp = await client.get(models_url)
+            resp.raise_for_status()
+            print("  -> Local Studio is ONLINE.")
+
+    async def generate(self, prompt: str, context: dict | None = None, **kwargs) -> str:
+        """
+        Generates text using the local LLM.
+        """
+        messages = [{"role": "user", "content": prompt}]
+        if context:
+            # Prepend context as system message or context
+            system_msg = f"Context: {context}"
+            messages.insert(0, {"role": "system", "content": system_msg})
+
+        payload = {
+            "model": self.model_name,
+            "messages": messages,
+            "temperature": 0.7,
+            "max_tokens": settings.llm_max_tokens,
+            "stream": False
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                resp = await client.post(self.base_url, json=payload)
+                resp.raise_for_status()
+                data = resp.json()
+                return data["choices"][0]["message"]["content"]
+        except Exception as e:
+            print(f"Error generating with LocalStudioLLM: {e}")
+            raise  # Re-raise to trigger fallback to Tier 3
+
+    async def function_call(self, prompt: str, tools: list[dict[str, Any]], context: dict[str, Any] | None = None) -> dict[str, Any]:
+        """
+        Basic function calling support for Local Studio.
+        """
+        # Note: Full function calling support depends on the local model's capabilities.
+        # For now, we treat it as a generation request.
+        content = await self.generate(prompt, context)
+        return {"content": content}
+
+    async def close(self):
+        pass
+
+
+# --- TinyLLM Implementation (Tier 3 - Panic) ---
 class TinyLLM(LLMInterface):
     """
+    Tier 3: Panic Mode.
     A minimal, local-only LLM fallback.
     Uses simple heuristics or a tiny local model (e.g., quantized) if available.
     For now, it provides safe, canned responses to keep the system alive.
@@ -64,7 +136,11 @@ def _get_lock() -> asyncio.Lock:
 
 async def initialize_llm() -> LLMInterface:
     """
-    Initialize LLM instance.
+    Initialize LLM instance with 3-Tier Fallback (Protocol Ahimsa).
+    
+    Priority 1: Cloud (Qwen3 via API/Transformers)
+    Priority 2: Local Mesh (LocalStudioLLM via localhost:1234)
+    Priority 3: Panic (TinyLLM static fallback)
 
     Returns:
         LLM interface instance
@@ -75,34 +151,49 @@ async def initialize_llm() -> LLMInterface:
         if _llm_instance is not None:
             return _llm_instance
 
+        # --- Tier 1: Cloud / Primary ---
         try:
+            print(f"Attempting Tier 1 (Cloud): {settings.llm_model_name}...")
             # Try to import and initialize Qwen3
             from alma.core.llm_qwen import Qwen3LLM
 
-            print(f"Initializing Qwen3 LLM: {settings.llm_model_name}")
-            print(f"Device: {settings.llm_device}")
+            # Check if we are configured for a real model
+            if settings.llm_model_name == "mock":
+                raise ImportError("Mock mode configured")
 
-            _llm_instance = Qwen3LLM(
+            instance = Qwen3LLM(
                 model_name=settings.llm_model_name,
                 device=settings.llm_device,
                 max_tokens=settings.llm_max_tokens,
             )
-
-            # Initialize the model
-            await _llm_instance._initialize()
-
-            print("✓ LLM initialized successfully")
-
-        except ImportError as e:
-            print(f"⚠ Could not load Qwen3 LLM: {e}")
-            print("Falling back to TinyLLM (Offline Mode)")
-            _llm_instance = TinyLLM()
+            await instance._initialize()
+            _llm_instance = instance
+            print("✓ Tier 1 (Cloud) initialized successfully")
+            return _llm_instance
 
         except Exception as e:
-            print(f"⚠ LLM initialization failed: {e}")
-            print("Falling back to TinyLLM (Offline Mode)")
-            _llm_instance = TinyLLM()
+            print(f"⚠ Tier 1 (Cloud) failed: {e}")
 
+        # --- Tier 2: Local Mesh ---
+        try:
+            print(f"Attempting Tier 2 (Local Mesh): {settings.llm_local_studio_model} at {settings.llm_local_studio_url}...")
+            instance = LocalStudioLLM(
+                base_url=settings.llm_local_studio_url,
+                model_name=settings.llm_local_studio_model
+            )
+            await instance._initialize()
+            _llm_instance = instance
+            print("✓ Tier 2 (Local Mesh) initialized successfully")
+            return _llm_instance
+
+        except Exception as e:
+            print(f"⚠ Tier 2 (Local Mesh) failed: {e}")
+
+        # --- Tier 3: Panic ---
+        print("Attempting Tier 3 (Panic): TinyLLM...")
+        _llm_instance = TinyLLM()
+        print("✓ Tier 3 (Panic) initialized (Offline Mode)")
+        
         return _llm_instance
 
 

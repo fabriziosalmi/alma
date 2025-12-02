@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     llm_model_name: str = "Qwen/Qwen2-0.5B"
     llm_device: str = "cpu"
     llm_max_tokens: int = 512
+    llm_local_studio_url: str = "http://localhost:1234/v1/chat/completions"
+    llm_local_studio_model: str = "qwen/qwen3-1.7b"
 
     # Engines
     default_engine: str = "fake"
