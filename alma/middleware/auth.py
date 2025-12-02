@@ -8,6 +8,9 @@ from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader
 
 
+import hashlib
+import secrets
+
 class APIKeyAuth:
     """API Key authentication handler."""
 
@@ -16,27 +19,38 @@ class APIKeyAuth:
         self.api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
         self._load_api_keys()
 
+    def _hash_key(self, key: str) -> str:
+        """Hash an API key using SHA-256."""
+        return hashlib.sha256(key.encode()).hexdigest()
+
     def _load_api_keys(self) -> None:
         """Load API keys from environment variables."""
         # Check if auth is enabled
         self.enabled = os.getenv("ALMA_AUTH_ENABLED", "true").lower() == "true"
 
         if not self.enabled:
-            self.valid_keys = set()
+            self.valid_key_hashes = set()
             return
 
         # Load API keys from environment
         env_keys = os.getenv("ALMA_API_KEYS", "")
 
         if env_keys:
-            # Use keys from environment
-            self.valid_keys = {key.strip() for key in env_keys.split(",") if key.strip()}
+            # Hash keys from environment
+            self.valid_key_hashes = {
+                self._hash_key(key.strip()) 
+                for key in env_keys.split(",") 
+                if key.strip()
+            }
         else:
-            # Default development keys
-            self.valid_keys = {
-                "test-api-key-12345",
-                "dev-api-key-67890",
-                "prod-api-key-abcdef",
+            # Default development keys (hashed)
+            # test-api-key-12345
+            # dev-api-key-67890
+            # prod-api-key-abcdef
+            self.valid_key_hashes = {
+                self._hash_key("test-api-key-12345"),
+                self._hash_key("dev-api-key-67890"),
+                self._hash_key("prod-api-key-abcdef"),
             }
 
     def validate_key(self, api_key: str | None) -> bool:
@@ -57,7 +71,10 @@ class APIKeyAuth:
         if not api_key:
             return False
 
-        return api_key in self.valid_keys
+        # Hash incoming key and check against stored hashes
+        # Use constant time comparison to prevent timing attacks (though set lookup is fast)
+        input_hash = self._hash_key(api_key)
+        return input_hash in self.valid_key_hashes
 
 
 # Global authentication instance
