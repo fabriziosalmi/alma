@@ -4,13 +4,13 @@
 [![PyPI version](https://img.shields.io/pypi/v/alma.svg)](https://pypi.org/project/alma/)
 [![Status](https://img.shields.io/badge/Status-Resilient_Beta-purple.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Protocol](https://img.shields.io/badge/Protocol-Ahimsa-green.svg)](SECURITY.md)
+[![Policy](https://img.shields.io/badge/Policy-Resiliency-green.svg)](SECURITY.md)
 
 **Stop writing YAML. Start conversing.**
 ALMA is the first **Cognitive & Resilient Infrastructure Platform**.
 It doesn't just execute commands; it protects resources, understands context, works offline, and adapts its persona to your emotional state.
 
-## 🛡️ Protocol Ahimsa: The Core Philosophy
+## 🛡️ Resiliency Policy: The Core Philosophy
 ALMA is built on the **Non-Violence** principle.
 1.  **Silent Defense**: It doesn't fight attacks; it renders them irrelevant via Information Theory (Entropy & Compression filters).
 2.  **Resource Respect**: It never wastes energy (LLM tokens) if a lighter solution (Regex/Local Model) suffices.

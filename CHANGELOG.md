@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.3] - 2025-12-02
 
-### 🛡️ Protocol Ahimsa (Resilience & Non-Violence)
+### 🛡️ Resiliency Policy (Resilience & Non-Violence)
 
 Major architectural update focusing on system resilience, local-first fallback, and empathetic error handling.
 

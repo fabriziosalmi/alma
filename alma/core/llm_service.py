@@ -159,7 +159,7 @@ def _get_lock() -> asyncio.Lock:
 
 async def initialize_llm() -> LLMInterface:
     """
-    Initialize LLM instance with 3-Tier Fallback (Protocol Ahimsa).
+    Initialize LLM instance with 3-Tier Fallback (Resiliency Policy).
 
     Priority 1: Cloud (Qwen3 via API/Transformers)
     Priority 2: Local Mesh (LocalStudioLLM via localhost:1234)

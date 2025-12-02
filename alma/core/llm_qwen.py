@@ -115,43 +115,56 @@ class Qwen3LLM(LLMInterface):
 
         loop = asyncio.get_event_loop()
 
-        def _stream():
-            # Tokenize input
-            text = self.tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True,
-            )
-            inputs = self.tokenizer([text], return_tensors="pt").to(self.device)
+        # Tokenize input
+        text = self.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+        inputs = self.tokenizer([text], return_tensors="pt").to(self.device)
 
-            # Generate with streaming
-            from threading import Thread
+        # Stream chunks asynchronously
+        async def _async_generator_wrapper(sync_generator):
+            it = iter(sync_generator)
+            
+            def _next_safe():
+                try:
+                    return next(it)
+                except StopIteration:
+                    return None
 
-            from transformers import TextIteratorStreamer
+            while True:
+                # Run next(it) in executor to avoid blocking the event loop
+                chunk = await loop.run_in_executor(None, _next_safe)
+                if chunk is None:
+                    break
+                yield chunk
 
-            streamer = TextIteratorStreamer(
-                self.tokenizer, skip_prompt=True, skip_special_tokens=True
-            )
+        # Start generation in a separate thread
+        from threading import Thread
+        from transformers import TextIteratorStreamer
 
-            generation_kwargs = dict(
-                inputs,
-                streamer=streamer,
-                max_new_tokens=self.max_tokens,
-                do_sample=True,
-                temperature=0.7,
-                top_p=0.9,
-            )
+        streamer = TextIteratorStreamer(
+            self.tokenizer, skip_prompt=True, skip_special_tokens=True
+        )
 
-            thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
-            thread.start()
+        generation_kwargs = dict(
+            inputs,
+            streamer=streamer,
+            max_new_tokens=self.max_tokens,
+            do_sample=True,
+            temperature=0.7,
+            top_p=0.9,
+        )
 
-            yield from streamer
+        thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
+        thread.start()
 
-            thread.join()
-
-        # Stream chunks
-        for chunk in await loop.run_in_executor(None, lambda: list(_stream())):
+        # Yield chunks as they become available
+        async for chunk in _async_generator_wrapper(streamer):
             yield chunk
+
+        thread.join()
 
     async def generate(self, prompt: str, context: dict[str, Any] | None = None) -> str:
         """

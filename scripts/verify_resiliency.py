@@ -1,5 +1,5 @@
 """
-Verification Script for Protocol Ahimsa
+Verification Script for Resiliency Policy
 =======================================
 
 Tests:
@@ -93,7 +93,7 @@ def test_local_fallback():
 
 
 if __name__ == "__main__":
-    print("=== Protocol Ahimsa Verification ===")
+    print("=== Resiliency Policy Verification ===")
     test_immune_system_sqli()
     test_immune_system_entropy()
     test_error_handling()

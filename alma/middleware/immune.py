@@ -60,7 +60,7 @@ class ImmuneMiddleware(BaseHTTPMiddleware):
 
             except Exception as e:
                 logger.error(f"Error during immune scan: {e}")
-                # Fail open or closed? Protocol Ahimsa suggests fail safe,
+                # Fail open or closed? Resiliency Policy suggests fail safe,
                 # but we don't want to block legit traffic on internal error.
                 # We'll log and proceed for now.
                 pass
