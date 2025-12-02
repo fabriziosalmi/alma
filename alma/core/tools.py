@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from datetime import datetime
+from functools import lru_cache
+import json
+from pathlib import Path
 from typing import Any
 
 
@@ -15,6 +18,31 @@ class InfrastructureTools:
     """
 
     @staticmethod
+    @lru_cache(maxsize=1)
+    def _load_tools() -> list[dict[str, Any]]:
+        """
+        Load tool definitions from JSON configuration file.
+        Cached to prevent repeated disk I/O.
+        """
+        try:
+            # Resolve path relative to this file
+            base_path = Path(__file__).parent.parent
+            config_path = base_path / "config" / "tools.json"
+            
+            if not config_path.exists():
+                print(f"Tools configuration not found at {config_path}")
+                return []
+
+            with open(config_path, "r") as f:
+                tools = json.load(f)
+                
+            return tools or []
+            
+        except Exception as e:
+            print(f"Failed to load tools: {e}")
+            return []
+
+    @staticmethod
     def get_available_tools() -> list[dict[str, Any]]:
         """
         Get list of available tools for LLM function calling.
@@ -22,303 +50,7 @@ class InfrastructureTools:
         Returns:
             List of tool definitions in OpenAI function calling format
         """
-        return [
-            {
-                "name": "create_blueprint",
-                "description": "Create a new infrastructure blueprint from specifications",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "name": {"type": "string", "description": "Name of the blueprint"},
-                        "description": {
-                            "type": "string",
-                            "description": "Description of what this infrastructure does",
-                        },
-                        "resources": {
-                            "type": "array",
-                            "description": "List of resources to include",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "type": {
-                                        "type": "string",
-                                        "enum": ["compute", "network", "storage", "service"],
-                                    },
-                                    "name": {"type": "string"},
-                                    "provider": {"type": "string"},
-                                    "specs": {"type": "object"},
-                                },
-                            },
-                        },
-                    },
-                    "required": ["name", "resources"],
-                },
-            },
-            {
-                "name": "validate_blueprint",
-                "description": "Validate a blueprint for correctness and best practices",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "blueprint": {"type": "object", "description": "Blueprint to validate"},
-                        "strict": {
-                            "type": "boolean",
-                            "description": "Enable strict validation mode",
-                            "default": False,
-                        },
-                    },
-                    "required": ["blueprint"],
-                },
-            },
-            {
-                "name": "estimate_resources",
-                "description": "Estimate resource requirements for a workload",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "workload_type": {
-                            "type": "string",
-                            "enum": ["web", "database", "cache", "queue", "ml", "analytics"],
-                            "description": "Type of workload",
-                        },
-                        "expected_load": {
-                            "type": "string",
-                            "description": "Expected load (e.g., '1000 requests/sec', '100GB data')",
-                        },
-                        "availability": {
-                            "type": "string",
-                            "enum": ["standard", "high", "critical"],
-                            "description": "Required availability level",
-                        },
-                    },
-                    "required": ["workload_type", "expected_load"],
-                },
-            },
-            {
-                "name": "optimize_costs",
-                "description": "Analyze and suggest cost optimizations for infrastructure",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "blueprint": {
-                            "type": "object",
-                            "description": "Current blueprint to optimize",
-                        },
-                        "provider": {
-                            "type": "string",
-                            "enum": ["aws", "azure", "gcp", "proxmox"],
-                            "description": "Cloud provider",
-                        },
-                        "optimization_goal": {
-                            "type": "string",
-                            "enum": ["cost", "performance", "balanced"],
-                            "default": "balanced",
-                        },
-                    },
-                    "required": ["blueprint"],
-                },
-            },
-            {
-                "name": "security_audit",
-                "description": "Perform security audit on infrastructure blueprint",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "blueprint": {"type": "object", "description": "Blueprint to audit"},
-                        "compliance_framework": {
-                            "type": "string",
-                            "enum": ["general", "pci-dss", "hipaa", "gdpr", "soc2"],
-                            "default": "general",
-                        },
-                        "severity_threshold": {
-                            "type": "string",
-                            "enum": ["low", "medium", "high", "critical"],
-                            "default": "medium",
-                        },
-                    },
-                    "required": ["blueprint"],
-                },
-            },
-            {
-                "name": "generate_deployment_plan",
-                "description": "Generate step-by-step deployment plan for infrastructure",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "blueprint": {"type": "object", "description": "Blueprint to deploy"},
-                        "strategy": {
-                            "type": "string",
-                            "enum": ["all-at-once", "rolling", "blue-green", "canary"],
-                            "default": "rolling",
-                        },
-                        "rollback_enabled": {"type": "boolean", "default": True},
-                    },
-                    "required": ["blueprint"],
-                },
-            },
-            {
-                "name": "troubleshoot_issue",
-                "description": "Diagnose and suggest fixes for infrastructure issues",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "issue_description": {
-                            "type": "string",
-                            "description": "Description of the issue",
-                        },
-                        "affected_resources": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": "List of affected resource IDs",
-                        },
-                        "symptoms": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": "Observed symptoms",
-                        },
-                        "logs": {"type": "string", "description": "Relevant log excerpts"},
-                    },
-                    "required": ["issue_description"],
-                },
-            },
-            {
-                "name": "compare_blueprints",
-                "description": "Compare two blueprints and identify differences",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "blueprint_a": {"type": "object", "description": "First blueprint"},
-                        "blueprint_b": {"type": "object", "description": "Second blueprint"},
-                        "show_details": {"type": "boolean", "default": True},
-                    },
-                    "required": ["blueprint_a", "blueprint_b"],
-                },
-            },
-            {
-                "name": "suggest_architecture",
-                "description": "Suggest optimal architecture for given requirements",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "requirements": {
-                            "type": "object",
-                            "properties": {
-                                "application_type": {"type": "string"},
-                                "expected_users": {"type": "number"},
-                                "data_size": {"type": "string"},
-                                "availability_requirement": {"type": "string"},
-                                "budget": {"type": "string"},
-                            },
-                        },
-                        "constraints": {
-                            "type": "object",
-                            "properties": {
-                                "preferred_provider": {"type": "string"},
-                                "region": {"type": "string"},
-                                "technologies": {"type": "array", "items": {"type": "string"}},
-                            },
-                        },
-                    },
-                    "required": ["requirements"],
-                },
-            },
-            {
-                "name": "calculate_capacity",
-                "description": "Calculate required capacity for scaling operations",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "current_metrics": {
-                            "type": "object",
-                            "properties": {
-                                "cpu_usage": {"type": "number"},
-                                "memory_usage": {"type": "number"},
-                                "storage_usage": {"type": "number"},
-                                "network_throughput": {"type": "number"},
-                            },
-                        },
-                        "growth_rate": {
-                            "type": "number",
-                            "description": "Expected growth rate (percentage)",
-                        },
-                        "time_horizon": {
-                            "type": "string",
-                            "description": "Planning horizon (e.g., '3 months', '1 year')",
-                        },
-                    },
-                    "required": ["current_metrics", "growth_rate"],
-                },
-            },
-            {
-                "name": "migrate_infrastructure",
-                "description": "Plan migration between different platforms",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "source_platform": {"type": "string", "description": "Current platform"},
-                        "target_platform": {"type": "string", "description": "Target platform"},
-                        "blueprint": {
-                            "type": "object",
-                            "description": "Current infrastructure blueprint",
-                        },
-                        "migration_strategy": {
-                            "type": "string",
-                            "enum": ["lift-and-shift", "replatform", "refactor"],
-                            "default": "replatform",
-                        },
-                        "downtime_tolerance": {
-                            "type": "string",
-                            "enum": ["none", "minimal", "moderate", "flexible"],
-                        },
-                    },
-                    "required": ["source_platform", "target_platform", "blueprint"],
-                },
-            },
-            {
-                "name": "check_compliance",
-                "description": "Check infrastructure compliance against standards",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "blueprint": {"type": "object", "description": "Blueprint to check"},
-                        "standards": {
-                            "type": "array",
-                            "items": {
-                                "type": "string",
-                                "enum": ["cis", "nist", "pci-dss", "hipaa", "gdpr", "iso27001"],
-                            },
-                        },
-                        "generate_report": {"type": "boolean", "default": True},
-                    },
-                    "required": ["blueprint", "standards"],
-                },
-            },
-            {
-                "name": "forecast_metrics",
-                "description": "Forecast infrastructure metrics and resource needs",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "historical_data": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "timestamp": {"type": "string"},
-                                    "metrics": {"type": "object"},
-                                },
-                            },
-                        },
-                        "forecast_period": {
-                            "type": "string",
-                            "description": "Period to forecast (e.g., '30 days', '3 months')",
-                        },
-                        "confidence_level": {"type": "number", "default": 0.95},
-                    },
-                    "required": ["historical_data", "forecast_period"],
-                },
-            },
-        ]
+        return InfrastructureTools._load_tools()
 
     @staticmethod
     def execute_tool(

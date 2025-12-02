@@ -39,6 +39,7 @@ dependencies = [
     "kubernetes_asyncio>=29.0.0",
     "Jinja2>=3.0",
     "pyfiglet>=0.8.post1",
+    "redis>=5.0.0",
 ]
 
 [project.optional-dependencies]

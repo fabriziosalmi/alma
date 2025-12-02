@@ -1,0 +1,540 @@
+simple-web-app:
+  version: "1.0"
+  name: "simple-web-app"
+  description: "Simple web application with load balancer and database"
+  category: "web"
+  complexity: "simple"
+  estimated_cost: "$100-200/month"
+  resources:
+    - type: "network"
+      name: "load-balancer"
+      provider: "fake"
+      specs:
+        type: "http"
+        algorithm: "round-robin"
+        health_check: "/health"
+        backends: ["web-server-1", "web-server-2"]
+    - type: "compute"
+      name: "web-server-1"
+      provider: "proxmox"
+      specs:
+        cpu: 2
+        memory: "4GB"
+        storage: "50GB"
+        os: "ubuntu-22.04"
+      dependencies: ["postgres-db"]
+    - type: "compute"
+      name: "web-server-2"
+      provider: "proxmox"
+      specs:
+        cpu: 2
+        memory: "4GB"
+        storage: "50GB"
+        os: "ubuntu-22.04"
+      dependencies: ["postgres-db"]
+    - type: "compute"
+      name: "postgres-db"
+      provider: "proxmox"
+      specs:
+        cpu: 4
+        memory: "8GB"
+        storage: "200GB"
+        storage_type: "SSD"
+  metadata:
+    template: "simple-web-app"
+    category: "web"
+    complexity: "simple"
+
+ha-web-app:
+  version: "1.0"
+  name: "ha-web-app"
+  description: "High-availability web application with autoscaling"
+  category: "web"
+  complexity: "medium"
+  estimated_cost: "$500-1000/month"
+  resources:
+    - type: "network"
+      name: "cdn"
+      provider: "fake"
+      specs:
+        type: "cdn"
+        caching: true
+        ssl: true
+        waf: true
+    - type: "network"
+      name: "primary-lb"
+      provider: "fake"
+      specs:
+        type: "application"
+        algorithm: "least-connections"
+        ssl_termination: true
+        health_check: "/health"
+        backends: ["web-1", "web-2", "web-3"]
+    - type: "compute"
+      name: "web-1"
+      provider: "proxmox"
+      specs:
+        cpu: 4
+        memory: "8GB"
+        storage: "100GB"
+        autoscaling:
+          min: 2
+          max: 10
+          target_cpu: 70
+      dependencies: ["db-primary", "redis-cache"]
+    - type: "compute"
+      name: "web-2"
+      provider: "proxmox"
+      specs:
+        cpu: 4
+        memory: "8GB"
+        storage: "100GB"
+      dependencies: ["db-primary", "redis-cache"]
+    - type: "compute"
+      name: "web-3"
+      provider: "proxmox"
+      specs:
+        cpu: 4
+        memory: "8GB"
+        storage: "100GB"
+      dependencies: ["db-primary", "redis-cache"]
+    - type: "compute"
+      name: "db-primary"
+      provider: "proxmox"
+      specs:
+        cpu: 8
+        memory: "32GB"
+        storage: "1TB"
+        storage_type: "NVMe"
+        replication:
+          standby: "db-standby"
+          type: "streaming"
+    - type: "compute"
+      name: "db-standby"
+      provider: "proxmox"
+      specs:
+        cpu: 8
+        memory: "32GB"
+        storage: "1TB"
+        storage_type: "NVMe"
+    - type: "compute"
+      name: "redis-cache"
+      provider: "proxmox"
+      specs:
+        cpu: 2
+        memory: "16GB"
+        storage: "100GB"
+  metadata:
+    template: "ha-web-app"
+    category: "web"
+    complexity: "medium"
+    availability: "99.9%"
+
+microservices-k8s:
+  version: "1.0"
+  name: "microservices-k8s"
+  description: "Kubernetes-based microservices platform with service mesh"
+  category: "microservices"
+  complexity: "advanced"
+  estimated_cost: "$1000-2000/month"
+  resources:
+    - type: "compute"
+      name: "k8s-master-1"
+      provider: "proxmox"
+      specs:
+        cpu: 4
+        memory: "16GB"
+        storage: "200GB"
+        role: "control-plane"
+    - type: "compute"
+      name: "k8s-master-2"
+      provider: "proxmox"
+      specs:
+        cpu: 4
+        memory: "16GB"
+        storage: "200GB"
+        role: "control-plane"
+    - type: "compute"
+      name: "k8s-master-3"
+      provider: "proxmox"
+      specs:
+        cpu: 4
+        memory: "16GB"
+        storage: "200GB"
+        role: "control-plane"
+    - type: "compute"
+      name: "k8s-worker-pool"
+      provider: "proxmox"
+      specs:
+        cpu: 8
+        memory: "32GB"
+        storage: "500GB"
+        role: "worker"
+        count: 5
+        autoscaling:
+          min: 3
+          max: 20
+    - type: "service"
+      name: "istio-service-mesh"
+      provider: "fake"
+      specs:
+        type: "service-mesh"
+        mTLS: true
+        tracing: true
+        traffic_management: true
+    - type: "storage"
+      name: "persistent-storage"
+      provider: "proxmox"
+      specs:
+        type: "ceph"
+        size: "10TB"
+        replicas: 3
+  metadata:
+    template: "microservices-k8s"
+    category: "microservices"
+    complexity: "advanced"
+
+postgres-ha:
+  version: "1.0"
+  name: "postgres-ha"
+  description: "PostgreSQL high-availability cluster with automated failover"
+  category: "database"
+  complexity: "medium"
+  estimated_cost: "$300-600/month"
+  resources:
+    - type: "compute"
+      name: "pg-primary"
+      provider: "proxmox"
+      specs:
+        cpu: 8
+        memory: "32GB"
+        storage: "2TB"
+        storage_type: "NVMe"
+        role: "primary"
+    - type: "compute"
+      name: "pg-replica-1"
+      provider: "proxmox"
+      specs:
+        cpu: 8
+        memory: "32GB"
+        storage: "2TB"
+        storage_type: "NVMe"
+        role: "replica"
+      dependencies: ["pg-primary"]
+    - type: "compute"
+      name: "pg-replica-2"
+      provider: "proxmox"
+      specs:
+        cpu: 8
+        memory: "32GB"
+        storage: "2TB"
+        storage_type: "NVMe"
+        role: "replica"
+      dependencies: ["pg-primary"]
+    - type: "service"
+      name: "pgpool"
+      provider: "fake"
+      specs:
+        type: "connection-pooler"
+        load_balancing: true
+        failover: "automatic"
+    - type: "storage"
+      name: "backup-storage"
+      provider: "proxmox"
+      specs:
+        type: "s3-compatible"
+        size: "5TB"
+        retention: "30 days"
+  metadata:
+    template: "postgres-ha"
+    category: "database"
+    complexity: "medium"
+
+data-pipeline:
+  version: "1.0"
+  name: "data-pipeline"
+  description: "ETL pipeline with data warehouse and analytics"
+  category: "data"
+  complexity: "advanced"
+  estimated_cost: "$800-1500/month"
+  resources:
+    - type: "service"
+      name: "airflow"
+      provider: "fake"
+      specs:
+        type: "workflow-orchestrator"
+        workers: 5
+        scheduler_ha: true
+    - type: "service"
+      name: "kafka-cluster"
+      provider: "fake"
+      specs:
+        type: "message-queue"
+        brokers: 3
+        partitions: 100
+        replication: 3
+    - type: "compute"
+      name: "spark-cluster"
+      provider: "proxmox"
+      specs:
+        cpu: 32
+        memory: "128GB"
+        storage: "2TB"
+        workers: 10
+    - type: "storage"
+      name: "data-lake"
+      provider: "fake"
+      specs:
+        type: "object-storage"
+        size: "100TB"
+        lifecycle: "intelligent-tiering"
+    - type: "service"
+      name: "clickhouse"
+      provider: "fake"
+      specs:
+        type: "data-warehouse"
+        shards: 4
+        replicas: 2
+  metadata:
+    template: "data-pipeline"
+    category: "data"
+    complexity: "advanced"
+
+ml-training:
+  version: "1.0"
+  name: "ml-training"
+  description: "GPU cluster for machine learning model training"
+  category: "ml"
+  complexity: "advanced"
+  estimated_cost: "$2000-5000/month"
+  resources:
+    - type: "compute"
+      name: "gpu-node-1"
+      provider: "proxmox"
+      specs:
+        cpu: 32
+        memory: "256GB"
+        storage: "4TB"
+        gpu: "NVIDIA A100"
+        gpu_count: 8
+    - type: "compute"
+      name: "gpu-node-2"
+      provider: "proxmox"
+      specs:
+        cpu: 32
+        memory: "256GB"
+        storage: "4TB"
+        gpu: "NVIDIA A100"
+        gpu_count: 8
+    - type: "service"
+      name: "mlflow"
+      provider: "fake"
+      specs:
+        type: "ml-platform"
+        experiment_tracking: true
+        model_registry: true
+    - type: "storage"
+      name: "dataset-storage"
+      provider: "fake"
+      specs:
+        type: "high-throughput"
+        size: "50TB"
+        iops: 100000
+  metadata:
+    template: "ml-training"
+    category: "ml"
+    complexity: "advanced"
+
+zero-trust-network:
+  version: "1.0"
+  name: "zero-trust-network"
+  description: "Zero-trust architecture with mTLS and micro-segmentation"
+  category: "security"
+  complexity: "advanced"
+  estimated_cost: "$400-800/month"
+  resources:
+    - type: "service"
+      name: "identity-provider"
+      provider: "fake"
+      specs:
+        type: "idp"
+        mfa: true
+        sso: true
+    - type: "network"
+      name: "service-mesh"
+      provider: "fake"
+      specs:
+        type: "zero-trust-mesh"
+        mTLS: "enforced"
+        authorization: "fine-grained"
+    - type: "service"
+      name: "policy-engine"
+      provider: "fake"
+      specs:
+        type: "opa"
+        policies: "least-privilege"
+    - type: "service"
+      name: "certificate-manager"
+      provider: "fake"
+      specs:
+        type: "vault"
+        auto_rotation: true
+        ttl: "24h"
+  metadata:
+    template: "zero-trust-network"
+    category: "security"
+    complexity: "advanced"
+
+observability-stack:
+  version: "1.0"
+  name: "observability-stack"
+  description: "Complete observability with metrics, logs, and traces"
+  category: "monitoring"
+  complexity: "medium"
+  estimated_cost: "$200-400/month"
+  resources:
+    - type: "service"
+      name: "prometheus"
+      provider: "fake"
+      specs:
+        type: "metrics"
+        retention: "90 days"
+        ha: true
+        replicas: 2
+    - type: "service"
+      name: "grafana"
+      provider: "fake"
+      specs:
+        type: "visualization"
+        dashboards: "pre-configured"
+        alerting: true
+    - type: "service"
+      name: "loki"
+      provider: "fake"
+      specs:
+        type: "logs"
+        retention: "30 days"
+        compression: true
+    - type: "service"
+      name: "jaeger"
+      provider: "fake"
+      specs:
+        type: "tracing"
+        sampling: "adaptive"
+        storage: "elasticsearch"
+    - type: "service"
+      name: "alertmanager"
+      provider: "fake"
+      specs:
+        type: "alerting"
+        integrations: ["slack", "pagerduty", "email"]
+  metadata:
+    template: "observability-stack"
+    category: "monitoring"
+    complexity: "medium"
+
+api-gateway:
+  version: "1.0"
+  name: "api-gateway"
+  description: "Kong-based API gateway with rate limiting and authentication"
+  category: "networking"
+  complexity: "medium"
+  estimated_cost: "$300-500/month"
+  resources:
+    - type: "service"
+      name: "kong-gateway"
+      provider: "fake"
+      specs:
+        type: "api-gateway"
+        instances: 3
+        plugins: ["rate-limiting", "jwt-auth", "cors", "request-transformer"]
+    - type: "compute"
+      name: "kong-db"
+      provider: "proxmox"
+      specs:
+        cpu: 4
+        memory: "16GB"
+        storage: "500GB"
+        type: "postgresql"
+    - type: "service"
+      name: "redis-cache"
+      provider: "fake"
+      specs:
+        type: "cache"
+        size: "8GB"
+        eviction: "lru"
+  metadata:
+    template: "api-gateway"
+    category: "networking"
+    complexity: "medium"
+
+redis-cluster:
+  version: "1.0"
+  name: "redis-cluster"
+  description: "Redis cluster with persistence and replication"
+  category: "database"
+  complexity: "simple"
+  estimated_cost: "$100-300/month"
+  resources:
+    - type: "compute"
+      name: "redis-master-1"
+      provider: "proxmox"
+      specs:
+        cpu: 4
+        memory: "32GB"
+        storage: "200GB"
+        role: "master"
+    - type: "compute"
+      name: "redis-master-2"
+      provider: "proxmox"
+      specs:
+        cpu: 4
+        memory: "32GB"
+        storage: "200GB"
+        role: "master"
+    - type: "compute"
+      name: "redis-master-3"
+      provider: "proxmox"
+      specs:
+        cpu: 4
+        memory: "32GB"
+        storage: "200GB"
+        role: "master"
+    - type: "compute"
+      name: "redis-replica-1"
+      provider: "proxmox"
+      specs:
+        cpu: 4
+        memory: "32GB"
+        storage: "200GB"
+        role: "replica"
+      dependencies: ["redis-master-1"]
+    - type: "compute"
+      name: "redis-replica-2"
+      provider: "proxmox"
+      specs:
+        cpu: 4
+        memory: "32GB"
+        storage: "200GB"
+        role: "replica"
+      dependencies: ["redis-master-2"]
+    - type: "compute"
+      name: "redis-replica-3"
+      provider: "proxmox"
+      specs:
+        cpu: 4
+        memory: "32GB"
+        storage: "200GB"
+        role: "replica"
+      dependencies: ["redis-master-3"]
+    - type: "service"
+      name: "redis-sentinel"
+      provider: "fake"
+      specs:
+        type: "failover-manager"
+        instances: 3
+        quorum: 2
+  metadata:
+    template: "redis-cluster"
+    category: "database"
+    complexity: "simple"

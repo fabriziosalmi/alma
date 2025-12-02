@@ -2,216 +2,163 @@
 
 from __future__ import annotations
 
+import logging
 import time
 from collections import defaultdict
-from collections.abc import Callable
-from typing import Any
+from typing import Any, Callable, Dict, Optional, Tuple
 
-from fastapi import Request, status
+import redis.asyncio as redis
+from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.types import ASGIApp
+
+logger = logging.getLogger(__name__)
 
 
 class RateLimiter:
     """
-    Token bucket rate limiter with multiple strategies.
-
-    Supports:
-    - Per-IP rate limiting
-    - Per-user rate limiting
-    - Per-endpoint rate limiting
-    - Burst handling
-    - Adaptive rate limiting
+    Distributed Rate Limiter using Redis with Token Bucket algorithm.
+    Falls back to in-memory implementation if Redis is unavailable.
     """
 
-    def __init__(
-        self, requests_per_minute: int = 60, burst_size: int = 10, enable_adaptive: bool = False
-    ):
-        """
-        Initialize rate limiter.
+    def __init__(self, redis_url: str = "redis://localhost:6379", enabled: bool = True):
+        self.enabled = enabled
+        # Default limits: (tokens, refill_rate_per_second)
+        self.default_limits = (10, 1.0)  # 10 requests burst, 1 req/s refill
+        self.ip_limits: Dict[str, Tuple[int, float]] = {}
+        self.endpoint_limits: Dict[str, Tuple[int, float]] = {}
+        
+        # Redis client
+        self.redis: Optional[redis.Redis] = None
+        self.redis_url = redis_url
+        self._redis_available = False
 
-        Args:
-            requests_per_minute: Max requests per minute
-            burst_size: Max burst requests
-            enable_adaptive: Enable adaptive rate limiting
-        """
-        self.requests_per_minute = requests_per_minute
-        self.burst_size = burst_size
-        self.enable_adaptive = enable_adaptive
+        # In-memory fallback
+        self.buckets: Dict[str, float] = defaultdict(lambda: 0.0)
+        self.last_update: Dict[str, float] = defaultdict(time.time)
 
-        # Token buckets: {client_id: {'tokens': float, 'last_update': float}}
-        self.buckets: dict[str, dict[str, float]] = {}
-
-        # Request tracking for metrics
-        self.request_counts: dict[str, int] = defaultdict(int)
-        self.blocked_counts: dict[str, int] = defaultdict(int)
-
-        # Adaptive rate limiting state
-        self.adaptive_limits: dict[str, int] = {}
-
-        # Cleanup old buckets periodically
-        self._last_cleanup = time.time()
-        self._cleanup_interval = 300  # 5 minutes
-
-    def _get_client_id(self, request: Request) -> str:
-        """
-        Get unique client identifier.
-
-        Args:
-            request: FastAPI request
-
-        Returns:
-            Client identifier
-        """
-        # Try to get user ID from auth (if implemented)
-        # For now, use IP address
-        client_host = request.client.host if request.client else "unknown"
-        return f"ip:{client_host}"
-
-    def _get_tokens(self, client_id: str) -> float:
-        """
-        Get current token count for client.
-
-        Args:
-            client_id: Client identifier
-
-        Returns:
-            Available tokens
-        """
-        now = time.time()
-
-        if client_id not in self.buckets:
-            self.buckets[client_id] = {"tokens": float(self.burst_size), "last_update": now}
-            return float(self.burst_size)
-
-        bucket = self.buckets[client_id]
-        time_passed = now - bucket["last_update"]
-
-        # Refill tokens based on time passed
-        tokens_to_add = time_passed * (self.requests_per_minute / 60.0)
-        bucket["tokens"] = min(self.burst_size, bucket["tokens"] + tokens_to_add)
-        bucket["last_update"] = now
-
-        return bucket["tokens"]
-
-    def _consume_token(self, client_id: str) -> bool:
-        """
-        Try to consume a token.
-
-        Args:
-            client_id: Client identifier
-
-        Returns:
-            True if token consumed, False if rate limited
-        """
-        tokens = self._get_tokens(client_id)
-
-        if tokens >= 1.0:
-            self.buckets[client_id]["tokens"] -= 1.0
-            self.request_counts[client_id] += 1
-            return True
-
-        self.blocked_counts[client_id] += 1
-        return False
-
-    def _cleanup_old_buckets(self) -> None:
-        """Remove inactive buckets to prevent memory leak."""
-        now = time.time()
-
-        if now - self._last_cleanup < self._cleanup_interval:
+    async def initialize(self):
+        """Initialize Redis connection."""
+        if not self.enabled:
             return
 
-        # Remove buckets inactive for > 1 hour
-        inactive_threshold = now - 3600
+        try:
+            self.redis = redis.from_url(self.redis_url, encoding="utf-8", decode_responses=True)
+            await self.redis.ping()
+            self._redis_available = True
+            logger.info(f"RateLimiter connected to Redis at {self.redis_url}")
+        except Exception as e:
+            logger.warning(f"RateLimiter failed to connect to Redis: {e}. Using in-memory fallback.")
+            self._redis_available = False
 
-        to_remove = [
-            client_id
-            for client_id, bucket in self.buckets.items()
-            if bucket["last_update"] < inactive_threshold
-        ]
+    async def close(self):
+        """Close Redis connection."""
+        if self.redis:
+            await self.redis.close()
 
-        for client_id in to_remove:
-            del self.buckets[client_id]
+    def set_limit(self, ip: str, limit: int, rate: float):
+        """Set custom limit for an IP."""
+        self.ip_limits[ip] = (limit, rate)
 
-        self._last_cleanup = now
-
-    async def check_rate_limit(self, request: Request) -> JSONResponse | None:
+    async def is_rate_limited(self, request: Request) -> Tuple[bool, float]:
         """
-        Check if request should be rate limited.
-
-        Args:
-            request: FastAPI request
-
-        Returns:
-            JSONResponse if rate limited, None otherwise
+        Check if request is rate limited.
+        Returns (is_limited, retry_after).
         """
-        # Bypass rate limiting in test environment
-        import os
+        if not self.enabled:
+            return False, 0.0
 
-        if os.environ.get("TESTING") == "true" or os.environ.get("BYPASS_RATE_LIMIT") == "true":
-            return None
+        ip = request.client.host if request.client else "unknown"
+        path = request.url.path
+        
+        # Determine limits
+        limit, rate = self.ip_limits.get(ip, self.default_limits)
+        
+        key = f"rate_limit:{ip}:{path}"
+        now = time.time()
 
-        client_id = self._get_client_id(request)
+        if self._redis_available and self.redis:
+            try:
+                # Redis Token Bucket Implementation using Lua script for atomicity
+                # Keys: 
+                #   tokens_key: Current tokens available
+                #   timestamp_key: Last update timestamp
+                tokens_key = f"{key}:tokens"
+                timestamp_key = f"{key}:ts"
+                
+                # Script:
+                # 1. Get current tokens and last timestamp
+                # 2. Calculate refill based on time passed
+                # 3. Update tokens (min(limit, current + refill))
+                # 4. If tokens >= 1, decrement and return allowed (1)
+                # 5. Else return denied (0) and retry time
+                
+                script = """
+                local tokens_key = KEYS[1]
+                local ts_key = KEYS[2]
+                local limit = tonumber(ARGV[1])
+                local rate = tonumber(ARGV[2])
+                local now = tonumber(ARGV[3])
+                local cost = 1
 
-        # Cleanup old buckets periodically
-        self._cleanup_old_buckets()
+                local current_tokens = tonumber(redis.call('get', tokens_key) or limit)
+                local last_ts = tonumber(redis.call('get', ts_key) or now)
 
-        # Check rate limit
-        if not self._consume_token(client_id):
-            # Calculate retry-after
-            tokens = self._get_tokens(client_id)
-            tokens_needed = 1.0 - tokens
-            retry_after = int((tokens_needed / (self.requests_per_minute / 60.0)) + 1)
+                local delta = math.max(0, now - last_ts)
+                local refill = delta * rate
+                
+                current_tokens = math.min(limit, current_tokens + refill)
+                
+                if current_tokens >= cost then
+                    current_tokens = current_tokens - cost
+                    redis.call('set', tokens_key, current_tokens)
+                    redis.call('set', ts_key, now)
+                    -- Expire keys after enough time to fully refill to save space
+                    local ttl = math.ceil(limit / rate)
+                    redis.call('expire', tokens_key, ttl)
+                    redis.call('expire', ts_key, ttl)
+                    return {1, 0}
+                else
+                    local wait = (cost - current_tokens) / rate
+                    return {0, wait}
+                end
+                """
+                
+                result = await self.redis.eval(script, 2, tokens_key, timestamp_key, limit, rate, now)
+                allowed = bool(result[0])
+                wait_time = float(result[1])
+                
+                if allowed:
+                    return False, 0.0
+                else:
+                    return True, wait_time
 
-            return JSONResponse(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                content={
-                    "error": "rate_limit_exceeded",
-                    "message": f"Rate limit exceeded. Max {self.requests_per_minute} requests per minute.",
-                    "retry_after": retry_after,
-                    "limit": self.requests_per_minute,
-                    "window": "1 minute",
-                },
-                headers={
-                    "Retry-After": str(retry_after),
-                    "X-RateLimit-Limit": str(self.requests_per_minute),
-                    "X-RateLimit-Remaining": "0",
-                    "X-RateLimit-Reset": str(int(time.time()) + retry_after),
-                },
-            )
-
-        # Add rate limit headers to response
-        tokens_remaining = int(self._get_tokens(client_id))
-        request.state.rate_limit_headers = {
-            "X-RateLimit-Limit": str(self.requests_per_minute),
-            "X-RateLimit-Remaining": str(tokens_remaining),
-            "X-RateLimit-Reset": str(int(time.time()) + 60),
-        }
-
-        return None
-
-    def get_stats(self) -> dict[str, Any]:
-        """
-        Get rate limiter statistics.
-
-        Returns:
-            Statistics dictionary
-        """
-        total_requests = sum(self.request_counts.values())
-        total_blocked = sum(self.blocked_counts.values())
-
-        return {
-            "total_requests": total_requests,
-            "total_blocked": total_blocked,
-            "block_rate": total_blocked / max(total_requests, 1),
-            "active_clients": len(self.buckets),
-            "requests_per_minute_limit": self.requests_per_minute,
-            "burst_size": self.burst_size,
-            "top_clients": sorted(
-                [{"client_id": k, "requests": v} for k, v in self.request_counts.items()],
-                key=lambda x: x["requests"],
-                reverse=True,
-            )[:10],
-        }
+            except Exception as e:
+                logger.error(f"Redis rate limit check failed: {e}. Falling back to memory.")
+                # Fall through to in-memory check
+        
+        # In-memory fallback (Token Bucket)
+        current_tokens = self.buckets[key]
+        last_ts = self.last_update[key]
+        
+        delta = now - last_ts
+        refill = delta * rate
+        
+        # Initial state or refill
+        if key not in self.buckets:
+            current_tokens = limit
+        else:
+            current_tokens = min(limit, current_tokens + refill)
+            
+        if current_tokens >= 1.0:
+            self.buckets[key] = current_tokens - 1.0
+            self.last_update[key] = now
+            return False, 0.0
+        else:
+            # Calculate wait time
+            wait_time = (1.0 - current_tokens) / rate
+            return True, wait_time
 
 
 class EndpointRateLimiter:
@@ -241,7 +188,10 @@ class EndpointRateLimiter:
             rpm: Requests per minute
         """
         self.endpoint_limits[endpoint] = rpm
-        self.limiters[endpoint] = RateLimiter(requests_per_minute=rpm, burst_size=max(10, rpm // 6))
+        # The new RateLimiter takes (limit, rate) where rate is per second
+        # rpm / 60.0 gives requests per second
+        self.limiters[endpoint] = RateLimiter(enabled=True) # Initialize with enabled=True
+        self.limiters[endpoint].default_limits = (max(10, rpm // 6), rpm / 60.0) # Set default limits for this specific limiter instance
 
     def _get_limiter(self, request: Request) -> RateLimiter:
         """
@@ -262,7 +212,8 @@ class EndpointRateLimiter:
 
         # Use default limiter
         if "default" not in self.limiters:
-            self.limiters["default"] = RateLimiter(requests_per_minute=self.default_rpm)
+            self.limiters["default"] = RateLimiter(enabled=True)
+            self.limiters["default"].default_limits = (max(10, self.default_rpm // 6), self.default_rpm / 60.0)
 
         return self.limiters["default"]
 
@@ -277,7 +228,80 @@ class EndpointRateLimiter:
             JSONResponse if rate limited, None otherwise
         """
         limiter = self._get_limiter(request)
-        return await limiter.check_rate_limit(request)
+        
+        # Initialize the specific limiter if it hasn't been yet
+        if limiter.redis is None and limiter.enabled:
+            await limiter.initialize()
+
+        is_limited, retry_after = await limiter.is_rate_limited(request)
+
+        if is_limited:
+            # Attempt to get the effective RPM for the message
+            effective_rpm = self.default_rpm
+            for endpoint, rpm_limit in self.endpoint_limits.items():
+                if request.url.path.startswith(endpoint):
+                    effective_rpm = rpm_limit
+                    break
+
+            return JSONResponse(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                content={
+                    "error": "rate_limit_exceeded",
+                    "message": f"Rate limit exceeded. Max {effective_rpm} requests per minute.",
+                    "retry_after": int(retry_after) + 1,
+                    "limit": effective_rpm,
+                    "window": "1 minute",
+                },
+                headers={
+                    "Retry-After": str(int(retry_after) + 1),
+                    "X-RateLimit-Limit": str(effective_rpm),
+                    "X-RateLimit-Remaining": "0",
+                    "X-RateLimit-Reset": str(int(time.time()) + int(retry_after) + 1),
+                },
+            )
+        
+        # Approximate remaining and reset for headers
+        effective_rpm = self.default_rpm
+        for endpoint, rpm_limit in self.endpoint_limits.items():
+            if request.url.path.startswith(endpoint):
+                effective_rpm = rpm_limit
+                break
+        
+        request.state.rate_limit_headers = {
+            "X-RateLimit-Limit": str(effective_rpm),
+            "X-RateLimit-Remaining": "1", # Placeholder
+            "X-RateLimit-Reset": str(int(time.time()) + 60),
+        }
+
+        return None
+
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """Middleware to enforce rate limits."""
+
+    def __init__(self, app: ASGIApp, limiter: EndpointRateLimiter):
+        super().__init__(app)
+        self.limiter = limiter
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        # Skip rate limiting for health checks and metrics
+        if request.url.path in ["/health", "/metrics", "/docs", "/openapi.json"]:
+            return await call_next(request)
+
+        rate_limit_response = await self.limiter.check_rate_limit(request)
+
+        if rate_limit_response:
+            return rate_limit_response
+
+        # Process request
+        response = await call_next(request)
+
+        # Add rate limit headers
+        if hasattr(request.state, "rate_limit_headers"):
+            for key, value in request.state.rate_limit_headers.items():
+                response.headers[key] = value
+
+        return response
 
 
 # Global rate limiter instance
