@@ -20,7 +20,15 @@ async def test_rate_limiter():
     assert limiter._redis_available == False, "Redis should be unavailable"
     
     # Mock request
-    scope = {"type": "http", "client": ("127.0.0.1", 12345), "path": "/test"}
+    scope = {
+        "type": "http", 
+        "client": ("127.0.0.1", 12345), 
+        "path": "/test",
+        "headers": [],
+        "scheme": "http",
+        "method": "GET",
+        "query_string": b""
+    }
     request = Request(scope)
     
     # Consume tokens
@@ -42,13 +50,29 @@ async def test_rate_limiter():
     endpoint_limiter.set_endpoint_limit("/api/v1/heavy", 10) # 10 RPM
     
     # Default endpoint
-    req_default = Request({"type": "http", "client": ("127.0.0.1", 12345), "path": "/api/v1/normal"})
+    req_default = Request({
+        "type": "http", 
+        "client": ("127.0.0.1", 12345), 
+        "path": "/api/v1/normal",
+        "headers": [],
+        "scheme": "http",
+        "method": "GET",
+        "query_string": b""
+    })
     l_default = endpoint_limiter._get_limiter(req_default)
     # Default RPM 60 -> 1 req/s refill, burst ~10
     assert l_default.default_limits[1] == 1.0 
     
     # Heavy endpoint
-    req_heavy = Request({"type": "http", "client": ("127.0.0.1", 12345), "path": "/api/v1/heavy/action"})
+    req_heavy = Request({
+        "type": "http", 
+        "client": ("127.0.0.1", 12345), 
+        "path": "/api/v1/heavy/action",
+        "headers": [],
+        "scheme": "http",
+        "method": "GET",
+        "query_string": b""
+    })
     l_heavy = endpoint_limiter._get_limiter(req_heavy)
     # 10 RPM -> 0.166 req/s
     assert abs(l_heavy.default_limits[1] - (10/60.0)) < 0.01

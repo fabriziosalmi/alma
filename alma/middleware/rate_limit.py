@@ -139,16 +139,16 @@ class RateLimiter:
                 # Fall through to in-memory check
         
         # In-memory fallback (Token Bucket)
-        current_tokens = self.buckets[key]
-        last_ts = self.last_update[key]
-        
-        delta = now - last_ts
-        refill = delta * rate
-        
-        # Initial state or refill
+        # Check existence before accessing to avoid defaultdict creation
         if key not in self.buckets:
             current_tokens = limit
+            last_ts = now
         else:
+            current_tokens = self.buckets[key]
+            last_ts = self.last_update[key]
+            
+            delta = now - last_ts
+            refill = delta * rate
             current_tokens = min(limit, current_tokens + refill)
             
         if current_tokens >= 1.0:
