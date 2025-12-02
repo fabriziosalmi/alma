@@ -1,10 +1,46 @@
 """LLM service initialization and management."""
 
+from __future__ import annotations
 import asyncio
+
 
 from alma.core.config import get_settings
 from alma.core.llm import LLMInterface, MockLLM
 from alma.core.llm_orchestrator import EnhancedOrchestrator
+
+# --- TinyLLM Implementation ---
+class TinyLLM(LLMInterface):
+    """
+    A minimal, local-only LLM fallback.
+    Uses simple heuristics or a tiny local model (e.g., quantized) if available.
+    For now, it provides safe, canned responses to keep the system alive.
+    """
+    
+    def __init__(self):
+        self.model_name = "tiny-llm-fallback"
+        
+    async def _initialize(self):
+        pass
+        
+    async def generate(self, prompt: str, context: dict | None = None, **kwargs) -> str:
+        """
+        Generates a safe, minimal response.
+        """
+        # Simple heuristic response
+        return (
+            "I am currently operating in Offline Mode (TinyLLM). "
+            "I can acknowledge your request, but advanced cognitive functions are temporarily unavailable. "
+            "Please check your connection or try again later."
+        )
+
+    async def function_call(self, prompt: str, tools: list[dict[str, Any]], context: dict[str, Any] | None = None) -> dict[str, Any]:
+        """
+        Mock function call for TinyLLM.
+        """
+        return {"content": self.generate(prompt)}
+
+    async def close(self):
+        pass
 
 settings = get_settings()
 
@@ -59,13 +95,13 @@ async def initialize_llm() -> LLMInterface:
 
         except ImportError as e:
             print(f"⚠ Could not load Qwen3 LLM: {e}")
-            print("Falling back to MockLLM")
-            _llm_instance = MockLLM()
+            print("Falling back to TinyLLM (Offline Mode)")
+            _llm_instance = TinyLLM()
 
         except Exception as e:
             print(f"⚠ LLM initialization failed: {e}")
-            print("Falling back to MockLLM")
-            _llm_instance = MockLLM()
+            print("Falling back to TinyLLM (Offline Mode)")
+            _llm_instance = TinyLLM()
 
         return _llm_instance
 

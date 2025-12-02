@@ -1,5 +1,7 @@
-"""Blueprint templates library for common infrastructure patterns."""
+"""Infrastructure templates and blueprint generation."""
 
+from __future__ import annotations
+import logging
 from enum import Enum
 from typing import Any
 

@@ -1,5 +1,7 @@
-"""API routes for blueprint templates."""
+"""Template API routes."""
 
+from __future__ import annotations
+import logging
 from typing import Any
 
 from fastapi import APIRouter, HTTPException

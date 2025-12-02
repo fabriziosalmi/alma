@@ -9,9 +9,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from alma.api.routes import blueprints, conversation, ipr, monitoring, templates, tools
 from alma.core.config import get_settings
 from alma.core.database import close_db, init_db
+from alma.core.error_handling import calm_exception_handler
 from alma.core.llm_service import initialize_llm, shutdown_llm, warmup_llm
 from alma.middleware.metrics import metrics_middleware
 from alma.middleware.rate_limit import rate_limit_middleware
+from alma.middleware.immune import ImmuneMiddleware
 
 settings = get_settings()
 
@@ -51,6 +53,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Register Empathetic Error Handler
+app.add_exception_handler(Exception, calm_exception_handler)
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -71,6 +76,7 @@ app.include_router(monitoring.router, prefix=settings.api_prefix)
 # Add middleware
 app.middleware("http")(rate_limit_middleware)
 app.middleware("http")(metrics_middleware)
+app.add_middleware(ImmuneMiddleware)
 
 
 @app.get("/")

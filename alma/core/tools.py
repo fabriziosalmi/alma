@@ -1,5 +1,6 @@
 """Function calling tools for LLM infrastructure operations."""
 
+from __future__ import annotations
 from datetime import datetime
 from typing import Any
 

@@ -1,5 +1,6 @@
 """Rate limiting middleware for API protection."""
 
+from __future__ import annotations
 import time
 from collections import defaultdict
 from collections.abc import Callable

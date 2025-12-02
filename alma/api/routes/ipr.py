@@ -1,5 +1,6 @@
 """API routes for Infrastructure Pull Requests (IPR)."""
 
+from __future__ import annotations
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status

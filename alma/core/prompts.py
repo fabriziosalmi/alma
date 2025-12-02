@@ -1,5 +1,6 @@
 """Prompt templates for LLM infrastructure tasks."""
 
+from __future__ import annotations
 from typing import Any
 
 

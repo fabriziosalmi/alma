@@ -1,6 +1,7 @@
-"""API Key authentication middleware."""
+"""Authentication middleware."""
 
-import os
+from __future__ import annotations
+import logging
 from typing import Optional
 
 from fastapi import HTTPException, Security, status

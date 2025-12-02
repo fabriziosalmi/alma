@@ -1,5 +1,6 @@
-"""Prometheus metrics collection for ALMA."""
+"""Metrics middleware for Prometheus."""
 
+from __future__ import annotations
 import time
 from collections import defaultdict
 from datetime import datetime

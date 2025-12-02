@@ -7,6 +7,7 @@ responsible for context tracking, risk assessment, and dynamic persona selection
 to provide a safer, more intuitive, and more aware conversational experience.
 """
 
+from __future__ import annotations
 import logging
 from enum import Enum
 from typing import Any
@@ -59,6 +60,14 @@ class UserEmotionalStability(str, Enum):
     STABLE = "STABLE"
     NEUTRAL = "NEUTRAL"
     VOLATILE = "VOLATILE"
+
+
+class SystemHealth(str, Enum):
+    """Enumeration for the system's internal health state."""
+    
+    OPTIMAL = "OPTIMAL"
+    DEGRADED = "DEGRADED"
+    CRITICAL = "CRITICAL"
 
 
 class RiskProfile(BaseModel):
@@ -132,10 +141,14 @@ def assess_risk(intent: str, frustration: float) -> RiskProfile:
     return profile
 
 
-def select_persona(intent_type: str) -> str:
+def select_persona(intent_type: str, system_health: SystemHealth = SystemHealth.OPTIMAL) -> str:
     """
-    Selects the appropriate AI persona based on the intent category.
+    Selects the appropriate AI persona based on the intent category and system health.
     """
+    # If system is sick, the Medic takes charge immediately.
+    if system_health != SystemHealth.OPTIMAL:
+        return "MEDIC"
+
     if intent_type.startswith("generate_") or intent_type.startswith("suggest_"):
         return "ARCHITECT"
     if intent_type.startswith("deploy_") or intent_type.startswith("rollback_"):
@@ -153,6 +166,7 @@ class AdvancedCognitiveEngine:
     def __init__(self):
         self.focus = FocusContext()
         self.frustration_level = 0.0
+        self.system_health = SystemHealth.OPTIMAL
 
     def process_advanced(self, user_input: str, intent: str) -> dict[str, Any]:
         """
@@ -180,7 +194,7 @@ class AdvancedCognitiveEngine:
             return {"override": SAFETY_OVERRIDE, "risk_profile": risk_profile}
 
         # 5. Select the appropriate persona for the response
-        persona = select_persona(intent)
+        persona = select_persona(intent, self.system_health)
 
         logger.info(
             f"Cognitive analysis complete. Risk: {risk_profile.command_risk_level}, Persona: {persona}"
