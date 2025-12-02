@@ -15,11 +15,11 @@ Philosophy:
 """
 
 from __future__ import annotations
+
 import math
 import re
 import zlib
 from abc import ABC, abstractmethod
-from typing import Any
 
 from pydantic import BaseModel
 
@@ -68,7 +68,9 @@ class RegexFilter(BaseFilter):
 class EntropyFilter(BaseFilter):
     """L0.5 Filter: Checks for information density anomalies."""
 
-    def __init__(self, min_length: int = 50, max_entropy: float = 5.8, min_compression: float = 0.1):
+    def __init__(
+        self, min_length: int = 50, max_entropy: float = 5.8, min_compression: float = 0.1
+    ):
         self.min_length = min_length
         self.max_entropy = max_entropy  # Threshold for random noise
         self.min_compression = min_compression  # Threshold for repetitive spam
@@ -95,9 +97,7 @@ class EntropyFilter(BaseFilter):
         # Check Entropy (High = Random Noise)
         entropy = self._calculate_entropy(content)
         if entropy > self.max_entropy:
-            return ImmuneResponse(
-                blocked=True, reason=f"High entropy: {entropy:.2f}", layer="L0.5"
-            )
+            return ImmuneResponse(blocked=True, reason=f"High entropy: {entropy:.2f}", layer="L0.5")
 
         # Check Compression (Low Ratio = Highly Repetitive/Spam)
         # Note: zlib ratio is compressed_size / original_size.

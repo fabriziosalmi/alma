@@ -8,6 +8,7 @@ to provide a safer, more intuitive, and more aware conversational experience.
 """
 
 from __future__ import annotations
+
 import logging
 from enum import Enum
 from typing import Any
@@ -64,7 +65,7 @@ class UserEmotionalStability(str, Enum):
 
 class SystemHealth(str, Enum):
     """Enumeration for the system's internal health state."""
-    
+
     OPTIMAL = "OPTIMAL"
     DEGRADED = "DEGRADED"
     CRITICAL = "CRITICAL"

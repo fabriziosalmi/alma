@@ -7,6 +7,7 @@ Uses the "Medic Persona" to guide the user when things go wrong.
 """
 
 from __future__ import annotations
+
 import logging
 import traceback
 
@@ -28,7 +29,7 @@ async def calm_exception_handler(request: Request, exc: Exception) -> Response:
     # Medic Persona Response
     # We don't use the LLM here to avoid recursive failures if the LLM is the cause.
     # We use a static but empathetic template.
-    
+
     medic_response = {
         "status": "error",
         "persona": "MEDIC",
@@ -36,10 +37,9 @@ async def calm_exception_handler(request: Request, exc: Exception) -> Response:
         "diagnosis": "The operation encountered an unexpected anomaly.",
         "prescription": "I have stabilized the session. Please try your request again, or check the system status if the issue persists.",
         "reference_id": error_id,
-        "technical_details": str(exc) if "Dev" in str(type(exc)) else None # Only show details if explicitly safe
+        "technical_details": (
+            str(exc) if "Dev" in str(type(exc)) else None
+        ),  # Only show details if explicitly safe
     }
 
-    return JSONResponse(
-        status_code=500,
-        content=medic_response
-    )
+    return JSONResponse(status_code=500, content=medic_response)

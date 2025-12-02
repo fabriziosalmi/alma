@@ -1,7 +1,8 @@
 """Tests for enhanced health check monitoring."""
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 
 
 class TestHealthCheckEnhancements:
@@ -51,7 +52,9 @@ class TestHealthCheckEnhancements:
             mock_orchestrator.llm = mock_llm
             return mock_orchestrator
 
-        with patch("alma.api.routes.monitoring.get_orchestrator", side_effect=mock_get_orchestrator):
+        with patch(
+            "alma.api.routes.monitoring.get_orchestrator", side_effect=mock_get_orchestrator
+        ):
             result = await check_llm_health()
             assert result["status"] == "healthy"
             assert result["model"] == "test-model"
@@ -72,15 +75,17 @@ class TestHealthCheckEnhancements:
     @pytest.mark.asyncio
     async def test_detailed_health_endpoint_all_healthy(self, client):
         """Test detailed health endpoint when all components are healthy."""
-        with patch("alma.api.routes.monitoring.check_database_health") as mock_db, \
-             patch("alma.api.routes.monitoring.check_llm_health") as mock_llm:
-            
+        with (
+            patch("alma.api.routes.monitoring.check_database_health") as mock_db,
+            patch("alma.api.routes.monitoring.check_llm_health") as mock_llm,
+        ):
+
             mock_db.return_value = {"status": "healthy", "response_time_ms": 5}
             mock_llm.return_value = {"status": "healthy", "model": "test-model"}
 
             response = await client.get("/api/v1/monitoring/health/detailed")
             assert response.status_code == 200
-            
+
             data = response.json()
             assert data["status"] == "healthy"
             assert data["components"]["database"]["status"] == "healthy"
@@ -89,15 +94,17 @@ class TestHealthCheckEnhancements:
     @pytest.mark.asyncio
     async def test_detailed_health_endpoint_degraded(self, client):
         """Test detailed health endpoint when some components are unhealthy."""
-        with patch("alma.api.routes.monitoring.check_database_health") as mock_db, \
-             patch("alma.api.routes.monitoring.check_llm_health") as mock_llm:
-            
+        with (
+            patch("alma.api.routes.monitoring.check_database_health") as mock_db,
+            patch("alma.api.routes.monitoring.check_llm_health") as mock_llm,
+        ):
+
             mock_db.return_value = {"status": "healthy", "response_time_ms": 5}
             mock_llm.return_value = {"status": "unhealthy", "error": "Model error"}
 
             response = await client.get("/api/v1/monitoring/health/detailed")
             assert response.status_code == 200
-            
+
             data = response.json()
             assert data["status"] == "degraded"
             assert data["components"]["database"]["status"] == "healthy"
@@ -106,15 +113,17 @@ class TestHealthCheckEnhancements:
     @pytest.mark.asyncio
     async def test_detailed_health_endpoint_unhealthy(self, client):
         """Test detailed health endpoint when critical components are down."""
-        with patch("alma.api.routes.monitoring.check_database_health") as mock_db, \
-             patch("alma.api.routes.monitoring.check_llm_health") as mock_llm:
-            
+        with (
+            patch("alma.api.routes.monitoring.check_database_health") as mock_db,
+            patch("alma.api.routes.monitoring.check_llm_health") as mock_llm,
+        ):
+
             mock_db.return_value = {"status": "unhealthy", "error": "DB down"}
             mock_llm.return_value = {"status": "unhealthy", "error": "Model error"}
 
             response = await client.get("/api/v1/monitoring/health/detailed")
             assert response.status_code == 503  # Service unavailable
-            
+
             data = response.json()
             assert data["status"] == "unhealthy"
 

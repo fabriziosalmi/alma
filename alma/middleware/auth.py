@@ -1,8 +1,8 @@
 """Authentication middleware."""
 
 from __future__ import annotations
-import logging
-from typing import Optional
+
+import os
 
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader
@@ -20,14 +20,14 @@ class APIKeyAuth:
         """Load API keys from environment variables."""
         # Check if auth is enabled
         self.enabled = os.getenv("ALMA_AUTH_ENABLED", "true").lower() == "true"
-        
+
         if not self.enabled:
             self.valid_keys = set()
             return
 
         # Load API keys from environment
         env_keys = os.getenv("ALMA_API_KEYS", "")
-        
+
         if env_keys:
             # Use keys from environment
             self.valid_keys = {key.strip() for key in env_keys.split(",") if key.strip()}
@@ -39,7 +39,7 @@ class APIKeyAuth:
                 "prod-api-key-abcdef",
             }
 
-    def validate_key(self, api_key: Optional[str]) -> bool:
+    def validate_key(self, api_key: str | None) -> bool:
         """
         Validate an API key.
 
@@ -61,7 +61,7 @@ class APIKeyAuth:
 
 
 # Global authentication instance
-_auth_instance: Optional[APIKeyAuth] = None
+_auth_instance: APIKeyAuth | None = None
 
 
 def get_auth() -> APIKeyAuth:
@@ -73,7 +73,7 @@ def get_auth() -> APIKeyAuth:
 
 
 async def verify_api_key(
-    api_key: Optional[str] = Security(APIKeyHeader(name="X-API-Key", auto_error=False))
+    api_key: str | None = Security(APIKeyHeader(name="X-API-Key", auto_error=False))
 ) -> str:
     """
     FastAPI dependency for API key verification.
@@ -105,8 +105,8 @@ async def verify_api_key(
 
 # Optional dependency - doesn't fail if no key provided
 async def optional_api_key(
-    api_key: Optional[str] = Security(APIKeyHeader(name="X-API-Key", auto_error=False))
-) -> Optional[str]:
+    api_key: str | None = Security(APIKeyHeader(name="X-API-Key", auto_error=False))
+) -> str | None:
     """
     Optional API key verification (doesn't raise exception).
 

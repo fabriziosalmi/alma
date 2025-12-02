@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from alma.models.blueprint import Base
 
-
 # Disable authentication by default for all tests
 # Test modules that need auth (like test_auth.py) must override this
 os.environ.setdefault("ALMA_AUTH_ENABLED", "false")

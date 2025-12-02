@@ -1,15 +1,16 @@
 """LLM service initialization and management."""
 
 from __future__ import annotations
-import asyncio
 
+import asyncio
+from typing import Any
+
+import httpx
 
 from alma.core.config import get_settings
 from alma.core.llm import LLMInterface, MockLLM
 from alma.core.llm_orchestrator import EnhancedOrchestrator
 
-import httpx
-from typing import Any
 
 # --- Local Studio LLM Implementation (Tier 2) ---
 class LocalStudioLLM(LLMInterface):
@@ -24,7 +25,7 @@ class LocalStudioLLM(LLMInterface):
         self.model_name = model_name
         self.timeout = 30.0  # Longer timeout for generation
 
-    async def _initialize(self):
+    async def _initialize(self) -> None:
         """
         Checks connectivity to the local LLM service.
         """
@@ -38,7 +39,9 @@ class LocalStudioLLM(LLMInterface):
             resp.raise_for_status()
             print("  -> Local Studio is ONLINE.")
 
-    async def generate(self, prompt: str, context: dict | None = None, **kwargs) -> str:
+    async def generate(
+        self, prompt: str, context: dict[str, Any] | None = None, **kwargs: Any
+    ) -> str:
         """
         Generates text using the local LLM.
         """
@@ -53,7 +56,7 @@ class LocalStudioLLM(LLMInterface):
             "messages": messages,
             "temperature": 0.7,
             "max_tokens": settings.llm_max_tokens,
-            "stream": False
+            "stream": False,
         }
 
         try:
@@ -61,12 +64,14 @@ class LocalStudioLLM(LLMInterface):
                 resp = await client.post(self.base_url, json=payload)
                 resp.raise_for_status()
                 data = resp.json()
-                return data["choices"][0]["message"]["content"]
+                return str(data["choices"][0]["message"]["content"])
         except Exception as e:
             print(f"Error generating with LocalStudioLLM: {e}")
             raise  # Re-raise to trigger fallback to Tier 3
 
-    async def function_call(self, prompt: str, tools: list[dict[str, Any]], context: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def function_call(
+        self, prompt: str, tools: list[dict[str, Any]], context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Basic function calling support for Local Studio.
         """
@@ -75,7 +80,7 @@ class LocalStudioLLM(LLMInterface):
         content = await self.generate(prompt, context)
         return {"content": content}
 
-    async def close(self):
+    async def close(self) -> None:
         pass
 
 
@@ -87,14 +92,16 @@ class TinyLLM(LLMInterface):
     Uses simple heuristics or a tiny local model (e.g., quantized) if available.
     For now, it provides safe, canned responses to keep the system alive.
     """
-    
-    def __init__(self):
+
+    def __init__(self) -> None:
         self.model_name = "tiny-llm-fallback"
-        
-    async def _initialize(self):
+
+    async def _initialize(self) -> None:
         pass
-        
-    async def generate(self, prompt: str, context: dict | None = None, **kwargs) -> str:
+
+    async def generate(
+        self, prompt: str, context: dict[str, Any] | None = None, **kwargs: Any
+    ) -> str:
         """
         Generates a safe, minimal response.
         """
@@ -105,14 +112,17 @@ class TinyLLM(LLMInterface):
             "Please check your connection or try again later."
         )
 
-    async def function_call(self, prompt: str, tools: list[dict[str, Any]], context: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def function_call(
+        self, prompt: str, tools: list[dict[str, Any]], context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Mock function call for TinyLLM.
         """
         return {"content": self.generate(prompt)}
 
-    async def close(self):
+    async def close(self) -> None:
         pass
+
 
 settings = get_settings()
 
@@ -126,7 +136,10 @@ def _get_lock() -> asyncio.Lock:
     """Get or create the initialization lock for the current event loop."""
     global _initialization_lock
     try:
-        if _initialization_lock is None or _initialization_lock._loop != asyncio.get_event_loop():
+        # Check if lock exists and belongs to current loop
+        # Note: _loop is internal, but we need to ensure thread safety across event loops if using multiple
+        # For now, just checking existence is usually enough in single-threaded async
+        if _initialization_lock is None:
             _initialization_lock = asyncio.Lock()
     except RuntimeError:
         # No event loop running
@@ -137,7 +150,7 @@ def _get_lock() -> asyncio.Lock:
 async def initialize_llm() -> LLMInterface:
     """
     Initialize LLM instance with 3-Tier Fallback (Protocol Ahimsa).
-    
+
     Priority 1: Cloud (Qwen3 via API/Transformers)
     Priority 2: Local Mesh (LocalStudioLLM via localhost:1234)
     Priority 3: Panic (TinyLLM static fallback)
@@ -161,13 +174,13 @@ async def initialize_llm() -> LLMInterface:
             if settings.llm_model_name == "mock":
                 raise ImportError("Mock mode configured")
 
-            instance = Qwen3LLM(
+            cloud_instance = Qwen3LLM(
                 model_name=settings.llm_model_name,
                 device=settings.llm_device,
                 max_tokens=settings.llm_max_tokens,
             )
-            await instance._initialize()
-            _llm_instance = instance
+            await cloud_instance._initialize()
+            _llm_instance = cloud_instance
             print("✓ Tier 1 (Cloud) initialized successfully")
             return _llm_instance
 
@@ -176,13 +189,14 @@ async def initialize_llm() -> LLMInterface:
 
         # --- Tier 2: Local Mesh ---
         try:
-            print(f"Attempting Tier 2 (Local Mesh): {settings.llm_local_studio_model} at {settings.llm_local_studio_url}...")
-            instance = LocalStudioLLM(
-                base_url=settings.llm_local_studio_url,
-                model_name=settings.llm_local_studio_model
+            print(
+                f"Attempting Tier 2 (Local Mesh): {settings.llm_local_studio_model} at {settings.llm_local_studio_url}..."
             )
-            await instance._initialize()
-            _llm_instance = instance
+            local_instance = LocalStudioLLM(
+                base_url=settings.llm_local_studio_url, model_name=settings.llm_local_studio_model
+            )
+            await local_instance._initialize()
+            _llm_instance = local_instance
             print("✓ Tier 2 (Local Mesh) initialized successfully")
             return _llm_instance
 
@@ -193,7 +207,7 @@ async def initialize_llm() -> LLMInterface:
         print("Attempting Tier 3 (Panic): TinyLLM...")
         _llm_instance = TinyLLM()
         print("✓ Tier 3 (Panic) initialized (Offline Mode)")
-        
+
         return _llm_instance
 
 

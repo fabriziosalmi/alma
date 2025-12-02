@@ -1,6 +1,7 @@
 """API routes for metrics and monitoring."""
 
 from __future__ import annotations
+
 import time
 from typing import Any
 
@@ -191,6 +192,7 @@ async def detailed_health() -> dict[str, Any]:
 
     # Return appropriate status code
     from fastapi.responses import JSONResponse
+
     return JSONResponse(content=response, status_code=http_status)
 
 

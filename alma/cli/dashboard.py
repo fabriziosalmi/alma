@@ -4,7 +4,6 @@ Includes a self-healing/setup wizard for initial configuration.
 """
 
 import asyncio
-import os
 import time
 from collections import deque
 from typing import Any
@@ -57,9 +56,7 @@ class DashboardApp:
             if settings.api_key:
                 headers["X-API-Key"] = settings.api_key
             self.http_client = httpx.AsyncClient(
-                base_url=API_BASE_URL, 
-                timeout=5.0,
-                headers=headers
+                base_url=API_BASE_URL, timeout=5.0, headers=headers
             )
 
     def generate_layout(self) -> Layout:
@@ -291,13 +288,14 @@ class DashboardApp:
         # --- Step 4: ALMA API Key ---
         self.console.print("\n[bold]Step 3: ALMA API Key Configuration[/]")
         self.console.print("This key is used to authenticate requests to ALMA API endpoints.")
-        
+
         import secrets
+
         default_alma_key = secrets.token_urlsafe(32)
-        
+
         alma_api_key = Prompt.ask(
             "🔑 Enter ALMA API Key (or press Enter to generate new random key)",
-            default=default_alma_key
+            default=default_alma_key,
         )
 
         # --- Step 5: Save to .env ---
@@ -313,7 +311,7 @@ class DashboardApp:
             set_key(dotenv_path, "OPENAI_API_KEY", llm_api_key)
             set_key(dotenv_path, "ALMA_API_KEY", alma_api_key)
             set_key(dotenv_path, "ALMA_AUTH_ENABLED", "true")
-            
+
             self.console.print("\n[bold green]✅ Configuration saved to .env file![/]")
             self.console.print(f"[dim]ALMA API Key: {alma_api_key[:8]}...{alma_api_key[-8:]}[/]")
             self.console.print(

@@ -31,8 +31,7 @@ def version_callback(value: bool) -> None:
 
 @app.callback()
 def main(
-    version: bool
-    | None = typer.Option(
+    version: bool | None = typer.Option(
         None,
         "--version",
         "-v",
@@ -233,12 +232,12 @@ def chat(message: str):
     with console.status("[bold green]Thinking...", spinner="dots"):
         try:
             response = httpx.post(
-                f"{api_url}/conversation/chat", 
-                json={"message": message}, 
+                f"{api_url}/conversation/chat",
+                json={"message": message},
                 headers=headers,
-                timeout=30.0
+                timeout=30.0,
             )
-            
+
             # Handle authentication errors
             if response.status_code == 403:
                 console.print(
@@ -246,7 +245,7 @@ def chat(message: str):
                     "[yellow]Please check ALMA_API_KEY in your .env file.[/yellow]"
                 )
                 return
-            
+
             response.raise_for_status()
             data = response.json()
         except httpx.ConnectError as e:
