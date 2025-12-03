@@ -26,8 +26,17 @@ def mock_session_factory():
     mock_session.__aenter__ = AsyncMock(return_value=mock_session)
     mock_session.__aexit__ = AsyncMock(return_value=None)
     
+    # Create a properly initialized state
+    mock_state = SagaStateModel(
+        saga_id="test-saga",
+        correlation_id="test-corr",
+        status="RUNNING",
+        history=[],
+        payload={}
+    )
+    
     mock_result = MagicMock()
-    mock_result.scalars.return_value.first.return_value = SagaStateModel()
+    mock_result.scalars.return_value.first.return_value = mock_state
     mock_session.execute = AsyncMock(return_value=mock_result)
     
     factory = MagicMock(return_value=mock_session)
