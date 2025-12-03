@@ -9,7 +9,7 @@ from sqlalchemy import Integer, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from alma.core.database import get_session
-from alma.engines.fake import FakeEngine
+from alma.engines.simulation import SimulationEngine
 from alma.middleware.auth import verify_api_key
 from alma.models.blueprint import SystemBlueprintModel
 from alma.models.ipr import InfrastructurePullRequestModel, IPRStatus
@@ -257,10 +257,10 @@ async def review_ipr(
         )
 
     # Update IPR
-    ipr.status = IPRStatus.APPROVED if review.approved else IPRStatus.REJECTED
-    ipr.reviewed_by = review.reviewed_by
-    ipr.review_comments = review.review_comments
-    ipr.reviewed_at = datetime.utcnow()
+    ipr.status = IPRStatus.APPROVED if review.approved else IPRStatus.REJECTED  # type: ignore[assignment]
+    ipr.reviewed_by = review.reviewed_by  # type: ignore[assignment]
+    ipr.review_comments = review.review_comments  # type: ignore[assignment]
+    ipr.reviewed_at = datetime.utcnow()  # type: ignore[assignment]
 
     await session.commit()
     await session.refresh(ipr)
@@ -302,18 +302,20 @@ async def deploy_ipr(
         )
 
     # Get engine and deploy
-    engine = FakeEngine()
+    engine = SimulationEngine()
     blueprint = ipr.blueprint_snapshot
 
     try:
-        deploy_result = await engine.deploy(blueprint)
+        # Deploy
+        from typing import cast, Any
+        deploy_result = await engine.deploy(cast(dict[str, Any], blueprint))
 
         if deploy_result.status.value == "completed":
-            ipr.status = IPRStatus.DEPLOYED
-            ipr.deployment_id = deploy_result.metadata.get("deployment_id")
-            ipr.deployed_at = datetime.utcnow()
+            ipr.status = IPRStatus.DEPLOYED  # type: ignore[assignment]
+            ipr.deployment_id = deploy_result.metadata.get("deployment_id")  # type: ignore[assignment]
+            ipr.deployed_at = datetime.utcnow()  # type: ignore[assignment]
         else:
-            ipr.status = IPRStatus.FAILED
+            ipr.status = IPRStatus.FAILED  # type: ignore[assignment]
             ipr.metadata = {
                 "error": deploy_result.message,
                 "failed_resources": deploy_result.resources_failed,
@@ -323,7 +325,7 @@ async def deploy_ipr(
         await session.refresh(ipr)
 
     except Exception as e:
-        ipr.status = IPRStatus.FAILED
+        ipr.status = IPRStatus.FAILED  # type: ignore[assignment]
         ipr.metadata = {"error": str(e)}
         await session.commit()
         await session.refresh(ipr)
@@ -366,5 +368,5 @@ async def cancel_ipr(
             detail=f"Cannot cancel IPR with status {ipr.status}",
         )
 
-    ipr.status = IPRStatus.CANCELLED
+    ipr.status = IPRStatus.CANCELLED  # type: ignore[assignment]
     await session.commit()

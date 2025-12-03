@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from alma.core.database import get_session
 from alma.core.state import diff_states
-from alma.engines.fake import FakeEngine
+from alma.engines.simulation import SimulationEngine
 from alma.middleware.auth import verify_api_key
 from alma.models.blueprint import SystemBlueprintModel
 from alma.schemas.blueprint import (
@@ -243,9 +243,9 @@ async def deploy_blueprint(
         }
     )
 
-    # 2. Get engine (currently only FakeEngine)
+    # 2. Get engine (currently only SimulationEngine for demo)
     # Future: Implement dynamic engine selection based on blueprint requirements
-    engine = FakeEngine()
+    engine = SimulationEngine()
 
     try:
         # 3. Get current state from the infrastructure

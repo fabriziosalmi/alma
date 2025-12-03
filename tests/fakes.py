@@ -1,4 +1,4 @@
-"""Fake engine for testing and development."""
+"""Fake engine for testing."""
 
 from __future__ import annotations
 

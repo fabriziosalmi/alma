@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 import json
+from collections.abc import AsyncGenerator
 from typing import Any
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from alma.core.database import get_session
 from alma.core.llm_orchestrator import EnhancedOrchestrator
 from alma.core.llm_service import get_orchestrator
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/conversation", tags=["conversation"])
 
@@ -225,7 +228,7 @@ async def security_audit(
 async def chat_stream(
     request: ConversationRequest,
     orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
-):
+) -> StreamingResponse:
     """
     Stream conversational responses in real-time.
 
@@ -240,7 +243,7 @@ async def chat_stream(
         Streaming response with Server-Sent Events
     """
 
-    async def generate_stream():
+    async def generate_stream() -> AsyncGenerator[str, None]:
         """Generate streaming response."""
         # First, parse intent
         intent_result = await orchestrator.parse_intent_with_llm(request.message)
@@ -289,7 +292,7 @@ async def chat_stream(
 async def generate_blueprint_stream(
     request: BlueprintGenerationRequest,
     orchestrator: EnhancedOrchestrator = Depends(get_orchestrator),
-):
+) -> StreamingResponse:
     """
     Stream blueprint generation in real-time.
 
@@ -303,7 +306,7 @@ async def generate_blueprint_stream(
         Streaming response
     """
 
-    async def generate_stream():
+    async def generate_stream() -> AsyncGenerator[str, None]:
         """Generate streaming blueprint creation."""
         yield f"data: {json.dumps({'type': 'status', 'data': 'Analyzing requirements...'})}\\n\\n"
 
@@ -323,7 +326,7 @@ async def generate_blueprint_stream(
                         yield f"data: {json.dumps({'type': 'text', 'data': chunk})}\\n\\n"
 
                 # Try to extract YAML from full response
-                import yaml
+                import yaml  # type: ignore[import]
 
                 try:
                     # Extract YAML block

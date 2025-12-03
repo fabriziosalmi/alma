@@ -87,10 +87,13 @@ class DashboardApp:
                 return_exceptions=True,
             )
 
-            if isinstance(metrics_resp, httpx.ConnectError) or isinstance(
-                iprs_resp, httpx.ConnectError
-            ):
-                raise httpx.ConnectError("API connection failed")
+            if isinstance(metrics_resp, Exception):
+                raise metrics_resp
+            if isinstance(iprs_resp, Exception):
+                raise iprs_resp
+
+            assert isinstance(metrics_resp, httpx.Response)
+            assert isinstance(iprs_resp, httpx.Response)
 
             metrics_resp.raise_for_status()
             iprs_resp.raise_for_status()
@@ -125,7 +128,7 @@ class DashboardApp:
                 f"[dim]{time.strftime('%H:%M:%S')}[/] [red]An unexpected error occurred[/]"
             )
 
-    def _generate_mock_data(self):
+    def _generate_mock_data(self) -> None:
         # (Mock data generation remains the same as previous version)
         self.api_status = "connected"
         self.metrics = {"llm": {"last_intent": "mock_intent"}, "system": {}}
@@ -207,7 +210,7 @@ class DashboardApp:
 
                 table.add_row(str(ipr["id"]), ipr["title"], status_text, progress)
         elif self.api_status == "connected":
-            table.add_row(Text("No active deployments.", justify="center", style="dim"), span=4)
+            table.add_row(Text("No active deployments.", justify="center", style="dim"))
 
         return Panel(table, title="[bold]🚀 Active Deployments[/]", border_style="green")
 
@@ -225,7 +228,7 @@ class DashboardApp:
         self.layout["footer"].update(self._render_footer())
         return self.layout
 
-    async def run(self):
+    async def run(self) -> None:
         """Run the dashboard's main async loop."""
         with Live(self.render(), screen=True, redirect_stderr=False, transient=True) as live:
             while self.consecutive_errors < MAX_CONSECUTIVE_ERRORS:
@@ -236,7 +239,7 @@ class DashboardApp:
         # If the loop breaks due to errors, run the recovery wizard
         self.run_recovery_wizard()
 
-    def run_recovery_wizard(self):
+    def run_recovery_wizard(self) -> None:
         """A guided setup process for when the API is unreachable."""
         self.console.clear()
         self.console.print(
@@ -307,7 +310,7 @@ class DashboardApp:
                     pass
                 dotenv_path = find_dotenv()
 
-            set_key(dotenv_path, "OPENAI_BASE_URL", base_url)
+            set_key(str(dotenv_path), "OPENAI_BASE_URL", str(base_url))
             set_key(dotenv_path, "OPENAI_API_KEY", llm_api_key)
             set_key(dotenv_path, "ALMA_API_KEY", alma_api_key)
             set_key(dotenv_path, "ALMA_AUTH_ENABLED", "true")
@@ -329,7 +332,7 @@ app = typer.Typer()
 @app.command(name="dashboard")
 def dashboard_command(
     mock: bool = typer.Option(False, "--mock", help="Run dashboard with mock data.")
-):
+) -> None:
     """Launch the ALMA real-time monitoring dashboard."""
     dashboard = DashboardApp(mock=mock)
     try:

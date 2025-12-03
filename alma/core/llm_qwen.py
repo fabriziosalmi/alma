@@ -6,7 +6,7 @@ import asyncio
 import json
 from typing import Any
 
-import torch
+import torch  # type: ignore[import]
 
 from alma.core.config import get_settings
 from alma.core.llm import LLMInterface
@@ -59,7 +59,7 @@ class Qwen3LLM(LLMInterface):
             return
 
         try:
-            from transformers import AutoModelForCausalLM, AutoTokenizer
+            from transformers import AutoModelForCausalLM, AutoTokenizer  # type: ignore[import]
 
             # Run initialization in thread pool to avoid blocking
             loop = asyncio.get_event_loop()

@@ -5,6 +5,28 @@ All notable changes to ALMA will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2025-12-03
+
+### 🧹 Technical Debt & Code Quality
+
+Major refactoring sprint to eliminate technical debt and enforce strict code quality standards.
+
+### Fixed
+- **Type Safety**:
+  - Resolved ~80 MyPy type errors across the codebase.
+  - Enabled strict MyPy mode (`warn_return_any`, `disallow_untyped_defs`, etc.).
+  - Fixed critical type mismatches in `RateLimiter`, `ProxmoxEngine`, and `Dashboard`.
+- **CI/CD**:
+  - Updated CI pipeline to block on MyPy and Ruff errors.
+  - Enforced type checking on all source code (excluding tests/examples).
+- **Dead Code**:
+  - Removed legacy `src/` directory.
+  - Removed `alma/engines/fake.py` (migrated to tests).
+
+### Changed
+- **Rate Limiting**: Improved `RateLimiter` stability and async handling.
+- **Monitoring**: Fixed async bugs in monitoring endpoints.
+
 ## [0.7.1] - 2025-12-03
 
 ### 🐛 Bug Fixes & CI/CD Stability

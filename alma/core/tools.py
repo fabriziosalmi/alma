@@ -111,6 +111,7 @@ class InfrastructureTools:
                 success=False,
                 tool=tool_name,
                 error=f"Unknown tool: {tool_name}. Available: {InfrastructureTools.get_registered_tools()}",
+                result=None,
             )
 
         try:
@@ -126,6 +127,7 @@ class InfrastructureTools:
                 success=True,
                 tool=tool_name,
                 result=result,
+                error=None,
             )
         except ValueError as e:
             # Validation errors
@@ -134,6 +136,7 @@ class InfrastructureTools:
                 success=False,
                 tool=tool_name,
                 error=f"Validation error: {str(e)}",
+                result=None,
             )
         except Exception as e:
             # Unexpected errors - log with full traceback
@@ -142,6 +145,7 @@ class InfrastructureTools:
                 success=False,
                 tool=tool_name,
                 error=f"Execution error: {str(e)}",
+                result=None,
             )
 
     # Tool implementations
@@ -149,12 +153,17 @@ class InfrastructureTools:
     @staticmethod
     def _create_blueprint(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Create blueprint implementation."""
+        from alma.schemas.tool_args import CreateBlueprintArgs
+
+        # Validate arguments
+        model = CreateBlueprintArgs(**args)
+        
         return {
             "blueprint": {
                 "version": "1.0",
-                "name": args.get("name"),
-                "description": args.get("description"),
-                "resources": args.get("resources", []),
+                "name": model.name,
+                "description": model.description,
+                "resources": model.resources,
                 "metadata": {"created_by": "ALMA-llm", "created_at": datetime.utcnow().isoformat()},
             }
         }
@@ -162,8 +171,12 @@ class InfrastructureTools:
     @staticmethod
     def _validate_blueprint(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Validate blueprint implementation."""
-        blueprint = args.get("blueprint", {})
-        strict = args.get("strict", False)
+        from alma.schemas.tool_args import ValidateBlueprintArgs
+
+        # Validate arguments
+        model = ValidateBlueprintArgs(**args)
+        blueprint = model.blueprint
+        strict = model.strict
 
         issues = []
         warnings = []
@@ -199,10 +212,13 @@ class InfrastructureTools:
     ) -> dict[str, Any]:
         """Estimate resources implementation with real pricing."""
         from alma.integrations.pricing import PricingService
+        from alma.schemas.tool_args import EstimateResourcesArgs
 
-        workload = args.get("workload_type")
-        load = args.get("expected_load")
-        availability = args.get("availability", "standard")
+        # Validate arguments
+        model = EstimateResourcesArgs(**args)
+        workload = model.workload_type
+        load = model.expected_load
+        availability = model.availability
 
         # Simple estimation logic (can be enhanced)
         base_specs = {
@@ -252,9 +268,11 @@ class InfrastructureTools:
     @staticmethod
     def _optimize_costs(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Cost optimization implementation."""
-        args.get("blueprint", {})
-        provider = args.get("provider", "aws")
-        goal = args.get("optimization_goal", "balanced")
+        from alma.schemas.tool_args import OptimizeCostsArgs
+
+        model = OptimizeCostsArgs(**args)
+        provider = model.provider
+        goal = model.optimization_goal
 
         suggestions = [
             "Consider using reserved instances for long-running workloads (up to 70% savings)",
@@ -275,9 +293,10 @@ class InfrastructureTools:
     @staticmethod
     def _security_audit(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Security audit implementation."""
-        args.get("blueprint", {})
-        framework = args.get("compliance_framework", "general")
-        args.get("severity_threshold", "medium")
+        from alma.schemas.tool_args import SecurityAuditArgs
+
+        model = SecurityAuditArgs(**args)
+        framework = model.compliance_framework
 
         findings = [
             {
@@ -312,9 +331,11 @@ class InfrastructureTools:
         args: dict[str, Any], ctx: dict[str, Any] | None
     ) -> dict[str, Any]:
         """Generate deployment plan implementation."""
-        args.get("blueprint", {})
-        strategy = args.get("strategy", "rolling")
-        rollback = args.get("rollback_enabled", True)
+        from alma.schemas.tool_args import GenerateDeploymentPlanArgs
+
+        model = GenerateDeploymentPlanArgs(**args)
+        strategy = model.strategy
+        rollback = model.rollback_enabled
 
         steps = [
             {"step": 1, "action": "Pre-deployment validation", "duration": "5 min"},
@@ -337,9 +358,9 @@ class InfrastructureTools:
     @staticmethod
     def _troubleshoot_issue(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Troubleshoot implementation."""
-        args.get("issue_description")
-        args.get("affected_resources", [])
-        args.get("symptoms", [])
+        from alma.schemas.tool_args import TroubleshootIssueArgs
+
+        model = TroubleshootIssueArgs(**args)
 
         return {
             "diagnosis": "Possible resource exhaustion or network connectivity issue",
@@ -361,8 +382,11 @@ class InfrastructureTools:
     @staticmethod
     def _compare_blueprints(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Compare blueprints implementation."""
-        bp_a = args.get("blueprint_a", {})
-        bp_b = args.get("blueprint_b", {})
+        from alma.schemas.tool_args import CompareBlueprintsArgs
+
+        model = CompareBlueprintsArgs(**args)
+        bp_a = model.blueprint_a
+        bp_b = model.blueprint_b
 
         return {
             "differences": [
@@ -380,8 +404,9 @@ class InfrastructureTools:
     @staticmethod
     def _suggest_architecture(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Suggest architecture implementation."""
-        args.get("requirements", {})
-        args.get("constraints", {})
+        from alma.schemas.tool_args import SuggestArchitectureArgs
+
+        model = SuggestArchitectureArgs(**args)
 
         return {
             "suggested_architecture": "3-tier web application",
@@ -398,9 +423,12 @@ class InfrastructureTools:
     @staticmethod
     def _calculate_capacity(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Calculate capacity implementation."""
-        current = args.get("current_metrics", {})
-        growth = args.get("growth_rate", 0)
-        horizon = args.get("time_horizon", "3 months")
+        from alma.schemas.tool_args import CalculateCapacityArgs
+
+        model = CalculateCapacityArgs(**args)
+        current = model.current_metrics
+        growth = model.growth_rate
+        horizon = model.time_horizon
 
         return {
             "current_capacity": current,
@@ -416,9 +444,10 @@ class InfrastructureTools:
     @staticmethod
     def _migrate_infrastructure(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Migrate infrastructure implementation."""
-        args.get("source_platform")
-        args.get("target_platform")
-        strategy = args.get("migration_strategy", "replatform")
+        from alma.schemas.tool_args import MigrateInfrastructureArgs
+
+        model = MigrateInfrastructureArgs(**args)
+        strategy = model.migration_strategy
 
         return {
             "migration_strategy": strategy,
@@ -435,8 +464,10 @@ class InfrastructureTools:
     @staticmethod
     def _check_compliance(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Check compliance implementation."""
-        args.get("blueprint", {})
-        standards = args.get("standards", [])
+        from alma.schemas.tool_args import CheckComplianceArgs
+
+        model = CheckComplianceArgs(**args)
+        standards = model.standards
 
         return {
             "standards_checked": standards,
@@ -456,9 +487,11 @@ class InfrastructureTools:
     @staticmethod
     def _forecast_metrics(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
         """Forecast metrics implementation."""
-        args.get("historical_data", [])
-        period = args.get("forecast_period")
-        confidence = args.get("confidence_level", 0.95)
+        from alma.schemas.tool_args import ForecastMetricsArgs
+
+        model = ForecastMetricsArgs(**args)
+        period = model.forecast_period
+        confidence = model.confidence_level
 
         return {
             "forecast_period": period,
@@ -477,7 +510,7 @@ class InfrastructureTools:
 
 
 # Register all tools at module load time
-def _register_all_tools():
+def _register_all_tools() -> None:
     """Register all tool implementations."""
     InfrastructureTools.register_tool("create_blueprint", InfrastructureTools._create_blueprint)
     InfrastructureTools.register_tool("validate_blueprint", InfrastructureTools._validate_blueprint)

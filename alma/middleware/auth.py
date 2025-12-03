@@ -12,13 +12,13 @@ logger = logging.getLogger(__name__)
 
 # Try to import argon2, fall back to passlib if not available
 try:
-    from argon2 import PasswordHasher
-    from argon2.exceptions import InvalidHash, VerifyMismatchError
+    from argon2 import PasswordHasher  # type: ignore[import]
+    from argon2.exceptions import InvalidHash, VerifyMismatchError  # type: ignore[import]
 
     HAS_ARGON2 = True
 except ImportError:
     try:
-        from passlib.hash import argon2
+        from passlib.hash import argon2  # type: ignore[import]
 
         HAS_ARGON2 = True
     except ImportError:
@@ -33,7 +33,7 @@ except ImportError:
 class APIKeyAuth:
     """API Key authentication handler with secure hashing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize API key authentication."""
         self.api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
         if HAS_ARGON2:
@@ -177,7 +177,7 @@ async def verify_api_key(
             detail="Invalid API key. Please provide a valid X-API-Key header.",
         )
 
-    return api_key
+    return api_key or ""
 
 
 # Optional dependency - doesn't fail if no key provided

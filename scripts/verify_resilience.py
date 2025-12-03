@@ -10,13 +10,13 @@ from alma.core.llm_service import LocalStudioLLM, TinyLLM, initialize_llm
 
 
 class TestLLMResilience(unittest.IsolatedAsyncioTestCase):
-    async def asyncSetUp(self):
+    async def asyncSetUp(self) -> None:
         # Reset the global instance before each test
         import alma.core.llm_service
 
         alma.core.llm_service._llm_instance = None
 
-    async def test_tier1_cloud_success(self):
+    async def test_tier1_cloud_success(self) -> None:
         """Test that we use Cloud (Tier 1) when available."""
         print("\n--- Testing Tier 1: Cloud Success ---")
 
@@ -40,7 +40,7 @@ class TestLLMResilience(unittest.IsolatedAsyncioTestCase):
             print("✓ Successfully initialized Tier 1 (Cloud)")
 
     @patch("alma.core.llm_service.httpx.AsyncClient")
-    async def test_tier2_local_mesh_success(self, MockClient):
+    async def test_tier2_local_mesh_success(self, MockClient: MagicMock) -> None:
         """Test fallback to Local Mesh (Tier 2) when Cloud fails."""
         print("\n--- Testing Tier 2: Local Mesh Success ---")
 
@@ -88,7 +88,7 @@ class TestLLMResilience(unittest.IsolatedAsyncioTestCase):
                 print("✓ Successfully fell back to Tier 2 (Local Mesh)")
 
     @patch("alma.core.llm_service.httpx.AsyncClient")
-    async def test_tier3_panic_mode(self, MockClient):
+    async def test_tier3_panic_mode(self, MockClient: MagicMock) -> None:
         """Test fallback to Panic Mode (Tier 3) when everything fails."""
         print("\n--- Testing Tier 3: Panic Mode ---")
 

@@ -4,7 +4,7 @@ import asyncio
 
 import httpx
 import typer
-import yaml
+import yaml  # type: ignore[import]
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -88,7 +88,7 @@ def deploy(
 
     With --no-llm: Engines work independently, no LLM required.
     """
-    from alma.engines.fake import FakeEngine
+    from alma.engines.simulation import SimulationEngine
 
     console.print(f"[blue]Loading blueprint from {blueprint_file}[/blue]")
 
@@ -104,7 +104,7 @@ def deploy(
         raise typer.Exit(1)
 
     # Get engine
-    engine_instance = FakeEngine()
+    engine_instance = SimulationEngine()
 
     # Deploy
     async def _deploy() -> None:
@@ -172,9 +172,9 @@ def rollback(
     console.print(f"[yellow]Rolling back deployment {deployment_id}[/yellow]")
 
     async def _rollback() -> None:
-        from alma.engines.fake import FakeEngine
+        from alma.engines.simulation import SimulationEngine
 
-        engine = FakeEngine()
+        engine = SimulationEngine()
         try:
             success = await engine.rollback(deployment_id, target)
             if success:
@@ -216,7 +216,7 @@ def init(
             {
                 "type": "compute",
                 "name": "example-server",
-                "provider": "fake",
+                "provider": "simulation",
                 "specs": {"cpu": 2, "memory": "4GB", "storage": "50GB"},
             }
         ],

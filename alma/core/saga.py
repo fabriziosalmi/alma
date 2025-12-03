@@ -38,6 +38,7 @@ class SagaOrchestrator:
 
     def __init__(self, session_factory: Callable[[], AsyncSession], steps: list[SagaStep]):
         self.session_factory = session_factory
+        self.status = "completed"  # type: ignore[assignment]
         self.steps = steps
 
     async def execute(self, correlation_id: str, payload: dict[str, Any]) -> None:

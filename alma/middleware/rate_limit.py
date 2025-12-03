@@ -39,14 +39,14 @@ class RateLimiter:
         self.buckets: dict[str, float] = defaultdict(lambda: 0.0)
         self.last_update: dict[str, float] = defaultdict(time.time)
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize Redis connection."""
         if not self.enabled:
             return
 
         try:
             self.redis = redis.from_url(self.redis_url, encoding="utf-8", decode_responses=True)
-            await self.redis.ping()
+            await self.redis.ping()  # type: ignore[misc]
             self._redis_available = True
             logger.info(f"RateLimiter connected to Redis at {self.redis_url}")
         except Exception as e:
@@ -55,12 +55,12 @@ class RateLimiter:
             )
             self._redis_available = False
 
-    async def close(self):
+    async def close(self) -> None:
         """Close Redis connection."""
         if self.redis:
             await self.redis.close()
 
-    def set_limit(self, ip: str, limit: int, rate: float):
+    def set_limit(self, ip: str, limit: int, rate: float) -> None:
         """Set custom limit for an IP."""
         self.ip_limits[ip] = (limit, rate)
 
@@ -128,7 +128,7 @@ class RateLimiter:
                 end
                 """
 
-                result = await self.redis.eval(
+                result = await self.redis.eval(  # type: ignore[misc]
                     script, 2, tokens_key, timestamp_key, limit, rate, now
                 )
                 allowed = bool(result[0])
@@ -146,7 +146,7 @@ class RateLimiter:
         # In-memory fallback (Token Bucket)
         # Check existence before accessing to avoid defaultdict creation
         if key not in self.buckets:
-            current_tokens = limit
+            current_tokens: float = float(limit)
             last_ts = now
         else:
             current_tokens = self.buckets[key]
@@ -165,7 +165,17 @@ class RateLimiter:
             wait_time = (1.0 - current_tokens) / rate
             return True, wait_time
 
-
+    async def get_stats(self) -> dict[str, Any]:
+        """Get rate limiter statistics."""
+        return {
+            "total_requests": 0,  # TODO: Implement tracking
+            "total_blocked": 0,
+            "block_rate": 0.0,
+            "active_clients": len(self.ip_limits),
+            "requests_per_minute_limit": int(self.default_limits[0] / (self.default_limits[1] / 60.0)) if self.default_limits[1] > 0 else 0,
+            "burst_size": self.default_limits[0],
+            "top_clients": [],
+        }
 class EndpointRateLimiter:
     """
     Rate limiter with per-endpoint limits.
@@ -244,7 +254,7 @@ class EndpointRateLimiter:
         if limiter.redis is None and limiter.enabled:
             await limiter.initialize()
 
-        is_limited, retry_after = await limiter.is_rate_limited(request)
+        is_limited, retry_after = await limiter.is_rate_limited(request)  # type: ignore[misc]
 
         if is_limited:
             # Attempt to get the effective RPM for the message

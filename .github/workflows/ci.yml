@@ -47,7 +47,7 @@ jobs:
         run: ruff check .
 
       - name: Run MyPy
-        run: mypy alma
+        run: mypy . --exclude "^tests/" --exclude "^examples/"
 
       - name: Run Bandit
         run: bandit -r alma -c pyproject.toml

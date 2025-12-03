@@ -5,11 +5,11 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
 from sqlalchemy import text
 
-from alma.core.database import get_session
+from alma.core.database import async_session_maker
 from alma.core.llm_service import get_orchestrator
 from alma.middleware.metrics import get_metrics_collector, get_prometheus_metrics
 from alma.middleware.rate_limit import get_rate_limiter
@@ -79,11 +79,12 @@ async def get_rate_limit_stats() -> RateLimitStats:
     Returns:
         Rate limit stats
     """
-    limiter = get_rate_limiter()
-    stats = (
-        limiter.limiters.get("default").get_stats()
-        if "default" in limiter.limiters
-        else {
+    # Get rate limit stats
+    rate_limiter = get_rate_limiter()
+    if rate_limiter and "default" in rate_limiter.limiters:
+        stats = await rate_limiter.limiters["default"].get_stats()
+    else:
+        stats = {
             "total_requests": 0,
             "total_blocked": 0,
             "block_rate": 0.0,
@@ -92,7 +93,7 @@ async def get_rate_limit_stats() -> RateLimitStats:
             "burst_size": 10,
             "top_clients": [],
         }
-    )
+
 
     return RateLimitStats(**stats)
 
@@ -106,7 +107,7 @@ async def check_database_health() -> dict[str, Any]:
     """
     try:
         start = time.time()
-        async with get_session() as session:
+        async with async_session_maker() as session:
             await session.execute(text("SELECT 1"))
         response_time = (time.time() - start) * 1000  # Convert to ms
 
@@ -148,7 +149,7 @@ async def check_llm_health() -> dict[str, Any]:
 
 
 @router.get("/health/detailed")
-async def detailed_health() -> dict[str, Any]:
+async def detailed_health() -> Response:
     """
     Detailed health check with component status.
 
@@ -208,7 +209,9 @@ async def system_overview() -> dict[str, Any]:
     limiter = get_rate_limiter()
 
     rate_limit_stats = (
-        limiter.limiters.get("default").get_stats() if "default" in limiter.limiters else {}
+        await limiter.limiters["default"].get_stats()
+        if "default" in limiter.limiters
+        else {}
     )
 
     return {

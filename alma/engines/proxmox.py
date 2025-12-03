@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import httpx
+from typing import cast
 
 from alma.core.state import Plan, ResourceState
 from alma.engines.base import Engine
@@ -58,7 +59,7 @@ class ProxmoxEngine(Engine):
 
     async def _api_request(
         self, method: str, endpoint: str, data: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    ) -> Any:
         # ... (internal logic remains the same)
         if not self.ticket:
             await self._authenticate()
@@ -67,7 +68,11 @@ class ProxmoxEngine(Engine):
         async with httpx.AsyncClient(verify=self.verify_ssl) as client:
             url = f"{self.host}/api2/json/{endpoint}"
             response = await client.request(
-                method=method, url=url, headers=headers, cookies=cookies, data=data
+                method=method,
+                url=url,
+                headers=cast(dict[str, str], headers),
+                cookies=cast(dict[str, str], cookies),
+                data=data,
             )
             response.raise_for_status()
             return response.json().get("data", {})
@@ -84,14 +89,14 @@ class ProxmoxEngine(Engine):
         for vm in vms:
             if vm.get("name") == name:
                 vm["type"] = "qemu"
-                return vm
+                return cast(dict[str, Any], vm)
 
         # Check LXC
         cts = await self._api_request("GET", f"nodes/{self.node}/lxc")
         for ct in cts:
             if ct.get("name") == name:
                 ct["type"] = "lxc"
-                return ct
+                return cast(dict[str, Any], ct)
 
         return None
 
@@ -202,7 +207,7 @@ class ProxmoxEngine(Engine):
             config_data = {}
             # Compare and update
             if "cpu" in resource_def.specs and str(resource_def.specs["cpu"]) != str(
-                current_state.config.get("cores")
+                cast(dict[str, Any], current_state.config).get("cores")
             ):
                 config_data["cores"] = resource_def.specs["cpu"]
 

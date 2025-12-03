@@ -26,7 +26,7 @@ class PricingClient:
 class InfracostClient(PricingClient):
     """Infracost API client for real pricing."""
 
-    def __init__(self, api_key: str | None = None):
+    def __init__(self, api_key: str | None = None) -> None:
         self.api_key = api_key
         self.enabled = api_key is not None
 
@@ -44,10 +44,10 @@ class InfracostClient(PricingClient):
 class AWSPricingClient(PricingClient):
     """AWS Pricing API client using boto3."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.enabled = False
         try:
-            import boto3
+            import boto3  # type: ignore[import]
 
             self.client = boto3.client("pricing", region_name="us-east-1")
             self.enabled = True
@@ -208,8 +208,8 @@ class FallbackPricingClient(PricingClient):
 class PricingService:
     """Unified pricing service with fallback chain."""
 
-    def __init__(self, infracost_api_key: str | None = None):
-        self.clients = [
+    def __init__(self, infracost_api_key: str | None = None) -> None:
+        self.clients: list[PricingClient] = [
             InfracostClient(infracost_api_key),
             AWSPricingClient(),
             FallbackPricingClient(),  # Always available

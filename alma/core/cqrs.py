@@ -74,3 +74,4 @@ class InfrastructureProjector(Projector):
 
                 view.last_updated = datetime.utcnow()
                 logger.debug(f"Updated InfrastructureView for {blueprint_id} to {view.status}")
+

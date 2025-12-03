@@ -64,7 +64,7 @@ class LocalStudioLLM(LLMInterface):
             "stream": False,
         }
 
-        async def _request():
+        async def _request() -> str:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 resp = await client.post(self.base_url, json=payload)
                 resp.raise_for_status()

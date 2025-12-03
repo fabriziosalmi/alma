@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import]  # type: ignore[import]
 
+from alma.core.cognitive import AdvancedCognitiveEngine
 from alma.core.llm import ConversationalOrchestrator, LLMInterface
 from alma.core.prompts import InfrastructurePrompts
 from alma.core.tools import InfrastructureTools
@@ -63,7 +65,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
             tool_name = function_call.get("function")
             arguments = function_call.get("arguments", {})
 
-            result = self.tools.execute_tool(tool_name, arguments, context)
+            result = self.tools.execute_tool(str(tool_name), arguments, context)
             return result
 
         except Exception as e:
