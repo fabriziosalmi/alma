@@ -105,9 +105,9 @@ async def execute_tool_direct(
     from alma.core.tools import InfrastructureTools
 
     tools = InfrastructureTools()
-    result = tools.execute_tool(request.tool_name, request.arguments, request.context)
+    result = await tools.execute_tool(request.tool_name, request.arguments, request.context)
 
-    return ToolExecutionResponse(**result)
+    return ToolExecutionResponse(**result.model_dump())
 
 
 @router.get("/{tool_name}", response_model=dict[str, Any])
@@ -154,9 +154,9 @@ async def validate_blueprint(
     from alma.core.tools import InfrastructureTools
 
     tools = InfrastructureTools()
-    result = tools.execute_tool("validate_blueprint", {"blueprint": blueprint, "strict": strict})
+    result = await tools.execute_tool("validate_blueprint", {"blueprint": blueprint, "strict": strict})
 
-    return result
+    return result.model_dump()
 
 
 @router.post("/estimate-resources")
@@ -179,7 +179,7 @@ async def estimate_resources(
     from alma.core.tools import InfrastructureTools
 
     tools = InfrastructureTools()
-    result = tools.execute_tool(
+    result = await tools.execute_tool(
         "estimate_resources",
         {
             "workload_type": workload_type,
@@ -188,7 +188,7 @@ async def estimate_resources(
         },
     )
 
-    return result
+    return result.model_dump()
 
 
 @router.post("/security-audit")
@@ -213,7 +213,7 @@ async def security_audit(
     from alma.core.tools import InfrastructureTools
 
     tools = InfrastructureTools()
-    result = tools.execute_tool(
+    result = await tools.execute_tool(
         "security_audit",
         {
             "blueprint": blueprint,
@@ -222,4 +222,4 @@ async def security_audit(
         },
     )
 
-    return result
+    return result.model_dump()
