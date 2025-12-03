@@ -45,19 +45,19 @@ Real-time terminal UI (`ALMA monitor`) featuring:
 
 ```mermaid
 graph TD
-    User[User / CLI] --> API[ALMA API (FastAPI)]
-    API --> Immune[Immune System (L0/L0.5)]
-    Immune --> Auth[Auth & Rate Limit]
-    Auth --> Orch[Cognitive Orchestrator (L4)]
+    User[User / CLI] --> API[ALMA API FastAPI]
+    API --> Immune[Immune System L0/L0.5]
+    Immune --> Auth[Auth and Rate Limit]
+    Auth --> Orch[Cognitive Orchestrator L4]
     
-    subgraph "The Brain (L3)"
-        Orch --> Cloud[Tier 1: Cloud LLM (Qwen/OpenAI)]
-        Orch --> Local[Tier 2: Local Mesh (LM Studio)]
-        Orch --> Panic[Tier 3: Panic Mode (TinyLLM)]
+    subgraph "The Brain L3"
+        Orch --> Cloud[Tier 1: Cloud LLM]
+        Orch --> Local[Tier 2: Local Mesh]
+        Orch --> Panic[Tier 3: Panic Mode]
     end
     
     Orch --> Tools[Infrastructure Tools]
-    Tools --> Engines[Execution Layer (L1)]
+    Tools --> Engines[Execution Layer L1]
     Engines --> K8s[Kubernetes]
     Engines --> Prox[Proxmox]
     Engines --> Docker[Docker]
