@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import os
 import logging
+import os
 
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # Try to import argon2, fall back to passlib if not available
 try:
     from argon2 import PasswordHasher
-    from argon2.exceptions import VerifyMismatchError, InvalidHash
+    from argon2.exceptions import InvalidHash, VerifyMismatchError
 
     HAS_ARGON2 = True
 except ImportError:
@@ -39,7 +39,7 @@ class APIKeyAuth:
         if HAS_ARGON2:
             try:
                 self.ph = PasswordHasher()
-            except:
+            except Exception:  # noqa: S110
                 # Fallback to passlib
                 self.ph = None
         else:
@@ -130,7 +130,7 @@ class APIKeyAuth:
             return False
 
         # Check against all stored hashes using constant-time verification
-        for stored_key, stored_hash in self.valid_key_hashes.items():
+        for _stored_key, stored_hash in self.valid_key_hashes.items():
             if self._verify_key(api_key, stored_hash):
                 return True
 

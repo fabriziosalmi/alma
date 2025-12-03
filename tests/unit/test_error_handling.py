@@ -1,8 +1,10 @@
 """Unit tests for error handling."""
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
+
 import pytest
 from fastapi import Request
+
 from alma.core.error_handling import calm_exception_handler
 
 

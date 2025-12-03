@@ -142,6 +142,7 @@ class Qwen3LLM(LLMInterface):
 
         # Start generation in a separate thread
         from threading import Thread
+
         from transformers import TextIteratorStreamer
 
         streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)

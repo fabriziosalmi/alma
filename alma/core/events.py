@@ -2,8 +2,9 @@
 
 import asyncio
 import logging
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, Type
+from typing import Any
 
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,9 +67,9 @@ class EventBus:
 
     def __init__(self, store: EventStore):
         self.store = store
-        self.handlers: dict[Type[Event], list[Callable[[Event], Any]]] = {}
+        self.handlers: dict[type[Event], list[Callable[[Event], Any]]] = {}
 
-    def subscribe(self, event_type: Type[Event], handler: Callable[[Event], Any]) -> None:
+    def subscribe(self, event_type: type[Event], handler: Callable[[Event], Any]) -> None:
         """Register a handler for an event type."""
         if event_type not in self.handlers:
             self.handlers[event_type] = []

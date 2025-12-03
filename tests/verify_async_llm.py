@@ -1,5 +1,5 @@
-import sys
 import asyncio
+import sys
 import time
 from unittest.mock import MagicMock, patch
 
@@ -40,7 +40,7 @@ async def test_async_streaming():
     mock_streamer_cls.return_value = mock_streamer_instance
 
     # Mock Thread locally
-    with patch("alma.core.llm_qwen.Qwen3LLM._initialize") as mock_init:
+    with patch("alma.core.llm_qwen.Qwen3LLM._initialize"):
 
         # Setup LLM
         llm = Qwen3LLM(device="cpu")

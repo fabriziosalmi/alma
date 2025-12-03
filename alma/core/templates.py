@@ -49,7 +49,7 @@ class BlueprintTemplates:
                 logger.error(f"Blueprints configuration not found at {config_path}")
                 return {}
 
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 templates = yaml.safe_load(f)
 
             logger.info(f"Loaded {len(templates)} blueprints from {config_path}")

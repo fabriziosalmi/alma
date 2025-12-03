@@ -1,7 +1,9 @@
 """Unit tests for DockerEngine."""
 
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from alma.core.state import Plan, ResourceState
 from alma.engines.docker import DockerEngine
 from alma.schemas.blueprint import ResourceDefinition, SystemBlueprint

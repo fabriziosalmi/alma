@@ -1,12 +1,12 @@
-import sys
 import asyncio
-from unittest.mock import MagicMock, patch
+import sys
+
 from fastapi import Request
 
 # Add project root to path
 sys.path.append(".")
 
-from alma.middleware.rate_limit import RateLimiter, EndpointRateLimiter
+from alma.middleware.rate_limit import EndpointRateLimiter, RateLimiter
 
 
 async def test_rate_limiter():
@@ -18,7 +18,7 @@ async def test_rate_limiter():
     # Force initialization failure to trigger fallback
     await limiter.initialize()
 
-    assert limiter._redis_available == False, "Redis should be unavailable"
+    assert not limiter._redis_available, "Redis should be unavailable"
 
     # Mock request
     scope = {

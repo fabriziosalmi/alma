@@ -1,10 +1,9 @@
 import sys
-from pathlib import Path
 
 # Add project root to path
 sys.path.append(".")
 
-from alma.core.templates import BlueprintTemplates, TemplateCategory
+from alma.core.templates import BlueprintTemplates
 
 
 def test_templates_loading():

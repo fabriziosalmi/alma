@@ -1,8 +1,10 @@
 """Unit tests for database module."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from alma.core.database import get_session, init_db, close_db
+
+from alma.core.database import close_db, get_session, init_db
 
 
 @pytest.mark.asyncio

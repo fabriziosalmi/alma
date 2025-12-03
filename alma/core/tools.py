@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from functools import lru_cache
-import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
+
+from alma.schemas.tools import ToolResponse
 
 
 class InfrastructureTools:
@@ -37,7 +39,7 @@ class InfrastructureTools:
                 logger.warning(f"Tools configuration not found at {config_path}, using defaults")
                 return []
 
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 tools = json.load(f)
 
             return tools or []
@@ -47,14 +49,14 @@ class InfrastructureTools:
             return []
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON in tools.json: {e}")
-            raise ValueError(f"Tools configuration is invalid: {e}")
+            raise ValueError(f"Tools configuration is invalid: {e}") from e
         except PermissionError as e:
             logger.error(f"Permission denied reading tools.json: {e}")
             raise
         except Exception as e:
             # Unexpected errors should fail loudly
             logger.exception("Unexpected error loading tools configuration")
-            raise RuntimeError(f"Failed to load tools configuration: {e}")
+            raise RuntimeError(f"Failed to load tools configuration: {e}") from e
 
     @staticmethod
     def get_available_tools() -> list[dict[str, Any]]:
@@ -94,9 +96,10 @@ class InfrastructureTools:
         Returns:
             ToolResponse with execution result
         """
-        from alma.schemas.tools import ToolResponse
         import inspect
         import logging
+
+        from alma.schemas.tools import ToolResponse
 
         logger = logging.getLogger(__name__)
 

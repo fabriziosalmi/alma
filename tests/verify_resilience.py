@@ -1,7 +1,5 @@
 import asyncio
 import sys
-from fastapi import Request, Response
-from starlette.datastructures import Headers
 
 # Add project root to path
 sys.path.append(".")
@@ -9,19 +7,19 @@ sys.path.append(".")
 
 async def test_bloom_filter():
     print("\n--- Testing Bloom Filter ---")
-    from alma.core.immune_system import BloomFilter, ImmuneResponse
+    from alma.core.immune_system import BloomFilter
 
     bf = BloomFilter()
 
     # Test known bad
     res = bf.check("malicious_bot_user_agent")
     print(f"Check 'malicious_bot_user_agent': Blocked={res.blocked} (Expected: True)")
-    assert res.blocked == True
+    assert res.blocked
 
     # Test good
     res = bf.check("normal_user_agent")
     print(f"Check 'normal_user_agent': Blocked={res.blocked} (Expected: False)")
-    assert res.blocked == False
+    assert not res.blocked
 
     print("✓ Bloom Filter Verified")
 

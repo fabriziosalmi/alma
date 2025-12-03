@@ -5,7 +5,8 @@ from __future__ import annotations
 import logging
 import time
 from collections import defaultdict
-from typing import Any, Callable, Dict, Optional, Tuple
+from collections.abc import Callable
+from typing import Any
 
 import redis.asyncio as redis
 from fastapi import Request, Response, status
@@ -26,17 +27,17 @@ class RateLimiter:
         self.enabled = enabled
         # Default limits: (tokens, refill_rate_per_second)
         self.default_limits = (10, 1.0)  # 10 requests burst, 1 req/s refill
-        self.ip_limits: Dict[str, Tuple[int, float]] = {}
-        self.endpoint_limits: Dict[str, Tuple[int, float]] = {}
+        self.ip_limits: dict[str, tuple[int, float]] = {}
+        self.endpoint_limits: dict[str, tuple[int, float]] = {}
 
         # Redis client
-        self.redis: Optional[redis.Redis] = None
+        self.redis: redis.Redis | None = None
         self.redis_url = redis_url
         self._redis_available = False
 
         # In-memory fallback
-        self.buckets: Dict[str, float] = defaultdict(lambda: 0.0)
-        self.last_update: Dict[str, float] = defaultdict(time.time)
+        self.buckets: dict[str, float] = defaultdict(lambda: 0.0)
+        self.last_update: dict[str, float] = defaultdict(time.time)
 
     async def initialize(self):
         """Initialize Redis connection."""
@@ -63,7 +64,7 @@ class RateLimiter:
         """Set custom limit for an IP."""
         self.ip_limits[ip] = (limit, rate)
 
-    async def is_rate_limited(self, request: Request) -> Tuple[bool, float]:
+    async def is_rate_limited(self, request: Request) -> tuple[bool, float]:
         """
         Check if request is rate limited.
         Returns (is_limited, retry_after).
@@ -109,9 +110,9 @@ class RateLimiter:
 
                 local delta = math.max(0, now - last_ts)
                 local refill = delta * rate
-                
+
                 current_tokens = math.min(limit, current_tokens + refill)
-                
+
                 if current_tokens >= cost then
                     current_tokens = current_tokens - cost
                     redis.call('set', tokens_key, current_tokens)

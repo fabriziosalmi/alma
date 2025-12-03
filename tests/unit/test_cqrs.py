@@ -1,7 +1,9 @@
 """Unit tests for CQRS."""
 
 from unittest.mock import AsyncMock, MagicMock
+
 import pytest
+
 from alma.core.cqrs import InfrastructureProjector
 from alma.core.events import Event
 from alma.models.view import InfrastructureViewModel

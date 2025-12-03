@@ -1,8 +1,9 @@
 """Unit tests for Event Sourcing."""
 
-from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
+
 import pytest
+
 from alma.core.events import Event, EventBus, EventStore
 from alma.models.event import EventModel
 

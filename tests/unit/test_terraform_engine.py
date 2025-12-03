@@ -1,9 +1,10 @@
 """Unit tests for TerraformEngine."""
 
 import json
-import os
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from alma.core.state import Plan, ResourceState
 from alma.engines.terraform import TerraformEngine
 from alma.schemas.blueprint import ResourceDefinition, SystemBlueprint

@@ -3,8 +3,10 @@
 import logging
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Callable, List
+from collections.abc import Callable
+from typing import Any
 
+from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,7 +36,7 @@ class SagaOrchestrator:
     Manages the execution of a Saga.
     """
 
-    def __init__(self, session_factory: Callable[[], AsyncSession], steps: List[SagaStep]):
+    def __init__(self, session_factory: Callable[[], AsyncSession], steps: list[SagaStep]):
         self.session_factory = session_factory
         self.steps = steps
 
@@ -82,7 +84,7 @@ class SagaOrchestrator:
             raise
 
     async def _compensate(
-        self, saga_id: str, steps: List[SagaStep], context: dict[str, Any]
+        self, saga_id: str, steps: list[SagaStep], context: dict[str, Any]
     ) -> None:
         """Run compensating actions in reverse order."""
         logger.info(f"Starting compensation for Saga {saga_id}")
@@ -118,6 +120,3 @@ class SagaOrchestrator:
                 state = result.scalars().first()
                 if state:
                     state.status = status
-
-
-from datetime import datetime

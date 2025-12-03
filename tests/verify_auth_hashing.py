@@ -1,7 +1,6 @@
-import sys
-import os
 import hashlib
-from unittest.mock import patch
+import os
+import sys
 
 # Add project root to path
 sys.path.append(".")
@@ -32,9 +31,9 @@ def test_auth_hashing():
 
     # 3. Verify validation works
     print("Testing validation...")
-    assert auth.validate_key("secret-key-1") == True, "Valid key rejected"
-    assert auth.validate_key("secret-key-2") == True, "Valid key rejected"
-    assert auth.validate_key("wrong-key") == False, "Invalid key accepted"
+    assert auth.validate_key("secret-key-1"), "Valid key rejected"
+    assert auth.validate_key("secret-key-2"), "Valid key rejected"
+    assert not auth.validate_key("wrong-key"), "Invalid key accepted"
     print("✓ Validation logic works")
 
     print("✓ Secret Management Verified")

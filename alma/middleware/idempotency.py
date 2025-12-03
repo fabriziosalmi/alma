@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import logging
 import time
-from collections import defaultdict
 from collections.abc import Callable
 from typing import Any
 

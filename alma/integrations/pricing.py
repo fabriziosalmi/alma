@@ -9,8 +9,8 @@ Provides actual cost estimates using:
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
 from decimal import Decimal
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class PricingClient:
 class InfracostClient(PricingClient):
     """Infracost API client for real pricing."""
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         self.api_key = api_key
         self.enabled = api_key is not None
 
@@ -208,7 +208,7 @@ class FallbackPricingClient(PricingClient):
 class PricingService:
     """Unified pricing service with fallback chain."""
 
-    def __init__(self, infracost_api_key: Optional[str] = None):
+    def __init__(self, infracost_api_key: str | None = None):
         self.clients = [
             InfracostClient(infracost_api_key),
             AWSPricingClient(),

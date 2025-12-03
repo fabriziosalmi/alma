@@ -52,7 +52,7 @@ class ImmuneMiddleware(BaseHTTPMiddleware):
 
             # Pattern matching
             if self._contains_malicious_pattern(query_params):
-                logger.warning(f"Blocked: Malicious pattern in query")
+                logger.warning("Blocked: Malicious pattern in query")
                 return Response(status_code=400, content=b"Invalid input")
 
         # L1: Check body (if present)
@@ -69,7 +69,7 @@ class ImmuneMiddleware(BaseHTTPMiddleware):
                 # Pattern matching
                 body_text = body_bytes.decode("utf-8", errors="ignore")
                 if self._contains_malicious_pattern(body_text):
-                    logger.warning(f"Blocked: Malicious pattern in body")
+                    logger.warning("Blocked: Malicious pattern in body")
                     return Response(status_code=400, content=b"Invalid input")
 
             except Exception as e:

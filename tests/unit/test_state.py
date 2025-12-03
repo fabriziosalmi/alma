@@ -1,6 +1,5 @@
 """Unit tests for state module."""
 
-import pytest
 from alma.core.state import Plan, ResourceState
 from alma.schemas.blueprint import ResourceDefinition
 

@@ -48,7 +48,7 @@ class DockerEngine(Engine):
                 else:
                     self.client = docker.from_env()
             except DockerException as e:
-                raise ConnectionError(f"Failed to connect to Docker daemon: {e}")
+                raise ConnectionError(f"Failed to connect to Docker daemon: {e}") from e
         return self.client
 
     async def health_check(self) -> bool:
@@ -106,7 +106,7 @@ class DockerEngine(Engine):
                 print(f"Failed to create container {resource_def.name}: {e}")
 
         # Update (Recreate)
-        for current_state, resource_def in plan.to_update:
+        for _current_state, resource_def in plan.to_update:
             print(f"Updating container: {resource_def.name}")
             # Docker containers are immutable-ish. Recreate.
             try:

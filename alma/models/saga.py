@@ -1,7 +1,9 @@
 """Saga state model."""
 
-from sqlalchemy import Column, Integer, String, JSON, DateTime
 from datetime import datetime
+
+from sqlalchemy import JSON, Column, DateTime, Integer, String
+
 from alma.models.blueprint import Base
 
 

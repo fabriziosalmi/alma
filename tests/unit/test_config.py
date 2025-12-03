@@ -2,7 +2,7 @@
 
 import os
 from unittest.mock import patch
-import pytest
+
 from alma.core.config import Settings, get_settings
 
 

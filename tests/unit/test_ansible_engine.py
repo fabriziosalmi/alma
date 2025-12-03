@@ -1,7 +1,9 @@
 """Unit tests for AnsibleEngine."""
 
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from alma.core.state import Plan
 from alma.engines.ansible import AnsibleEngine
 from alma.schemas.blueprint import ResourceDefinition, SystemBlueprint
