@@ -3,25 +3,79 @@
 from __future__ import annotations
 
 import os
+import logging
 
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader
 
+logger = logging.getLogger(__name__)
 
-import hashlib
-import secrets
+# Try to import argon2, fall back to passlib if not available
+try:
+    from argon2 import PasswordHasher
+    from argon2.exceptions import VerifyMismatchError, InvalidHash
+    HAS_ARGON2 = True
+except ImportError:
+    try:
+        from passlib.hash import argon2
+        HAS_ARGON2 = True
+    except ImportError:
+        logger.warning("argon2-cffi not installed, falling back to SHA-256 (INSECURE for production)")
+        import hashlib
+        HAS_ARGON2 = False
+
 
 class APIKeyAuth:
-    """API Key authentication handler."""
+    """API Key authentication handler with secure hashing."""
 
     def __init__(self):
         """Initialize API key authentication."""
         self.api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+        if HAS_ARGON2:
+            try:
+                self.ph = PasswordHasher()
+            except:
+                # Fallback to passlib
+                self.ph = None
+        else:
+            self.ph = None
         self._load_api_keys()
 
     def _hash_key(self, key: str) -> str:
-        """Hash an API key using SHA-256."""
-        return hashlib.sha256(key.encode()).hexdigest()
+        """
+        Hash an API key using Argon2id (secure) or SHA-256 (fallback).
+        
+        WARNING: SHA-256 fallback is INSECURE for production.
+        Install argon2-cffi: pip install argon2-cffi
+        """
+        if HAS_ARGON2:
+            if self.ph:
+                # Using argon2-cffi
+                return self.ph.hash(key)
+            else:
+                # Using passlib
+                return argon2.hash(key)
+        else:
+            # INSECURE FALLBACK - only for development
+            logger.warning("Using SHA-256 for API key hashing - INSECURE for production!")
+            return hashlib.sha256(key.encode()).hexdigest()
+
+    def _verify_key(self, key: str, hash: str) -> bool:
+        """Verify a key against its hash."""
+        if HAS_ARGON2:
+            try:
+                if self.ph:
+                    # Using argon2-cffi
+                    self.ph.verify(hash, key)
+                    return True
+                else:
+                    # Using passlib
+                    return argon2.verify(key, hash)
+            except (VerifyMismatchError, InvalidHash, ValueError):
+                return False
+        else:
+            # Fallback to simple comparison
+            return self._hash_key(key) == hash
 
     def _load_api_keys(self) -> None:
         """Load API keys from environment variables."""
@@ -29,7 +83,7 @@ class APIKeyAuth:
         self.enabled = os.getenv("ALMA_AUTH_ENABLED", "true").lower() == "true"
 
         if not self.enabled:
-            self.valid_key_hashes = set()
+            self.valid_key_hashes = {}
             return
 
         # Load API keys from environment
@@ -38,24 +92,25 @@ class APIKeyAuth:
         if env_keys:
             # Hash keys from environment
             self.valid_key_hashes = {
-                self._hash_key(key.strip()) 
+                key.strip(): self._hash_key(key.strip())
                 for key in env_keys.split(",") 
                 if key.strip()
             }
         else:
             # Default development keys (hashed)
-            # test-api-key-12345
-            # dev-api-key-67890
-            # prod-api-key-abcdef
+            # WARNING: Change these in production!
+            dev_keys = [
+                "test-api-key-12345",
+                "dev-api-key-67890",
+                "prod-api-key-abcdef",
+            ]
             self.valid_key_hashes = {
-                self._hash_key("test-api-key-12345"),
-                self._hash_key("dev-api-key-67890"),
-                self._hash_key("prod-api-key-abcdef"),
+                key: self._hash_key(key) for key in dev_keys
             }
 
     def validate_key(self, api_key: str | None) -> bool:
         """
-        Validate an API key.
+        Validate an API key using constant-time comparison.
 
         Args:
             api_key: API key to validate
@@ -71,10 +126,12 @@ class APIKeyAuth:
         if not api_key:
             return False
 
-        # Hash incoming key and check against stored hashes
-        # Use constant time comparison to prevent timing attacks (though set lookup is fast)
-        input_hash = self._hash_key(api_key)
-        return input_hash in self.valid_key_hashes
+        # Check against all stored hashes using constant-time verification
+        for stored_key, stored_hash in self.valid_key_hashes.items():
+            if self._verify_key(api_key, stored_hash):
+                return True
+        
+        return False
 
 
 # Global authentication instance
