@@ -5,6 +5,61 @@ All notable changes to ALMA will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-12-03
+
+### 🔐 Security & Production Hardening
+
+Major security and code quality improvements based on production readiness review.
+
+### Added
+- **Real Pricing Integration**:
+  - Infracost API support
+  - AWS Pricing API via boto3
+  - Fallback estimates clearly marked
+- **Type Safety**:
+  - Pydantic schemas for all tool requests/responses
+  - `ToolRequest`, `ToolResponse`, `ResourceEstimateRequest/Response`
+  - Strict validation throughout
+- **--debug Flag**: Full stack traces in debug mode
+- **--no-llm Mode**: Engines work independently of LLM service
+- **Registry Pattern**: Tool dispatch using dynamic registry instead of if/else
+- **Config Externalization**: Resource specs moved to `alma/config/resource_specs.yaml`
+- **Dependency Locking**: `requirements.lock` for reproducible builds
+
+### Security
+- **CRITICAL**: Replaced SHA-256 with Argon2id for API key hashing
+  - Prevents rainbow table attacks
+  - Proper salt and memory-hard KDF
+  - Constant-time verification
+- Added `argon2-cffi>=23.1.0` dependency
+
+### Changed
+- **Simplified Immune System**:
+  - Removed Shannon Entropy (academic fluff)
+  - Removed Compression Trap (academic fluff)
+  - Using standard regex patterns for SQL injection, XSS, path traversal
+  - Input size limits (2KB query, 1MB body)
+- **Exception Hygiene**:
+  - Specific exception handling (FileNotFoundError, JSONDecodeError, etc.)
+  - No more swallowing generic exceptions
+  - Proper logging with logger.exception()
+- **Error Handling**:
+  - Debug mode shows full stack traces
+  - Production mode shows user-friendly messages
+  - Removed "Medic Persona" from internal errors
+
+### Removed
+- `alma/core/immune_system.py` (unused, replaced by simplified middleware)
+- Shannon Entropy validation
+- Compression Trap validation
+- "Cognitive Violence" terminology from code
+
+### Fixed
+- GitHub Pages documentation deployment
+- Logo path in docs (base path issue)
+- Workflow conflicts (duplicate docs workflows)
+
+
 ## [0.4.3] - 2025-12-02
 
 ### 🛡️ Resiliency Policy (Resilience & Non-Violence)

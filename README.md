@@ -18,20 +18,23 @@ ALMA is built on the **Non-Violence** principle.
 
 ## Key Features
 
-### 🧠 3-Tier Neural Brain (Local-First)
-ALMA possesses a redundant cognitive architecture to ensure 100% uptime:
-- **Tier 1 (Cloud)**: Uses primary models (OpenAI/Anthropic) for maximum reasoning power.
-- **Tier 2 (Local Mesh)**: Automatically falls back to **local Qwen3** (via LM Studio) if internet fails. Maintains tool-use capabilities without data leaving your perimeter.
-- **Tier 3 (Panic Mode)**: Degrades gracefully to a static "Medic" mode if all intelligence fails.
+## Why ALMA?
 
-### 🛡️ Immune System (Powered by SILENCE)
-Zero-energy defense mechanism that filters input before it touches the Brain:
-- **L0 (Regex Guard)**: Blocks known malicious patterns (SQLi, Injection).
-- **L0.5 (Entropy Guard)**: Uses Shannon Entropy to silently drop chaotic payloads (fuzzing/encryption).
-- **L0.5 (Compression Trap)**: Detects and drops repetitive spam anomalies.
+1.  **Production-Ready Security**: Standard WAF patterns (SQL injection, XSS, path traversal) with input size limits and rate limiting.
+2.  **Type-Safe Architecture**: Pydantic models throughout, proper exception handling, and strict validation.
+3.  **Real Cloud Integration**: Actual pricing APIs (Infracost, AWS) instead of hardcoded estimates.
 
-### ❤️ Empathetic Error Handling
-ALMA eliminates "Cognitive Violence" (scary stacktraces):
+### Zero-Energy Defense
+
+Input validation before it reaches the core:
+
+- **L0 (Regex Guard)**: Blocks known malicious patterns (SQL injection, XSS, path traversal, code injection).
+- **L2 (Size Limits)**: 2KB query parameters, 1MB request body.
+- **L3 (Rate Limiting)**: Redis-backed rate limiting per IP/API key.
+
+### Developer-Friendly Error Handling
+
+ALMA provides clear error messages with proper debugging support:
 - **Medic Persona**: Intercepts system crashes and translates technical errors into calm, diagnostic dialogue.
 - **Risk Guard**: Detects user frustration and blocks destructive commands (e.g., "DELETE DB") until emotional stability returns.
 
