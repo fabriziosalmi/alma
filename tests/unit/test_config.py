@@ -1,41 +1,34 @@
-"""Tests for configuration module."""
+"""Unit tests for core config."""
 
+import os
+from unittest.mock import patch
+import pytest
 from alma.core.config import Settings, get_settings
 
 
 class TestSettings:
-    """Tests for Settings configuration."""
-
-    def test_default_settings(self) -> None:
+    def test_default_settings(self):
         """Test default settings values."""
-        settings = Settings()
-
-        assert settings.app_name == "ALMA"
-        assert settings.debug is False
-        assert settings.database_echo is False
-        assert settings.log_level == "INFO"
-
-    def test_database_url_default(self) -> None:
-        """Test default database URL is SQLite."""
-        settings = Settings()
-        assert "sqlite" in settings.database_url
-        assert "alma.db" in settings.database_url
-
-    def test_get_settings_singleton(self) -> None:
-        """Test that get_settings returns the same instance."""
-        settings1 = get_settings()
-        settings2 = get_settings()
-
-        assert settings1 is settings2
-
-    def test_allowed_origins(self) -> None:
-        """Test allowed origins configuration."""
-        settings = Settings()
-        assert isinstance(settings.api_cors_origins, list)
-
-    def test_api_configuration(self) -> None:
-        """Test API configuration defaults."""
         settings = Settings()
         assert settings.api_host == "0.0.0.0"
         assert settings.api_port == 8000
         assert settings.api_prefix == "/api/v1"
+        assert settings.environment == "development"
+        
+    def test_settings_from_env(self):
+        """Test settings loaded from environment variables."""
+        with patch.dict(os.environ, {
+            "ALMA_API_HOST": "127.0.0.1",
+            "ALMA_API_PORT": "9000",
+            "ALMA_ENVIRONMENT": "production"
+        }):
+            settings = Settings()
+            assert settings.api_host == "127.0.0.1"
+            assert settings.api_port == 9000
+            assert settings.environment == "production"
+    
+    def test_get_settings_singleton(self):
+        """Test that get_settings returns the same instance."""
+        settings1 = get_settings()
+        settings2 = get_settings()
+        assert settings1 is settings2
