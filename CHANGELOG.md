@@ -5,6 +5,41 @@ All notable changes to ALMA will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2025-12-03
+
+### 📚 Documentation & Architecture
+
+Complete documentation overhaul and architecture decision records.
+
+### Added
+- **Architecture Decision Records (ADRs)**:
+  - ADR-001: Event Sourcing justification
+  - ADR-002: Saga Pattern justification
+  - docs/ADR/README.md with index
+- **Documentation cleanup**:
+  - Removed all marketing fluff from README
+  - Updated PROJECT_STATUS.md to current state
+  - Accurate, honest feature descriptions
+
+### Changed
+- **README.md**:
+  - Removed "Cognitive & Resilient" marketing language
+  - Removed "Non-Violence principle" references
+  - Removed "Medic Persona" and "Risk Guard" references
+  - Added clear Core Principles (Security, Type Safety, Auditability, Reliability)
+- **Error Handling Documentation**:
+  - Clarified --debug flag usage
+  - Documented production vs debug modes
+  - Removed persona-based error handling references
+
+### Documentation
+- All documentation now accurately reflects production capabilities
+- No exaggerated claims
+- Clear technical descriptions
+- ADRs document architectural decisions with industry examples
+
+
+
 ## [0.6.0] - 2025-12-03
 
 ### 🔐 Security & Production Hardening
