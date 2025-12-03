@@ -219,7 +219,7 @@ class TestChatCommand:
         mock_post.side_effect = httpx.ConnectError("Connection refused")
 
         result = runner.invoke(app, ["chat", "Hello"])
-        # Should not crash, just show error message
+        # Should not crash; display error message
         assert "Error connecting to ALMA API" in result.stdout
         assert "Please ensure the API server is running" in result.stdout
 

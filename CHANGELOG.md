@@ -369,10 +369,10 @@ Major update adding production-ready features and comprehensive documentation.
 
 ## Links
 
-- **Repository**: https://github.com/fabriziosalmi/cdn-sdk
-- **Documentation**: https://github.com/fabriziosalmi/cdn-sdk/tree/main/docs
-- **Issues**: https://github.com/fabriziosalmi/cdn-sdk/issues
-- **Discussions**: https://github.com/fabriziosalmi/cdn-sdk/discussions
+- **Repository**: https://github.com/fabriziosalmi/alma
+- **Documentation**: https://github.com/fabriziosalmi/alma/tree/main/docs
+- **Issues**: https://github.com/fabriziosalmi/alma/issues
+- **Discussions**: https://github.com/fabriziosalmi/alma/discussions
 
 ---
 

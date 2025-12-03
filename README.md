@@ -2,7 +2,7 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyPI version](https://img.shields.io/pypi/v/alma.svg)](https://pypi.org/project/alma/)
-[![Status](https://img.shields.io/badge/Status-Resilient_Beta-purple.svg)]()
+[![Status](https://img.shields.io/badge/Status-Resilient_Beta-purple.svg)](https://github.com/fabriziosalmi/alma/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Policy](https://img.shields.io/badge/Policy-Resiliency-green.svg)](SECURITY.md)
 

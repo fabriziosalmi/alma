@@ -137,10 +137,12 @@ class BlueprintCreate(BaseModel):
 
 ### Authentication & Authorization
 
-**Current Status**: IP-based rate limiting only
+**Current Status**:
+- **API Key Authentication**: Secure access using `X-API-Key` header.
+- **Argon2id Hashing**: API keys are hashed using Argon2id for maximum security.
+- **Rate Limiting**: IP-based and API-key based rate limiting.
 
 **Planned Features** (Future Releases):
-- API Key Authentication
 - OAuth2 / JWT Tokens
 - Role-Based Access Control (RBAC)
 - Multi-Factor Authentication (MFA)
@@ -194,8 +196,8 @@ Security updates will be announced via:
 
 Current version has the following security limitations:
 
-1. **No Authentication**: API is publicly accessible
-2. **IP-Based Rate Limiting**: Can be bypassed with distributed attacks
+1. **Single Role**: No RBAC (all valid API keys have full access)
+2. **IP-Based Rate Limiting**: Can be bypassed with distributed attacks (mitigated by API Key limits)
 3. **No Request Signing**: Requests not cryptographically signed
 4. **Limited Audit Logging**: Basic logging only
 
@@ -213,5 +215,5 @@ We are planning to launch a bug bounty program in Q2 2026. Stay tuned for detail
 
 ---
 
-**Last Updated**: November 2025  
-**Security Policy Version**: 1.0
+**Last Updated**: December 2025
+**Security Policy Version**: 1.1

@@ -477,29 +477,32 @@ redis-cluster:
   estimated_cost: "$100-300/month"
   resources:
     - type: "compute"
-      name: "redis-master-1"
+      name: "k8s-control-plane-1"
+      type: "vm"
       provider: "proxmox"
       specs:
         cpu: 4
-        memory: "32GB"
-        storage: "200GB"
-        role: "master"
+        memory: 8192
+        storage: 50
+      role: "control-plane"
     - type: "compute"
-      name: "redis-master-2"
+      name: "k8s-control-plane-2"
+      type: "vm"
       provider: "proxmox"
       specs:
         cpu: 4
-        memory: "32GB"
-        storage: "200GB"
-        role: "master"
+        memory: 8192
+        storage: 50
+      role: "control-plane"
     - type: "compute"
-      name: "redis-master-3"
+      name: "k8s-control-plane-3"
+      type: "vm"
       provider: "proxmox"
       specs:
         cpu: 4
-        memory: "32GB"
-        storage: "200GB"
-        role: "master"
+        memory: 8192
+        storage: 50
+      role: "control-plane"
     - type: "compute"
       name: "redis-replica-1"
       provider: "proxmox"

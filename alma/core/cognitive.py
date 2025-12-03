@@ -181,9 +181,8 @@ class AdvancedCognitiveEngine:
             A dictionary containing the results of the cognitive analysis,
             or a safety override string.
         """
-        # 1. TODO: Normalize input and update frustration level (e.g., based on sentiment analysis)
-
-        # 2. Check for a shift in context
+        # Normalize input and update frustration level
+        self._update_frustration(user_input) # in context
         self.focus = detect_context_shift(user_input, self.focus)
 
         # 3. Assess the risk of the intended action
