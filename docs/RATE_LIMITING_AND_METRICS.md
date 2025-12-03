@@ -222,7 +222,7 @@ The auto-generated dashboard includes:
 
 Create custom panels with PromQL queries:
 
-```promql
+```txt
 # Average response time by endpoint
 rate(http_request_duration_seconds_sum[5m]) / 
 rate(http_request_duration_seconds_count[5m])

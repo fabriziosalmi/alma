@@ -701,7 +701,7 @@ docker-compose -f docker-compose.metrics.yml up -d
 
 **Custom Prometheus queries:**
 
-```promql
+```txt
 # Request rate by endpoint
 rate(http_requests_total[5m])
 
