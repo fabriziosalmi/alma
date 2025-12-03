@@ -4,9 +4,9 @@ import logging
 import uuid
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from datetime import datetime
 from typing import Any
 
-from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
