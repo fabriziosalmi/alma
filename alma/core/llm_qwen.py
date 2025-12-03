@@ -126,7 +126,7 @@ class Qwen3LLM(LLMInterface):
         # Stream chunks asynchronously
         async def _async_generator_wrapper(sync_generator):
             it = iter(sync_generator)
-            
+
             def _next_safe():
                 try:
                     return next(it)
@@ -144,9 +144,7 @@ class Qwen3LLM(LLMInterface):
         from threading import Thread
         from transformers import TextIteratorStreamer
 
-        streamer = TextIteratorStreamer(
-            self.tokenizer, skip_prompt=True, skip_special_tokens=True
-        )
+        streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
 
         generation_kwargs = dict(
             inputs,

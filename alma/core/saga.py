@@ -51,7 +51,7 @@ class SagaOrchestrator:
                     correlation_id=correlation_id,
                     status="RUNNING",
                     payload=payload,
-                    history=[]
+                    history=[],
                 )
                 session.add(state)
 
@@ -61,13 +61,13 @@ class SagaOrchestrator:
         try:
             for step in self.steps:
                 logger.info(f"Executing step {step.name}")
-                
+
                 # Update state
                 await self._update_state(saga_id, step.name, "EXECUTING")
-                
+
                 await step.execute(context)
                 completed_steps.append(step)
-                
+
                 # Update state
                 await self._update_state(saga_id, step.name, "COMPLETED")
 
@@ -81,7 +81,9 @@ class SagaOrchestrator:
             await self._compensate(saga_id, completed_steps, context)
             raise
 
-    async def _compensate(self, saga_id: str, steps: List[SagaStep], context: dict[str, Any]) -> None:
+    async def _compensate(
+        self, saga_id: str, steps: List[SagaStep], context: dict[str, Any]
+    ) -> None:
         """Run compensating actions in reverse order."""
         logger.info(f"Starting compensation for Saga {saga_id}")
         for step in reversed(steps):
@@ -102,7 +104,9 @@ class SagaOrchestrator:
                 if state:
                     state.current_step = step
                     history = list(state.history)
-                    history.append({"step": step, "status": status, "timestamp": str(datetime.utcnow())})
+                    history.append(
+                        {"step": step, "status": status, "timestamp": str(datetime.utcnow())}
+                    )
                     state.history = history
 
     async def _update_status(self, saga_id: str, status: str) -> None:
@@ -114,5 +118,6 @@ class SagaOrchestrator:
                 state = result.scalars().first()
                 if state:
                     state.status = status
+
 
 from datetime import datetime

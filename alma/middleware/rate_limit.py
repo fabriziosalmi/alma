@@ -28,7 +28,7 @@ class RateLimiter:
         self.default_limits = (10, 1.0)  # 10 requests burst, 1 req/s refill
         self.ip_limits: Dict[str, Tuple[int, float]] = {}
         self.endpoint_limits: Dict[str, Tuple[int, float]] = {}
-        
+
         # Redis client
         self.redis: Optional[redis.Redis] = None
         self.redis_url = redis_url
@@ -49,7 +49,9 @@ class RateLimiter:
             self._redis_available = True
             logger.info(f"RateLimiter connected to Redis at {self.redis_url}")
         except Exception as e:
-            logger.warning(f"RateLimiter failed to connect to Redis: {e}. Using in-memory fallback.")
+            logger.warning(
+                f"RateLimiter failed to connect to Redis: {e}. Using in-memory fallback."
+            )
             self._redis_available = False
 
     async def close(self):
@@ -71,29 +73,29 @@ class RateLimiter:
 
         ip = request.client.host if request.client else "unknown"
         path = request.url.path
-        
+
         # Determine limits
         limit, rate = self.ip_limits.get(ip, self.default_limits)
-        
+
         key = f"rate_limit:{ip}:{path}"
         now = time.time()
 
         if self._redis_available and self.redis:
             try:
                 # Redis Token Bucket Implementation using Lua script for atomicity
-                # Keys: 
+                # Keys:
                 #   tokens_key: Current tokens available
                 #   timestamp_key: Last update timestamp
                 tokens_key = f"{key}:tokens"
                 timestamp_key = f"{key}:ts"
-                
+
                 # Script:
                 # 1. Get current tokens and last timestamp
                 # 2. Calculate refill based on time passed
                 # 3. Update tokens (min(limit, current + refill))
                 # 4. If tokens >= 1, decrement and return allowed (1)
                 # 5. Else return denied (0) and retry time
-                
+
                 script = """
                 local tokens_key = KEYS[1]
                 local ts_key = KEYS[2]
@@ -124,11 +126,13 @@ class RateLimiter:
                     return {0, wait}
                 end
                 """
-                
-                result = await self.redis.eval(script, 2, tokens_key, timestamp_key, limit, rate, now)
+
+                result = await self.redis.eval(
+                    script, 2, tokens_key, timestamp_key, limit, rate, now
+                )
                 allowed = bool(result[0])
                 wait_time = float(result[1])
-                
+
                 if allowed:
                     return False, 0.0
                 else:
@@ -137,7 +141,7 @@ class RateLimiter:
             except Exception as e:
                 logger.error(f"Redis rate limit check failed: {e}. Falling back to memory.")
                 # Fall through to in-memory check
-        
+
         # In-memory fallback (Token Bucket)
         # Check existence before accessing to avoid defaultdict creation
         if key not in self.buckets:
@@ -146,11 +150,11 @@ class RateLimiter:
         else:
             current_tokens = self.buckets[key]
             last_ts = self.last_update[key]
-            
+
             delta = now - last_ts
             refill = delta * rate
             current_tokens = min(limit, current_tokens + refill)
-            
+
         if current_tokens >= 1.0:
             self.buckets[key] = current_tokens - 1.0
             self.last_update[key] = now
@@ -190,8 +194,11 @@ class EndpointRateLimiter:
         self.endpoint_limits[endpoint] = rpm
         # The new RateLimiter takes (limit, rate) where rate is per second
         # rpm / 60.0 gives requests per second
-        self.limiters[endpoint] = RateLimiter(enabled=True) # Initialize with enabled=True
-        self.limiters[endpoint].default_limits = (max(10, rpm // 6), rpm / 60.0) # Set default limits for this specific limiter instance
+        self.limiters[endpoint] = RateLimiter(enabled=True)  # Initialize with enabled=True
+        self.limiters[endpoint].default_limits = (
+            max(10, rpm // 6),
+            rpm / 60.0,
+        )  # Set default limits for this specific limiter instance
 
     def _get_limiter(self, request: Request) -> RateLimiter:
         """
@@ -213,7 +220,10 @@ class EndpointRateLimiter:
         # Use default limiter
         if "default" not in self.limiters:
             self.limiters["default"] = RateLimiter(enabled=True)
-            self.limiters["default"].default_limits = (max(10, self.default_rpm // 6), self.default_rpm / 60.0)
+            self.limiters["default"].default_limits = (
+                max(10, self.default_rpm // 6),
+                self.default_rpm / 60.0,
+            )
 
         return self.limiters["default"]
 
@@ -228,7 +238,7 @@ class EndpointRateLimiter:
             JSONResponse if rate limited, None otherwise
         """
         limiter = self._get_limiter(request)
-        
+
         # Initialize the specific limiter if it hasn't been yet
         if limiter.redis is None and limiter.enabled:
             await limiter.initialize()
@@ -259,17 +269,17 @@ class EndpointRateLimiter:
                     "X-RateLimit-Reset": str(int(time.time()) + int(retry_after) + 1),
                 },
             )
-        
+
         # Approximate remaining and reset for headers
         effective_rpm = self.default_rpm
         for endpoint, rpm_limit in self.endpoint_limits.items():
             if request.url.path.startswith(endpoint):
                 effective_rpm = rpm_limit
                 break
-        
+
         request.state.rate_limit_headers = {
             "X-RateLimit-Limit": str(effective_rpm),
-            "X-RateLimit-Remaining": "1", # Placeholder
+            "X-RateLimit-Remaining": "1",  # Placeholder
             "X-RateLimit-Reset": str(int(time.time()) + 60),
         }
 

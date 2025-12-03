@@ -14,14 +14,19 @@ logger = logging.getLogger(__name__)
 try:
     from argon2 import PasswordHasher
     from argon2.exceptions import VerifyMismatchError, InvalidHash
+
     HAS_ARGON2 = True
 except ImportError:
     try:
         from passlib.hash import argon2
+
         HAS_ARGON2 = True
     except ImportError:
-        logger.warning("argon2-cffi not installed, falling back to SHA-256 (INSECURE for production)")
+        logger.warning(
+            "argon2-cffi not installed, falling back to SHA-256 (INSECURE for production)"
+        )
         import hashlib
+
         HAS_ARGON2 = False
 
 
@@ -44,7 +49,7 @@ class APIKeyAuth:
     def _hash_key(self, key: str) -> str:
         """
         Hash an API key using Argon2id (secure) or SHA-256 (fallback).
-        
+
         WARNING: SHA-256 fallback is INSECURE for production.
         Install argon2-cffi: pip install argon2-cffi
         """
@@ -93,7 +98,7 @@ class APIKeyAuth:
             # Hash keys from environment
             self.valid_key_hashes = {
                 key.strip(): self._hash_key(key.strip())
-                for key in env_keys.split(",") 
+                for key in env_keys.split(",")
                 if key.strip()
             }
         else:
@@ -104,9 +109,7 @@ class APIKeyAuth:
                 "dev-api-key-67890",
                 "prod-api-key-abcdef",
             ]
-            self.valid_key_hashes = {
-                key: self._hash_key(key) for key in dev_keys
-            }
+            self.valid_key_hashes = {key: self._hash_key(key) for key in dev_keys}
 
     def validate_key(self, api_key: str | None) -> bool:
         """
@@ -130,7 +133,7 @@ class APIKeyAuth:
         for stored_key, stored_hash in self.valid_key_hashes.items():
             if self._verify_key(api_key, stored_hash):
                 return True
-        
+
         return False
 
 

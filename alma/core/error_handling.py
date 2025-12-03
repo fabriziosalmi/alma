@@ -20,13 +20,14 @@ logger = logging.getLogger(__name__)
 async def calm_exception_handler(request: Request, exc: Exception) -> Response:
     """
     Global exception handler for API responses only.
-    
+
     In debug mode: Shows full stack traces
     In production: Shows calm, user-friendly messages
     """
     from alma.core.config import get_settings
+
     settings = get_settings()
-    
+
     # Log the full traceback internally for Ops
     error_id = str(hash(str(exc)))  # Simple ID for correlation
     logger.error(f"System Error (ID: {error_id}): {exc}")
@@ -41,8 +42,8 @@ async def calm_exception_handler(request: Request, exc: Exception) -> Response:
                 "error_id": error_id,
                 "message": str(exc),
                 "traceback": traceback.format_exc(),
-                "debug_mode": True
-            }
+                "debug_mode": True,
+            },
         )
 
     # Production mode: Calm response for users

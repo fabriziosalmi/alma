@@ -85,14 +85,14 @@ class ProxmoxEngine(Engine):
             if vm.get("name") == name:
                 vm["type"] = "qemu"
                 return vm
-        
+
         # Check LXC
         cts = await self._api_request("GET", f"nodes/{self.node}/lxc")
         for ct in cts:
             if ct.get("name") == name:
                 ct["type"] = "lxc"
                 return ct
-                
+
         return None
 
     async def get_state(self, blueprint: SystemBlueprint) -> list[ResourceState]:
@@ -100,7 +100,7 @@ class ProxmoxEngine(Engine):
         Get state of all Proxmox resources for a blueprint.
         """
         resources = []
-        
+
         # Get all VMs and CTs
         try:
             vms = await self._api_request("GET", f"nodes/{self.node}/qemu")
@@ -110,29 +110,31 @@ class ProxmoxEngine(Engine):
             return []
 
         all_resources = vms + cts
-        
+
         # Filter resources that match blueprint naming convention or just all?
         # For now, we return all resources that match names in the blueprint
         blueprint_names = {r.name for r in blueprint.resources}
-        
+
         for res in all_resources:
             name = res.get("name")
             if name in blueprint_names:
                 # Fetch detailed config
                 vmid = res.get("vmid")
                 res_type = "qemu" if res in vms else "lxc"
-                
+
                 try:
-                    config = await self._api_request("GET", f"nodes/{self.node}/{res_type}/{vmid}/config")
-                    
-                    resources.append(ResourceState(
-                        id=name,
-                        type="compute", # Generic type for now
-                        config=config
-                    ))
+                    config = await self._api_request(
+                        "GET", f"nodes/{self.node}/{res_type}/{vmid}/config"
+                    )
+
+                    resources.append(
+                        ResourceState(
+                            id=name, type="compute", config=config  # Generic type for now
+                        )
+                    )
                 except Exception:
                     continue
-                    
+
         return resources
 
     async def apply(self, plan: Plan) -> None:
@@ -145,57 +147,48 @@ class ProxmoxEngine(Engine):
         # Create new resources
         for resource_def in plan.to_create:
             print(f"Creating resource: {resource_def.name}")
-            
+
             # We assume cloning from a template
             template_name = resource_def.specs.get("template")
             if not template_name:
                 print(f"Skipping {resource_def.name}: No template specified")
                 continue
-                
+
             template = await self._get_vm_by_name(template_name)
             if not template:
                 print(f"Skipping {resource_def.name}: Template '{template_name}' not found")
                 continue
-                
+
             new_vmid = await self._get_next_vmid()
             template_id = template.get("vmid")
-            
+
             # Clone
             print(f"Cloning template {template_id} to VMID {new_vmid}...")
             await self._api_request(
-                "POST", 
+                "POST",
                 f"nodes/{self.node}/qemu/{template_id}/clone",
-                data={
-                    "newid": new_vmid,
-                    "name": resource_def.name,
-                    "full": 1
-                }
+                data={"newid": new_vmid, "name": resource_def.name, "full": 1},
             )
-            
+
             # Apply specs (CPU, Memory)
             # Wait for clone to finish? In async API, we might need to poll task.
             # For simplicity, we fire and forget config update (might fail if locked)
             # In production, we should wait for task completion.
-            
+
             config_data = {}
             if "cpu" in resource_def.specs:
                 config_data["cores"] = resource_def.specs["cpu"]
             if "memory" in resource_def.specs:
                 # Convert GB to MB if needed, assuming specs are in MB or raw
                 config_data["memory"] = resource_def.specs["memory"]
-                
+
             if config_data:
                 await self._api_request(
-                    "POST",
-                    f"nodes/{self.node}/qemu/{new_vmid}/config",
-                    data=config_data
+                    "POST", f"nodes/{self.node}/qemu/{new_vmid}/config", data=config_data
                 )
-                
+
             # Start VM
-            await self._api_request(
-                "POST",
-                f"nodes/{self.node}/qemu/{new_vmid}/status/start"
-            )
+            await self._api_request("POST", f"nodes/{self.node}/qemu/{new_vmid}/status/start")
 
         # Update existing resources
         for current_state, resource_def in plan.to_update:
@@ -203,19 +196,19 @@ class ProxmoxEngine(Engine):
             vm = await self._get_vm_by_name(resource_def.name)
             if not vm:
                 continue
-                
+
             vmid = vm.get("vmid")
-            
+
             config_data = {}
             # Compare and update
-            if "cpu" in resource_def.specs and str(resource_def.specs["cpu"]) != str(current_state.config.get("cores")):
+            if "cpu" in resource_def.specs and str(resource_def.specs["cpu"]) != str(
+                current_state.config.get("cores")
+            ):
                 config_data["cores"] = resource_def.specs["cpu"]
-            
+
             if config_data:
                 await self._api_request(
-                    "POST",
-                    f"nodes/{self.node}/qemu/{vmid}/config",
-                    data=config_data
+                    "POST", f"nodes/{self.node}/qemu/{vmid}/config", data=config_data
                 )
 
     async def destroy(self, plan: Plan) -> None:
@@ -231,24 +224,18 @@ class ProxmoxEngine(Engine):
             if not vm:
                 print(f"Resource {resource_state.id} not found")
                 continue
-                
+
             vmid = vm.get("vmid")
             res_type = vm.get("type", "qemu")
-            
+
             # Stop first
             try:
-                await self._api_request(
-                    "POST",
-                    f"nodes/{self.node}/{res_type}/{vmid}/status/stop"
-                )
+                await self._api_request("POST", f"nodes/{self.node}/{res_type}/{vmid}/status/stop")
             except Exception:
-                pass # Already stopped?
-                
+                pass  # Already stopped?
+
             # Delete
-            await self._api_request(
-                "DELETE",
-                f"nodes/{self.node}/{res_type}/{vmid}"
-            )
+            await self._api_request("DELETE", f"nodes/{self.node}/{res_type}/{vmid}")
 
     async def health_check(self) -> bool:
         """

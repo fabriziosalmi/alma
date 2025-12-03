@@ -45,10 +45,7 @@ class AnsibleEngine(Engine):
             self._check_runner()
             # Try a simple ping
             r = ansible_runner.run(
-                private_data_dir=self.data_dir,
-                host_pattern="localhost",
-                module="ping",
-                quiet=True
+                private_data_dir=self.data_dir, host_pattern="localhost", module="ping", quiet=True
             )
             return r.status == "successful"
         except Exception:
@@ -57,8 +54,8 @@ class AnsibleEngine(Engine):
     async def get_state(self, blueprint: SystemBlueprint) -> list[ResourceState]:
         """
         Get state of Ansible managed resources.
-        
-        Since Ansible is stateless, we can't easily query the "current state" 
+
+        Since Ansible is stateless, we can't easily query the "current state"
         without running a playbook. For now, we assume if it's in the blueprint,
         it's managed.
         """
@@ -79,24 +76,24 @@ class AnsibleEngine(Engine):
             # Write playbook to temp file or pass as string?
             # ansible-runner expects a file path usually.
             # For simplicity, we assume 'playbook' is a path or we write it.
-            
+
             playbook_path = os.path.join(self.data_dir, f"{resource_def.name}.yml")
             os.makedirs(self.data_dir, exist_ok=True)
-            
+
             if isinstance(playbook, str) and not os.path.exists(playbook):
                 # Assume it's content
                 with open(playbook_path, "w") as f:
                     f.write(playbook)
             elif isinstance(playbook, str) and os.path.exists(playbook):
                 playbook_path = playbook
-            
+
             r = ansible_runner.run(
                 private_data_dir=self.data_dir,
                 playbook=playbook_path,
                 inventory=self.inventory,
-                quiet=False
+                quiet=False,
             )
-            
+
             if r.status != "successful":
                 raise RuntimeError(f"Ansible playbook failed: {r.rc}")
 

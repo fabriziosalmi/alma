@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class Projector(ABC):
     """
     Base class for Projectors.
-    
+
     Projectors listen to events and update Read Models.
     """
 
@@ -46,14 +46,16 @@ class InfrastructureProjector(Projector):
             async with session.begin():
                 # Get or create view
                 result = await session.execute(
-                    select(InfrastructureViewModel).where(InfrastructureViewModel.blueprint_id == blueprint_id)
+                    select(InfrastructureViewModel).where(
+                        InfrastructureViewModel.blueprint_id == blueprint_id
+                    )
                 )
                 view = result.scalars().first()
-                
+
                 if not view:
                     view = InfrastructureViewModel(blueprint_id=blueprint_id)
                     session.add(view)
-                
+
                 # Update based on event type
                 if event.event_type == "DeploymentStarted":
                     view.status = "DEPLOYING"
@@ -69,6 +71,6 @@ class InfrastructureProjector(Projector):
                     if res_id:
                         resources[res_id] = "PROVISIONED"
                         view.resources = resources
-                
+
                 view.last_updated = datetime.utcnow()
                 logger.debug(f"Updated InfrastructureView for {blueprint_id} to {view.status}")

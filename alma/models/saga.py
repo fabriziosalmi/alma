@@ -4,12 +4,14 @@ from sqlalchemy import Column, Integer, String, JSON, DateTime
 from datetime import datetime
 from alma.models.blueprint import Base
 
+
 class SagaStateModel(Base):
     """
     Database model for Saga State.
-    
+
     Tracks the progress of long-running transactions.
     """
+
     __tablename__ = "saga_states"
 
     id = Column(Integer, primary_key=True, index=True)

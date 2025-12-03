@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 class ToolRequest(BaseModel):
     """Request schema for tool execution."""
-    
+
     name: str = Field(..., description="Name of the tool to execute")
     arguments: dict[str, Any] = Field(default_factory=dict, description="Tool arguments")
     context: Optional[dict[str, Any]] = Field(None, description="Optional execution context")
@@ -18,7 +18,7 @@ class ToolRequest(BaseModel):
 
 class ToolResponse(BaseModel):
     """Response schema for tool execution."""
-    
+
     success: bool = Field(..., description="Whether the tool executed successfully")
     tool: str = Field(..., description="Name of the executed tool")
     result: Optional[dict[str, Any]] = Field(None, description="Tool execution result")
@@ -28,15 +28,17 @@ class ToolResponse(BaseModel):
 
 class ResourceEstimateRequest(BaseModel):
     """Request schema for resource estimation."""
-    
+
     workload_type: str = Field(..., description="Type of workload (web, database, cache, etc.)")
     expected_load: Optional[str] = Field(None, description="Expected load description")
-    availability: str = Field("standard", description="Availability level (standard, high, critical)")
+    availability: str = Field(
+        "standard", description="Availability level (standard, high, critical)"
+    )
 
 
 class ResourceSpecs(BaseModel):
     """Resource specifications."""
-    
+
     cpu: int = Field(..., description="Number of CPU cores")
     memory: str = Field(..., description="Memory size (e.g., '4GB')")
     storage: str = Field(..., description="Storage size (e.g., '50GB')")
@@ -44,7 +46,7 @@ class ResourceSpecs(BaseModel):
 
 class CostBreakdown(BaseModel):
     """Cost breakdown details."""
-    
+
     hourly_usd: Optional[float] = Field(None, description="Hourly cost in USD")
     monthly_usd: float = Field(..., description="Monthly cost in USD")
     yearly_usd: Optional[float] = Field(None, description="Yearly cost in USD")
@@ -57,7 +59,7 @@ class CostBreakdown(BaseModel):
 
 class ResourceEstimateResponse(BaseModel):
     """Response schema for resource estimation."""
-    
+
     workload_type: str
     expected_load: Optional[str] = None
     recommended_specs: ResourceSpecs
@@ -69,15 +71,17 @@ class ResourceEstimateResponse(BaseModel):
 
 class BlueprintRequest(BaseModel):
     """Request schema for blueprint operations."""
-    
+
     name: str = Field(..., description="Blueprint name")
     description: Optional[str] = Field(None, description="Blueprint description")
-    resources: list[dict[str, Any]] = Field(default_factory=list, description="Resource definitions")
+    resources: list[dict[str, Any]] = Field(
+        default_factory=list, description="Resource definitions"
+    )
 
 
 class ValidationIssue(BaseModel):
     """Validation issue details."""
-    
+
     severity: str = Field(..., description="Issue severity (error, warning)")
     message: str = Field(..., description="Issue description")
     field: Optional[str] = Field(None, description="Field that caused the issue")
@@ -85,7 +89,7 @@ class ValidationIssue(BaseModel):
 
 class BlueprintValidationResponse(BaseModel):
     """Response schema for blueprint validation."""
-    
+
     valid: bool
     issues: list[ValidationIssue] = Field(default_factory=list)
     warnings: list[ValidationIssue] = Field(default_factory=list)

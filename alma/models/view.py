@@ -4,12 +4,14 @@ from sqlalchemy import Column, Integer, String, JSON, DateTime
 from datetime import datetime
 from alma.models.blueprint import Base
 
+
 class InfrastructureViewModel(Base):
     """
     Read model for Infrastructure status.
-    
+
     Optimized for queries, updated by Projectors.
     """
+
     __tablename__ = "infrastructure_views"
 
     id = Column(Integer, primary_key=True, index=True)

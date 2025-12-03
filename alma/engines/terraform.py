@@ -44,13 +44,9 @@ class TerraformEngine(Engine):
         """Run a terraform command."""
         cmd = [self.binary] + args
         logger.info(f"Running command: {' '.join(cmd)} in {cwd}")
-        
+
         process = subprocess.Popen(
-            cmd,
-            cwd=cwd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+            cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
         stdout, stderr = process.communicate()
         return process.returncode, stdout, stderr
@@ -67,13 +63,13 @@ class TerraformEngine(Engine):
     async def get_state(self, blueprint: SystemBlueprint) -> list[ResourceState]:
         """
         Get state of Terraform managed resources.
-        
+
         Parses terraform state to find resources.
         """
         # We assume one workspace per blueprint for simplicity?
         # Or one workspace per resource? Terraform usually manages a stack.
         # If the blueprint represents a stack, we look at that stack's state.
-        
+
         # For this implementation, we assume the blueprint ID maps to a directory.
         bp_dir = os.path.join(self.work_dir, str(blueprint.id))
         if not os.path.exists(bp_dir):
@@ -87,15 +83,17 @@ class TerraformEngine(Engine):
         try:
             state_data = json.loads(stdout)
             resources = []
-            
+
             # Parse root module resources
             if "values" in state_data and "root_module" in state_data["values"]:
                 for res in state_data["values"]["root_module"].get("resources", []):
-                    resources.append(ResourceState(
-                        id=res["address"], # e.g. aws_instance.web
-                        type="terraform_resource",
-                        config=res.get("values", {})
-                    ))
+                    resources.append(
+                        ResourceState(
+                            id=res["address"],  # e.g. aws_instance.web
+                            type="terraform_resource",
+                            config=res.get("values", {}),
+                        )
+                    )
             return resources
         except json.JSONDecodeError:
             return []
@@ -108,27 +106,27 @@ class TerraformEngine(Engine):
         # but the Plan object is resource-based.
         # If resources have 'hcl' spec, we aggregate them?
         # Or we run terraform for each resource? (Inefficient but isolated)
-        
+
         # Strategy: Group resources by 'stack' or 'module' metadata?
-        # For simplicity, we assume each resource in the plan is a separate terraform run 
+        # For simplicity, we assume each resource in the plan is a separate terraform run
         # (micro-stacks) OR we assume the blueprint is one stack.
-        
+
         # Let's go with: Each resource definition in the blueprint that uses 'terraform' provider
         # is a separate state file (isolated).
-        
+
         for resource_def in plan.to_create + [r for _, r in plan.to_update]:
             if resource_def.provider != "terraform":
                 continue
-                
+
             print(f"Applying Terraform for: {resource_def.name}")
-            
+
             res_dir = os.path.join(self.work_dir, resource_def.name)
             os.makedirs(res_dir, exist_ok=True)
-            
+
             # Write HCL
             hcl = resource_def.specs.get("hcl")
             source = resource_def.specs.get("source")
-            
+
             if hcl:
                 with open(os.path.join(res_dir, "main.tf"), "w") as f:
                     f.write(hcl)
@@ -155,18 +153,18 @@ class TerraformEngine(Engine):
         self._check_binary()
 
         for resource_state in plan.to_delete:
-            # We need to know the directory. 
+            # We need to know the directory.
             # Assuming ID maps to name which maps to directory.
-            # But resource_state.id from get_state was 'address'. 
-            # This mismatch is tricky. 
+            # But resource_state.id from get_state was 'address'.
+            # This mismatch is tricky.
             # If we use micro-stacks, the resource_state.id should be the stack name?
-            
-            # Let's assume resource_state.id IS the resource name from the blueprint 
+
+            # Let's assume resource_state.id IS the resource name from the blueprint
             # (which matches the directory name).
-            
+
             print(f"Destroying Terraform stack: {resource_state.id}")
             res_dir = os.path.join(self.work_dir, resource_state.id)
-            
+
             if not os.path.exists(res_dir):
                 print(f"Directory {res_dir} not found, skipping destroy.")
                 continue

@@ -100,10 +100,10 @@ class TestProxmoxEngine:
     ) -> None:
         """Test apply for resource creation."""
         plan = Plan(to_create=sample_blueprint.resources)
-        
+
         # Mock template lookup
         mock_template = {"vmid": 100, "name": "ubuntu-template", "type": "qemu"}
-        
+
         # Mock API responses
         async def api_side_effect(method, endpoint, data=None):
             if endpoint == "cluster/nextid":
@@ -120,51 +120,42 @@ class TestProxmoxEngine:
         ):
             # Add template spec to resource
             sample_blueprint.resources[0].specs["template"] = "ubuntu-template"
-            
+
             await engine.apply(plan)
-            
+
             # Verify clone call
             mock_req.assert_any_call(
                 "POST",
                 f"nodes/{engine.node}/qemu/100/clone",
-                data={"newid": 101, "name": "test-vm", "full": 1}
+                data={"newid": 101, "name": "test-vm", "full": 1},
             )
             # Verify start call
-            mock_req.assert_any_call(
-                "POST",
-                f"nodes/{engine.node}/qemu/101/status/start"
-            )
+            mock_req.assert_any_call("POST", f"nodes/{engine.node}/qemu/101/status/start")
 
     async def test_destroy(self, engine: ProxmoxEngine) -> None:
         """Test destroying a resource."""
         resource_state = ResourceState(id="test-vm", type="compute", config={})
         plan = Plan(to_delete=[resource_state])
-        
+
         mock_vm = {"vmid": 101, "name": "test-vm", "type": "qemu"}
-        
+
         async def api_side_effect(method, endpoint, data=None):
             if endpoint == f"nodes/{engine.node}/qemu":
                 return [mock_vm]
             if endpoint == f"nodes/{engine.node}/lxc":
                 return []
             return {}
-            
+
         with (
             patch.object(engine, "_authenticate", return_value=True),
             patch.object(engine, "_api_request", side_effect=api_side_effect) as mock_req,
         ):
             await engine.destroy(plan)
-            
+
             # Verify stop call
-            mock_req.assert_any_call(
-                "POST",
-                f"nodes/{engine.node}/qemu/101/status/stop"
-            )
+            mock_req.assert_any_call("POST", f"nodes/{engine.node}/qemu/101/status/stop")
             # Verify delete call
-            mock_req.assert_any_call(
-                "DELETE",
-                f"nodes/{engine.node}/qemu/101"
-            )
+            mock_req.assert_any_call("DELETE", f"nodes/{engine.node}/qemu/101")
 
     async def test_apply_update(
         self, engine: ProxmoxEngine, sample_blueprint: SystemBlueprint
@@ -172,9 +163,9 @@ class TestProxmoxEngine:
         """Test apply for resource updates."""
         old_state = ResourceState(id="test-vm", type="compute", config={"cores": 1})
         plan = Plan(to_update=[(old_state, sample_blueprint.resources[0])])
-        
+
         mock_vm = {"vmid": 101, "name": "test-vm", "type": "qemu"}
-        
+
         async def api_side_effect(method, endpoint, data=None):
             if endpoint == f"nodes/{engine.node}/qemu":
                 return [mock_vm]
@@ -187,10 +178,8 @@ class TestProxmoxEngine:
             patch.object(engine, "_api_request", side_effect=api_side_effect) as mock_req,
         ):
             await engine.apply(plan)
-            
+
             # Verify config update
             mock_req.assert_any_call(
-                "POST",
-                f"nodes/{engine.node}/qemu/101/config",
-                data={"cores": 2}
+                "POST", f"nodes/{engine.node}/qemu/101/config", data={"cores": 2}
             )

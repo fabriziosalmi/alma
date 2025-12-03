@@ -10,7 +10,7 @@ from alma.models.blueprint import Base
 class EventModel(Base):
     """
     Database model for an Event.
-    
+
     Implements the Event Sourcing pattern by storing an immutable log of state changes.
     """
 

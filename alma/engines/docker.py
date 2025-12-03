@@ -40,7 +40,7 @@ class DockerEngine(Engine):
         """Get Docker client."""
         if not docker:
             raise ImportError("docker package is not installed.")
-            
+
         if not self.client:
             try:
                 if self.base_url:
@@ -74,15 +74,17 @@ class DockerEngine(Engine):
 
         for container in containers:
             if container.name in blueprint_names:
-                resources.append(ResourceState(
-                    id=container.name,
-                    type="container",
-                    config={
-                        "image": container.attrs["Config"]["Image"],
-                        "status": container.status,
-                        "ports": container.attrs["NetworkSettings"]["Ports"],
-                    }
-                ))
+                resources.append(
+                    ResourceState(
+                        id=container.name,
+                        type="container",
+                        config={
+                            "image": container.attrs["Config"]["Image"],
+                            "status": container.status,
+                            "ports": container.attrs["NetworkSettings"]["Ports"],
+                        },
+                    )
+                )
         return resources
 
     async def apply(self, plan: Plan) -> None:
@@ -95,14 +97,10 @@ class DockerEngine(Engine):
             image = resource_def.specs.get("image", "alpine:latest")
             ports = resource_def.specs.get("ports", {})
             env = resource_def.specs.get("env", {})
-            
+
             try:
                 client.containers.run(
-                    image,
-                    name=resource_def.name,
-                    ports=ports,
-                    environment=env,
-                    detach=True
+                    image, name=resource_def.name, ports=ports, environment=env, detach=True
                 )
             except Exception as e:
                 print(f"Failed to create container {resource_def.name}: {e}")
@@ -115,17 +113,13 @@ class DockerEngine(Engine):
                 container = client.containers.get(resource_def.name)
                 container.stop()
                 container.remove()
-                
+
                 image = resource_def.specs.get("image", "alpine:latest")
                 ports = resource_def.specs.get("ports", {})
                 env = resource_def.specs.get("env", {})
-                
+
                 client.containers.run(
-                    image,
-                    name=resource_def.name,
-                    ports=ports,
-                    environment=env,
-                    detach=True
+                    image, name=resource_def.name, ports=ports, environment=env, detach=True
                 )
             except Exception as e:
                 print(f"Failed to update container {resource_def.name}: {e}")

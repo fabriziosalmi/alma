@@ -16,12 +16,12 @@ logger = logging.getLogger(__name__)
 
 class Event(BaseModel):
     """Base class for all domain events."""
-    
+
     aggregate_id: str
     aggregate_type: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     version: int = 1
-    
+
     @property
     def event_type(self) -> str:
         return self.__class__.__name__
@@ -79,12 +79,12 @@ class EventBus:
         """Persist event and notify subscribers."""
         # 1. Persist
         await self.store.append(event)
-        
+
         # 2. Notify (Fire and Forget or Await?)
         # For consistency, we usually await handlers in simple systems.
         # For high throughput, we might background them.
         # We'll await for now to ensure read models are updated before returning.
-        
+
         handlers = self.handlers.get(type(event), [])
         if handlers:
             logger.debug(f"Dispatching {event.event_type} to {len(handlers)} handlers")

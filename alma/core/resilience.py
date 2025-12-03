@@ -139,6 +139,7 @@ class Retrier:
                 if self.jitter:
                     delay = delay * (0.5 + random.random())
 
-                logger.info(f"Retrying in {delay:.2f}s (Attempt {attempt}/{self.max_attempts}) due to: {e}")
+                logger.info(
+                    f"Retrying in {delay:.2f}s (Attempt {attempt}/{self.max_attempts}) due to: {e}"
+                )
                 await asyncio.sleep(delay)
-

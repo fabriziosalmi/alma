@@ -25,22 +25,23 @@ class InfrastructureTools:
         Cached to prevent repeated disk I/O.
         """
         import logging
+
         logger = logging.getLogger(__name__)
-        
+
         try:
             # Resolve path relative to this file
             base_path = Path(__file__).parent.parent
             config_path = base_path / "config" / "tools.json"
-            
+
             if not config_path.exists():
                 logger.warning(f"Tools configuration not found at {config_path}, using defaults")
                 return []
 
             with open(config_path, "r") as f:
                 tools = json.load(f)
-                
+
             return tools or []
-            
+
         except FileNotFoundError:
             logger.warning("Tools config file not found, using empty tool list")
             return []
@@ -67,17 +68,17 @@ class InfrastructureTools:
 
     # Tool Registry (class-level)
     _TOOL_REGISTRY: dict[str, Callable] = {}
-    
+
     @classmethod
     def register_tool(cls, name: str, func: Callable) -> None:
         """Register a tool function."""
         cls._TOOL_REGISTRY[name] = func
-    
+
     @classmethod
     def get_registered_tools(cls) -> list[str]:
         """Get list of registered tool names."""
         return list(cls._TOOL_REGISTRY.keys())
-    
+
     @staticmethod
     async def execute_tool(
         tool_name: str, arguments: dict[str, Any], context: dict[str, Any] | None = None
@@ -96,9 +97,9 @@ class InfrastructureTools:
         from alma.schemas.tools import ToolResponse
         import inspect
         import logging
-        
+
         logger = logging.getLogger(__name__)
-        
+
         # Get tool from registry
         if tool_name not in InfrastructureTools._TOOL_REGISTRY:
             logger.warning(f"Unknown tool requested: {tool_name}")
@@ -110,13 +111,13 @@ class InfrastructureTools:
 
         try:
             tool_func = InfrastructureTools._TOOL_REGISTRY[tool_name]
-            
+
             # Check if tool is async
             if inspect.iscoroutinefunction(tool_func):
                 result = await tool_func(arguments, context)
             else:
                 result = tool_func(arguments, context)
-                
+
             return ToolResponse(
                 success=True,
                 tool=tool_name,
@@ -189,10 +190,12 @@ class InfrastructureTools:
         }
 
     @staticmethod
-    async def _estimate_resources(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
+    async def _estimate_resources(
+        args: dict[str, Any], ctx: dict[str, Any] | None
+    ) -> dict[str, Any]:
         """Estimate resources implementation with real pricing."""
         from alma.integrations.pricing import PricingService
-        
+
         workload = args.get("workload_type")
         load = args.get("expected_load")
         availability = args.get("availability", "standard")
@@ -229,7 +232,7 @@ class InfrastructureTools:
                 "monthly_usd": monthly_cost,
                 "estimate_type": "FALLBACK",
                 "error": str(e),
-                "note": "Using basic fallback estimate"
+                "note": "Using basic fallback estimate",
             }
 
         return {
@@ -477,15 +480,21 @@ def _register_all_tools():
     InfrastructureTools.register_tool("estimate_resources", InfrastructureTools._estimate_resources)
     InfrastructureTools.register_tool("optimize_costs", InfrastructureTools._optimize_costs)
     InfrastructureTools.register_tool("security_audit", InfrastructureTools._security_audit)
-    InfrastructureTools.register_tool("generate_deployment_plan", InfrastructureTools._generate_deployment_plan)
+    InfrastructureTools.register_tool(
+        "generate_deployment_plan", InfrastructureTools._generate_deployment_plan
+    )
     InfrastructureTools.register_tool("troubleshoot_issue", InfrastructureTools._troubleshoot_issue)
     InfrastructureTools.register_tool("compare_blueprints", InfrastructureTools._compare_blueprints)
-    InfrastructureTools.register_tool("suggest_architecture", InfrastructureTools._suggest_architecture)
+    InfrastructureTools.register_tool(
+        "suggest_architecture", InfrastructureTools._suggest_architecture
+    )
     InfrastructureTools.register_tool("calculate_capacity", InfrastructureTools._calculate_capacity)
-    InfrastructureTools.register_tool("migrate_infrastructure", InfrastructureTools._migrate_infrastructure)
+    InfrastructureTools.register_tool(
+        "migrate_infrastructure", InfrastructureTools._migrate_infrastructure
+    )
     InfrastructureTools.register_tool("check_compliance", InfrastructureTools._check_compliance)
     InfrastructureTools.register_tool("forecast_metrics", InfrastructureTools._forecast_metrics)
 
+
 # Auto-register on import
 _register_all_tools()
-

@@ -11,13 +11,13 @@ async def test_calm_exception_handler():
     """Test calm exception handler."""
     # Create mock request
     request = MagicMock(spec=Request)
-    
+
     # Create test exception
     exc = ValueError("Test error")
-    
+
     # Call handler
     response = await calm_exception_handler(request, exc)
-    
+
     # Verify response
     assert response.status_code == 500
     assert "status" in response.body.decode()
