@@ -6,7 +6,7 @@ import pytest
 from alma.core.events import Event, EventBus, EventStore
 from alma.models.event import EventModel
 
-class TestEvent(Event):
+class SampleEvent(Event):
     payload_data: str
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def event_bus(event_store):
 
 @pytest.mark.asyncio
 async def test_event_store_append(event_store, mock_session_factory):
-    event = TestEvent(aggregate_id="1", aggregate_type="test", payload_data="foo")
+    event = SampleEvent(aggregate_id="1", aggregate_type="test", payload_data="foo")
     
     await event_store.append(event)
     
@@ -44,12 +44,12 @@ async def test_event_store_append(event_store, mock_session_factory):
 
 @pytest.mark.asyncio
 async def test_event_bus_publish(event_bus, event_store):
-    event = TestEvent(aggregate_id="1", aggregate_type="test", payload_data="foo")
+    event = SampleEvent(aggregate_id="1", aggregate_type="test", payload_data="foo")
     
     handler = AsyncMock()
     handler.__name__ = "mock_handler"  # Fix AttributeError
     
-    event_bus.subscribe(TestEvent, handler)
+    event_bus.subscribe(SampleEvent, handler)
     
     # Mock store append to avoid DB calls
     event_store.append = AsyncMock()

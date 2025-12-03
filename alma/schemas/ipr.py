@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class IPRBase(BaseModel):
     """Base schema for IPR."""
 
     title: str = Field(..., description="Title of the IPR")
-    description: str | None = Field(None, description="Detailed description")
+    description: Optional[str] = Field(None, description="Detailed description")
     blueprint_id: int = Field(..., description="ID of the blueprint to deploy")
 
 
@@ -20,15 +20,15 @@ class IPRCreate(IPRBase):
     """Schema for creating a new IPR."""
 
     created_by: str = Field(..., description="User creating the IPR")
-    changes_summary: dict[str, Any] | None = Field(None, description="Summary of changes")
+    changes_summary: Optional[dict[str, Any]] = Field(None, description="Summary of changes")
 
 
 class IPRUpdate(BaseModel):
     """Schema for updating an IPR."""
 
-    title: str | None = None
-    description: str | None = None
-    review_comments: str | None = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    review_comments: Optional[str] = None
 
 
 class IPRReview(BaseModel):
@@ -36,7 +36,7 @@ class IPRReview(BaseModel):
 
     approved: bool = Field(..., description="Whether to approve or reject")
     reviewed_by: str = Field(..., description="User reviewing the IPR")
-    review_comments: str | None = Field(None, description="Review comments")
+    review_comments: Optional[str] = Field(None, description="Review comments")
 
 
 class IPRInDB(IPRBase):
@@ -44,22 +44,19 @@ class IPRInDB(IPRBase):
 
     id: int
     blueprint_snapshot: dict[str, Any]
-    changes_summary: dict[str, Any] | None = None
+    changes_summary: Optional[dict[str, Any]] = None
     status: str
     created_by: str
-    reviewed_by: str | None = None
+    reviewed_by: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    reviewed_at: datetime | None = None
-    deployed_at: datetime | None = None
-    deployment_id: str | None = None
-    review_comments: str | None = None
+    reviewed_at: Optional[datetime] = None
+    deployed_at: Optional[datetime] = None
+    deployment_id: Optional[str] = None
+    review_comments: Optional[str] = None
     metadata: dict[str, Any] = {}
 
-    class Config:
-        """Pydantic config."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IPR(IPRInDB):

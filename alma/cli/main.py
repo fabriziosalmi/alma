@@ -1,6 +1,7 @@
 """CLI interface for ALMA using Typer."""
 
 import asyncio
+from typing import Optional
 
 import httpx
 import typer
@@ -31,7 +32,7 @@ def version_callback(value: bool) -> None:
 
 @app.callback()
 def main(
-    version: bool | None = typer.Option(
+    version: Optional[bool] = typer.Option(
         None,
         "--version",
         "-v",
@@ -68,7 +69,7 @@ def serve(
 def deploy(
     blueprint_file: str = typer.Argument(..., help="Path to blueprint YAML file"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Validate only, do not deploy"),
-    engine: str | None = typer.Option(None, "--engine", "-e", help="Engine to use"),
+    engine: Optional[str] = typer.Option(None, "--engine", "-e", help="Engine to use"),
 ) -> None:
     """
     Deploy a system blueprint.
@@ -149,7 +150,7 @@ def status() -> None:
 @app.command()
 def rollback(
     deployment_id: str = typer.Argument(..., help="Deployment ID to rollback"),
-    target: str | None = typer.Option(None, "--to", help="Target state to rollback to"),
+    target: Optional[str] = typer.Option(None, "--to", help="Target state to rollback to"),
 ) -> None:
     """
     Rollback a deployment.
@@ -177,7 +178,7 @@ def rollback(
 @app.command()
 def init(
     name: str = typer.Argument(..., help="Project name"),
-    path: str | None = typer.Option(".", "--path", "-p", help="Path to create project"),
+    path: Optional[str] = typer.Option(".", "--path", "-p", help="Path to create project"),
 ) -> None:
     """
     Initialize a new ALMA project.
