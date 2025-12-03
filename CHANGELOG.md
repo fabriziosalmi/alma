@@ -5,6 +5,25 @@ All notable changes to ALMA will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2025-12-03
+
+### 🐛 Bug Fixes & CI/CD Stability
+
+Critical fixes for CI pipelines and runtime async execution bugs.
+
+### Fixed
+- **Critical Runtime Bug**: Added missing `await` in `execute_tool` API route (prevented tool execution).
+- **CI Pipeline**:
+  - Fixed GitHub Pages 404 error (incorrect sidebar link).
+  - Resolved 300+ MyPy type errors (excluded tests, fixed API types).
+  - Resolved 127 Ruff linting errors.
+  - Removed duplicate `docs.yml` workflow.
+- **Documentation**:
+  - Fixed broken links in CHANGELOG.
+  - Updated SECURITY.md with current auth status.
+  - Replaced "master/slave" terminology with "control-plane/primary".
+  - Fixed README status badge.
+
 ## [0.7.0] - 2025-12-03
 
 ### 📚 Documentation & Architecture
