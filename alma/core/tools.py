@@ -24,13 +24,16 @@ class InfrastructureTools:
         Load tool definitions from JSON configuration file.
         Cached to prevent repeated disk I/O.
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         try:
             # Resolve path relative to this file
             base_path = Path(__file__).parent.parent
             config_path = base_path / "config" / "tools.json"
             
             if not config_path.exists():
-                print(f"Tools configuration not found at {config_path}")
+                logger.warning(f"Tools configuration not found at {config_path}, using defaults")
                 return []
 
             with open(config_path, "r") as f:
@@ -38,9 +41,19 @@ class InfrastructureTools:
                 
             return tools or []
             
-        except Exception as e:
-            print(f"Failed to load tools: {e}")
+        except FileNotFoundError:
+            logger.warning("Tools config file not found, using empty tool list")
             return []
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in tools.json: {e}")
+            raise ValueError(f"Tools configuration is invalid: {e}")
+        except PermissionError as e:
+            logger.error(f"Permission denied reading tools.json: {e}")
+            raise
+        except Exception as e:
+            # Unexpected errors should fail loudly
+            logger.exception("Unexpected error loading tools configuration")
+            raise RuntimeError(f"Failed to load tools configuration: {e}")
 
     @staticmethod
     def get_available_tools() -> list[dict[str, Any]]:
@@ -68,7 +81,7 @@ class InfrastructureTools:
     @staticmethod
     async def execute_tool(
         tool_name: str, arguments: dict[str, Any], context: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    ) -> ToolResponse:
         """
         Execute a tool with given arguments using registry pattern.
 
@@ -78,18 +91,22 @@ class InfrastructureTools:
             context: Optional execution context
 
         Returns:
-            Tool execution result
+            ToolResponse with execution result
         """
+        from alma.schemas.tools import ToolResponse
         import inspect
+        import logging
+        
+        logger = logging.getLogger(__name__)
         
         # Get tool from registry
         if tool_name not in InfrastructureTools._TOOL_REGISTRY:
-            return {
-                "success": False,
-                "error": f"Unknown tool: {tool_name}",
-                "available_tools": InfrastructureTools.get_registered_tools(),
-                "timestamp": datetime.utcnow().isoformat(),
-            }
+            logger.warning(f"Unknown tool requested: {tool_name}")
+            return ToolResponse(
+                success=False,
+                tool=tool_name,
+                error=f"Unknown tool: {tool_name}. Available: {InfrastructureTools.get_registered_tools()}",
+            )
 
         try:
             tool_func = InfrastructureTools._TOOL_REGISTRY[tool_name]
@@ -100,19 +117,27 @@ class InfrastructureTools:
             else:
                 result = tool_func(arguments, context)
                 
-            return {
-                "success": True,
-                "tool": tool_name,
-                "result": result,
-                "timestamp": datetime.utcnow().isoformat(),
-            }
+            return ToolResponse(
+                success=True,
+                tool=tool_name,
+                result=result,
+            )
+        except ValueError as e:
+            # Validation errors
+            logger.error(f"Validation error in tool {tool_name}: {e}")
+            return ToolResponse(
+                success=False,
+                tool=tool_name,
+                error=f"Validation error: {str(e)}",
+            )
         except Exception as e:
-            return {
-                "success": False,
-                "tool": tool_name,
-                "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
-            }
+            # Unexpected errors - log with full traceback
+            logger.exception(f"Unexpected error executing tool {tool_name}")
+            return ToolResponse(
+                success=False,
+                tool=tool_name,
+                error=f"Execution error: {str(e)}",
+            )
 
     # Tool implementations
 
