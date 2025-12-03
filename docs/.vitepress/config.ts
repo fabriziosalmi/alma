@@ -41,7 +41,7 @@ export default defineConfig({
         text: 'Getting Started',
         collapsed: false,
         items: [
-          { text: 'Introduction', link: '/index' },
+          { text: 'Introduction', link: '/' },
           { text: 'Quick Start', link: '/QUICKSTART' },
           { text: 'User Guide', link: '/USER_GUIDE' }
         ]
