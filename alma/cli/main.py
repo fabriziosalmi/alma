@@ -40,9 +40,18 @@ def main(
         callback=version_callback,
         is_eager=True,
     ),
+    debug: bool = typer.Option(
+        False,
+        "--debug",
+        help="Enable debug mode with full stack traces",
+    ),
 ) -> None:
     """ALMA: The Soul of Your Infrastructure."""
-    pass
+    if debug:
+        import logging
+        logging.basicConfig(level=logging.DEBUG)
+        settings.debug = True
+        console.print("[yellow]Debug mode enabled - full stack traces will be shown[/yellow]")
 
 
 @app.command()

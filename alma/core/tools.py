@@ -53,7 +53,7 @@ class InfrastructureTools:
         return InfrastructureTools._load_tools()
 
     @staticmethod
-    def execute_tool(
+    async def execute_tool(
         tool_name: str, arguments: dict[str, Any], context: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """
@@ -67,6 +67,8 @@ class InfrastructureTools:
         Returns:
             Tool execution result
         """
+        import inspect
+        
         # Tool execution mapping
         tool_map = {
             "create_blueprint": InfrastructureTools._create_blueprint,
@@ -93,7 +95,14 @@ class InfrastructureTools:
             }
 
         try:
-            result = tool_map[tool_name](arguments, context)
+            tool_func = tool_map[tool_name]
+            
+            # Check if tool is async
+            if inspect.iscoroutinefunction(tool_func):
+                result = await tool_func(arguments, context)
+            else:
+                result = tool_func(arguments, context)
+                
             return {
                 "success": True,
                 "tool": tool_name,
@@ -158,8 +167,10 @@ class InfrastructureTools:
         }
 
     @staticmethod
-    def _estimate_resources(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
-        """Estimate resources implementation."""
+    async def _estimate_resources(args: dict[str, Any], ctx: dict[str, Any] | None) -> dict[str, Any]:
+        """Estimate resources implementation with real pricing."""
+        from alma.integrations.pricing import PricingService
+        
         workload = args.get("workload_type")
         load = args.get("expected_load")
         availability = args.get("availability", "standard")
@@ -183,13 +194,30 @@ class InfrastructureTools:
         elif availability == "critical":
             instances = 5
 
+        # Get real pricing estimate
+        pricing_service = PricingService()
+        try:
+            cost_estimate = await pricing_service.estimate_cost("compute", specs)
+            monthly_cost = cost_estimate.get("monthly_usd", 0) * instances
+            cost_breakdown = cost_estimate
+        except Exception as e:
+            # Fallback to basic estimate if pricing fails
+            monthly_cost = instances * 100
+            cost_breakdown = {
+                "monthly_usd": monthly_cost,
+                "estimate_type": "FALLBACK",
+                "error": str(e),
+                "note": "Using basic fallback estimate"
+            }
+
         return {
             "workload_type": workload,
             "expected_load": load,
             "recommended_specs": specs,
             "recommended_instances": instances,
             "availability_level": availability,
-            "estimated_monthly_cost": instances * 100,  # Simplified
+            "estimated_monthly_cost": monthly_cost,
+            "cost_breakdown": cost_breakdown,
         }
 
     @staticmethod
