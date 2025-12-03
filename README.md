@@ -7,7 +7,7 @@
 [![Policy](https://img.shields.io/badge/Policy-Resiliency-green.svg)](SECURITY.md)
 
 **Stop writing YAML. Start conversing.**
-ALMA (Autonomous Language Model Architecture) is a production-ready infrastructure orchestration platform that combines natural language interfaces with robust execution engines.
+ALMA (Autonomous Language Model Architecture) is an infrastructure orchestration platform that combines natural language interfaces with robust execution engines.
 
 ## Core Principles
 
