@@ -4,13 +4,10 @@ import time
 from unittest.mock import MagicMock, patch
 
 # Add project root to path
-sys.path.append("""Verify async LLM functionality."""
+sys.path.append(".")
 
-import asyncio
-import sys
-from unittest.mock import AsyncMock, MagicMock, patch
-
-# Mock transformers before importing Qwen3LLM
+# Mock torch before importing llm_qwen
+sys.modules["torch"] = MagicMock()
 sys.modules["transformers"] = MagicMock()
 
 from alma.core.llm_qwen import Qwen3LLM  # noqa: E402
