@@ -6,7 +6,7 @@ hero:
   text: Autonomous Language Model Architecture
   tagline: Infrastructure as Conversation - Manage your infrastructure using natural language
   image:
-    src: /logo.svg
+    src: /alma/logo.svg
     alt: ALMA Logo
   actions:
     - theme: brand
