@@ -7,14 +7,14 @@
 [![Policy](https://img.shields.io/badge/Policy-Resiliency-green.svg)](SECURITY.md)
 
 **Stop writing YAML. Start conversing.**
-ALMA is the first **Cognitive & Resilient Infrastructure Platform**.
-It doesn't just execute commands; it protects resources, understands context, works offline, and adapts its persona to your emotional state.
+ALMA (Autonomous Language Model Architecture) is a production-ready infrastructure orchestration platform that combines natural language interfaces with robust execution engines.
 
-## 🛡️ Resiliency Policy: The Core Philosophy
-ALMA is built on the **Non-Violence** principle.
-1.  **Silent Defense**: It doesn't fight attacks; it renders them irrelevant via Information Theory (Entropy & Compression filters).
-2.  **Resource Respect**: It never wastes energy (LLM tokens) if a lighter solution (Regex/Local Model) suffices.
-3.  **Local Sovereignty**: It refuses to die when the Cloud disconnects.
+## Core Principles
+
+1. **Security First**: Argon2id authentication, input validation, rate limiting
+2. **Type Safety**: Pydantic models throughout, strict validation
+3. **Auditability**: Event Sourcing for complete audit trail (compliance-ready)
+4. **Reliability**: Saga Pattern for automatic rollback on failures
 
 ## Key Features
 
@@ -35,8 +35,9 @@ Input validation before it reaches the core:
 ### Developer-Friendly Error Handling
 
 ALMA provides clear error messages with proper debugging support:
-- **Medic Persona**: Intercepts system crashes and translates technical errors into calm, diagnostic dialogue.
-- **Risk Guard**: Detects user frustration and blocks destructive commands (e.g., "DELETE DB") until emotional stability returns.
+- **Debug Mode**: Use `--debug` flag for full stack traces
+- **Production Mode**: User-friendly error messages without exposing internals
+- **Proper Logging**: All errors logged with full context for ops teams
 
 ### TUI Dashboard
 Real-time terminal UI (`ALMA monitor`) featuring:
