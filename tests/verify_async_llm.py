@@ -4,13 +4,16 @@ import time
 from unittest.mock import MagicMock, patch
 
 # Add project root to path
-sys.path.append(".")
+sys.path.append("""Verify async LLM functionality."""
 
-# Mock torch before importing llm_qwen
-sys.modules["torch"] = MagicMock()
+import asyncio
+import sys
+from unittest.mock import AsyncMock, MagicMock, patch
+
+# Mock transformers before importing Qwen3LLM
 sys.modules["transformers"] = MagicMock()
 
-from alma.core.llm_qwen import Qwen3LLM
+from alma.core.llm_qwen import Qwen3LLM  # noqa: E402
 
 
 async def test_async_streaming():
