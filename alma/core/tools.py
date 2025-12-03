@@ -52,12 +52,25 @@ class InfrastructureTools:
         """
         return InfrastructureTools._load_tools()
 
+    # Tool Registry (class-level)
+    _TOOL_REGISTRY: dict[str, Callable] = {}
+    
+    @classmethod
+    def register_tool(cls, name: str, func: Callable) -> None:
+        """Register a tool function."""
+        cls._TOOL_REGISTRY[name] = func
+    
+    @classmethod
+    def get_registered_tools(cls) -> list[str]:
+        """Get list of registered tool names."""
+        return list(cls._TOOL_REGISTRY.keys())
+    
     @staticmethod
     async def execute_tool(
         tool_name: str, arguments: dict[str, Any], context: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """
-        Execute a tool with given arguments.
+        Execute a tool with given arguments using registry pattern.
 
         Args:
             tool_name: Name of the tool to execute
@@ -69,33 +82,17 @@ class InfrastructureTools:
         """
         import inspect
         
-        # Tool execution mapping
-        tool_map = {
-            "create_blueprint": InfrastructureTools._create_blueprint,
-            "validate_blueprint": InfrastructureTools._validate_blueprint,
-            "estimate_resources": InfrastructureTools._estimate_resources,
-            "optimize_costs": InfrastructureTools._optimize_costs,
-            "security_audit": InfrastructureTools._security_audit,
-            "generate_deployment_plan": InfrastructureTools._generate_deployment_plan,
-            "troubleshoot_issue": InfrastructureTools._troubleshoot_issue,
-            "compare_blueprints": InfrastructureTools._compare_blueprints,
-            "suggest_architecture": InfrastructureTools._suggest_architecture,
-            "calculate_capacity": InfrastructureTools._calculate_capacity,
-            "migrate_infrastructure": InfrastructureTools._migrate_infrastructure,
-            "check_compliance": InfrastructureTools._check_compliance,
-            "forecast_metrics": InfrastructureTools._forecast_metrics,
-        }
-
-        if tool_name not in tool_map:
+        # Get tool from registry
+        if tool_name not in InfrastructureTools._TOOL_REGISTRY:
             return {
                 "success": False,
                 "error": f"Unknown tool: {tool_name}",
-                "available_tools": list(tool_map.keys()),
+                "available_tools": InfrastructureTools.get_registered_tools(),
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
         try:
-            tool_func = tool_map[tool_name]
+            tool_func = InfrastructureTools._TOOL_REGISTRY[tool_name]
             
             # Check if tool is async
             if inspect.iscoroutinefunction(tool_func):
@@ -445,3 +442,25 @@ class InfrastructureTools:
                 "Review CPU optimization opportunities",
             ],
         }
+
+
+# Register all tools at module load time
+def _register_all_tools():
+    """Register all tool implementations."""
+    InfrastructureTools.register_tool("create_blueprint", InfrastructureTools._create_blueprint)
+    InfrastructureTools.register_tool("validate_blueprint", InfrastructureTools._validate_blueprint)
+    InfrastructureTools.register_tool("estimate_resources", InfrastructureTools._estimate_resources)
+    InfrastructureTools.register_tool("optimize_costs", InfrastructureTools._optimize_costs)
+    InfrastructureTools.register_tool("security_audit", InfrastructureTools._security_audit)
+    InfrastructureTools.register_tool("generate_deployment_plan", InfrastructureTools._generate_deployment_plan)
+    InfrastructureTools.register_tool("troubleshoot_issue", InfrastructureTools._troubleshoot_issue)
+    InfrastructureTools.register_tool("compare_blueprints", InfrastructureTools._compare_blueprints)
+    InfrastructureTools.register_tool("suggest_architecture", InfrastructureTools._suggest_architecture)
+    InfrastructureTools.register_tool("calculate_capacity", InfrastructureTools._calculate_capacity)
+    InfrastructureTools.register_tool("migrate_infrastructure", InfrastructureTools._migrate_infrastructure)
+    InfrastructureTools.register_tool("check_compliance", InfrastructureTools._check_compliance)
+    InfrastructureTools.register_tool("forecast_metrics", InfrastructureTools._forecast_metrics)
+
+# Auto-register on import
+_register_all_tools()
+

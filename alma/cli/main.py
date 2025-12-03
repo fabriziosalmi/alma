@@ -79,9 +79,12 @@ def deploy(
     blueprint_file: str = typer.Argument(..., help="Path to blueprint YAML file"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Validate only, do not deploy"),
     engine: Optional[str] = typer.Option(None, "--engine", "-e", help="Engine to use"),
+    no_llm: bool = typer.Option(False, "--no-llm", help="Deploy without LLM (blueprint must be pre-generated)"),
 ) -> None:
     """
     Deploy a system blueprint.
+    
+    With --no-llm: Engines work independently, no LLM required.
     """
     from alma.engines.fake import FakeEngine
 
