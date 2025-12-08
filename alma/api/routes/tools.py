@@ -154,7 +154,9 @@ async def validate_blueprint(
     from alma.core.tools import InfrastructureTools
 
     tools = InfrastructureTools()
-    result = await tools.execute_tool("validate_blueprint", {"blueprint": blueprint, "strict": strict})
+    result = await tools.execute_tool(
+        "validate_blueprint", {"blueprint": blueprint, "strict": strict}
+    )
 
     return result.model_dump()
 

@@ -71,7 +71,5 @@ class InfrastructureProjector(Projector):
                     if res_id:
                         resources[res_id] = "PROVISIONED"
                         view.resources = resources
-
                 view.last_updated = datetime.utcnow()
                 logger.debug(f"Updated InfrastructureView for {blueprint_id} to {view.status}")
-

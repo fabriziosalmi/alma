@@ -157,7 +157,7 @@ class InfrastructureTools:
 
         # Validate arguments
         model = CreateBlueprintArgs(**args)
-        
+
         return {
             "blueprint": {
                 "version": "1.0",

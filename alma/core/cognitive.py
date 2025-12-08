@@ -182,7 +182,7 @@ class AdvancedCognitiveEngine:
             or a safety override string.
         """
         # Normalize input and update frustration level
-        self._update_frustration(user_input) # in context
+        self._update_frustration(user_input)  # in context
         self.focus = detect_context_shift(user_input, self.focus)
 
         # 3. Assess the risk of the intended action

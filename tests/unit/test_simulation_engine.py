@@ -71,7 +71,9 @@ class TestSimulationEngine:
         assert len(new_state) == 1
         assert new_state[0].config["cpu"] == 4
 
-    async def test_destroy(self, engine: SimulationEngine, sample_blueprint: SystemBlueprint) -> None:
+    async def test_destroy(
+        self, engine: SimulationEngine, sample_blueprint: SystemBlueprint
+    ) -> None:
         """Test destroying a resource."""
         # First, create the resource
         plan_create = Plan(to_create=sample_blueprint.resources)
