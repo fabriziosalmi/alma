@@ -16,7 +16,31 @@ ALMA (Autonomous Language Model Architecture) is an infrastructure orchestration
 3. **Auditability**: Event Sourcing for complete audit trail (compliance-ready)
 4. **Reliability**: Saga Pattern for automatic rollback on failures
 
-## Key Features
+## Roadmap
+
+### Implemented & Ready
+- **Natural Language Interface**: Chat with your infrastructure.
+- **Provider Agnostic**: Support for AWS, Azure, GCP, Kubernetes, and Proxmox.
+- **Terraform Engine**: Built-in Terraform plan execution and state management.
+- **Architecture Patterns**: Core built on CQRS and Event Sourcing for reliability.
+- **Observability**: Prometheus metrics enabled by default.
+
+### Future Enhancements
+
+**Short Term**
+- [ ] WebSocket support for real-time updates
+- [ ] GraphQL API
+- [ ] Web UI
+
+**Medium Term**
+- [ ] Multi-tenancy
+- [ ] RBAC (Role-Based Access Control)
+- [ ] Kubernetes operator (Native Controller)
+
+**Long Term**
+- [ ] Distributed deployment
+- [ ] Blockchain audit trail
+
 
 ## Why ALMA?
 
