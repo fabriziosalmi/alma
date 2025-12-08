@@ -72,6 +72,31 @@ Built-in security auditing, compliance checking, and best practices enforcement 
 
 Horizontally scalable design with support for distributed deployments and high-throughput workloads.
 
+## Roadmap
+
+### Implemented & Ready
+- **Natural Language Interface**: Chat with your infrastructure.
+- **Provider Agnostic**: Support for AWS, Azure, GCP, Kubernetes, and Proxmox.
+- **Terraform Engine**: Built-in Terraform plan execution and state management.
+- **Architecture Patterns**: Core built on CQRS and Event Sourcing for reliability.
+- **Observability**: Prometheus metrics enabled by default.
+
+### Future Enhancements
+
+**Short Term**
+- [ ] WebSocket support for real-time updates
+- [ ] GraphQL API
+- [ ] Web UI
+
+**Medium Term**
+- [ ] Multi-tenancy
+- [ ] RBAC (Role-Based Access Control)
+- [ ] Kubernetes operator (Native Controller)
+
+**Long Term**
+- [ ] Distributed deployment
+- [ ] Blockchain audit trail
+
 ## Getting Started
 
 <div class="vp-doc">
