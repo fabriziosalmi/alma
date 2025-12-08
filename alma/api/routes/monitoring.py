@@ -94,7 +94,6 @@ async def get_rate_limit_stats() -> RateLimitStats:
             "top_clients": [],
         }
 
-
     return RateLimitStats(**stats)
 
 
@@ -209,9 +208,7 @@ async def system_overview() -> dict[str, Any]:
     limiter = get_rate_limiter()
 
     rate_limit_stats = (
-        await limiter.limiters["default"].get_stats()
-        if "default" in limiter.limiters
-        else {}
+        await limiter.limiters["default"].get_stats() if "default" in limiter.limiters else {}
     )
 
     return {

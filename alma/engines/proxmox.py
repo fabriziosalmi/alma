@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import httpx
-from typing import cast
 
 from alma.core.state import Plan, ResourceState
 from alma.engines.base import Engine

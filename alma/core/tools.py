@@ -360,7 +360,7 @@ class InfrastructureTools:
         """Troubleshoot implementation."""
         from alma.schemas.tool_args import TroubleshootIssueArgs
 
-        model = TroubleshootIssueArgs(**args)
+        TroubleshootIssueArgs(**args)
 
         return {
             "diagnosis": "Possible resource exhaustion or network connectivity issue",
@@ -406,7 +406,7 @@ class InfrastructureTools:
         """Suggest architecture implementation."""
         from alma.schemas.tool_args import SuggestArchitectureArgs
 
-        model = SuggestArchitectureArgs(**args)
+        SuggestArchitectureArgs(**args)
 
         return {
             "suggested_architecture": "3-tier web application",

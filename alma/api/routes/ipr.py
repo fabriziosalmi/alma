@@ -307,7 +307,8 @@ async def deploy_ipr(
 
     try:
         # Deploy
-        from typing import cast, Any
+        from typing import Any, cast
+
         deploy_result = await engine.deploy(cast(dict[str, Any], blueprint))
 
         if deploy_result.status.value == "completed":

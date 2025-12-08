@@ -10,10 +10,8 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from alma.core.database import get_session
 from alma.core.llm_orchestrator import EnhancedOrchestrator
 from alma.core.llm_service import get_orchestrator
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/conversation", tags=["conversation"])
 

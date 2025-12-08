@@ -6,20 +6,19 @@ import asyncio
 from typing import Any
 
 from alma.core.state import Plan, ResourceState
-from alma.core.state import Plan, ResourceState
 from alma.engines.base import Engine
-from alma.schemas.blueprint import SystemBlueprint, DeploymentResponse
+from alma.schemas.blueprint import DeploymentResponse, SystemBlueprint
 
 
 class SimulationEngine(Engine):
     """
     Simulation engine that mimics infrastructure operations.
-    
+
     Used for:
     1. Dry-run deployments
     2. Testing deployment logic without cloud credentials
     3. Demonstrations
-    
+
     This engine maintains an in-memory state of resources.
     """
 
@@ -49,7 +48,7 @@ class SimulationEngine(Engine):
         for resource_def in plan.to_create:
             if self.simulate_latency:
                 await asyncio.sleep(0.02)
-            
+
             state = ResourceState(
                 id=resource_def.name,
                 type=resource_def.type,
@@ -61,7 +60,7 @@ class SimulationEngine(Engine):
         for _current_state, resource_def in plan.to_update:
             if self.simulate_latency:
                 await asyncio.sleep(0.02)
-            
+
             state = ResourceState(
                 id=resource_def.name,
                 type=resource_def.type,
@@ -74,7 +73,7 @@ class SimulationEngine(Engine):
         for resource_state in plan.to_delete:
             if self.simulate_latency:
                 await asyncio.sleep(0.02)
-            
+
             if resource_state.id in self.resources:
                 del self.resources[resource_state.id]
 
@@ -92,7 +91,7 @@ class SimulationEngine(Engine):
         """Deploy a blueprint."""
         if self.simulate_latency:
             await asyncio.sleep(0.05)
-        
+
         return DeploymentResponse(
             deployment_id="sim-deploy-123",
             status="completed",

@@ -172,10 +172,16 @@ class RateLimiter:
             "total_blocked": 0,
             "block_rate": 0.0,
             "active_clients": len(self.ip_limits),
-            "requests_per_minute_limit": int(self.default_limits[0] / (self.default_limits[1] / 60.0)) if self.default_limits[1] > 0 else 0,
+            "requests_per_minute_limit": (
+                int(self.default_limits[0] / (self.default_limits[1] / 60.0))
+                if self.default_limits[1] > 0
+                else 0
+            ),
             "burst_size": self.default_limits[0],
             "top_clients": [],
         }
+
+
 class EndpointRateLimiter:
     """
     Rate limiter with per-endpoint limits.

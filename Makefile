@@ -20,13 +20,13 @@ test-cov:  ## Run tests with coverage
 	pytest tests/ -v --cov=aicdn --cov-report=html --cov-report=term
 
 lint:  ## Run linting checks
-	ruff check src/
-	mypy src/
-	bandit -r src/
+	ruff check alma/
+	mypy alma/
+	bandit -r alma/
 
 format:  ## Format code
-	black src/ tests/
-	ruff check --fix src/ tests/
+	black alma/ tests/
+	ruff check --fix alma/ tests/
 
 run:  ## Run the API server
 	python run_server.py

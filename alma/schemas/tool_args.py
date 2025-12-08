@@ -1,6 +1,6 @@
 """Pydantic models for tool arguments."""
 
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -56,7 +56,9 @@ class TroubleshootIssueArgs(BaseModel):
     """Arguments for troubleshoot_issue tool."""
 
     issue_description: str = Field(..., description="Description of the issue")
-    affected_resources: list[str] = Field(default_factory=list, description="List of affected resources")
+    affected_resources: list[str] = Field(
+        default_factory=list, description="List of affected resources"
+    )
     symptoms: list[str] = Field(default_factory=list, description="List of symptoms")
 
 
@@ -100,6 +102,8 @@ class CheckComplianceArgs(BaseModel):
 class ForecastMetricsArgs(BaseModel):
     """Arguments for forecast_metrics tool."""
 
-    historical_data: list[dict[str, Any]] = Field(default_factory=list, description="Historical metric data")
+    historical_data: list[dict[str, Any]] = Field(
+        default_factory=list, description="Historical metric data"
+    )
     forecast_period: str = Field(..., description="Period to forecast")
     confidence_level: float = Field(0.95, description="Confidence level (0.0-1.0)")

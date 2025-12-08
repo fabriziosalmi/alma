@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import json
-import logging
 import re
 from typing import Any
 
 import yaml  # type: ignore[import]  # type: ignore[import]
 
-from alma.core.cognitive import AdvancedCognitiveEngine
 from alma.core.llm import ConversationalOrchestrator, LLMInterface
 from alma.core.prompts import InfrastructurePrompts
 from alma.core.tools import InfrastructureTools
