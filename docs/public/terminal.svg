@@ -1,0 +1,60 @@
+<svg width="600" height="400" viewBox="0 0 600 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Window Shadow -->
+    <rect x="10" y="10" width="580" height="380" rx="10" fill="#000" fill-opacity="0.3"/>
+    
+    <!-- Window Background -->
+    <rect x="0" y="0" width="580" height="380" rx="10" fill="#1E1E1E"/>
+    
+    <!-- Window Header -->
+    <rect x="0" y="0" width="580" height="36" rx="10" fill="#2D2D2D"/>
+    <!-- Fix rounded corners at bottom of header not needed, but masking or just overwrite is fine. simpler: -->
+    <rect x="0" y="26" width="580" height="10" fill="#2D2D2D"/>
+    
+    <!-- Traffic Lights -->
+    <circle cx="25" cy="18" r="6" fill="#FF5F56"/>
+    <circle cx="45" cy="18" r="6" fill="#FFBD2E"/>
+    <circle cx="65" cy="18" r="6" fill="#27C93F"/>
+    
+    <!-- Content Area -->
+    <g font-family="Monaco, Consolas, monospace" font-size="14">
+        <!-- Line 1: Prompt -->
+        <text x="25" y="70" fill="#4AF626">➜</text>
+        <text x="45" y="70" fill="#54A5FC">~</text>
+        <text x="60" y="70" fill="#E5E5E5">alma chat "Deploy highly available web app"</text>
+        
+        <!-- Line 2: Thinking -->
+        <text x="25" y="100" fill="#808080">Analyzing intent...</text>
+        
+        <!-- Line 3: Output Header -->
+        <text x="25" y="130" fill="#E5E5E5">Blueprint Generated:</text>
+        
+        <!-- Line 4: JSON-like or plan -->
+        <text x="40" y="155" fill="#569CD6">PLAN:</text>
+        <text x="90" y="155" fill="#CE9178">"Production Web Cluster"</text>
+        
+        <!-- Line 5: Resource 1 -->
+        <text x="40" y="180" fill="#C586C0">Add</text>
+        <text x="80" y="180" fill="#9CDCFE">aws_instance.worker</text>
+        <text x="240" y="180" fill="#4EC9B0">(count=3)</text>
+        
+        <!-- Line 6: Resource 2 -->
+        <text x="40" y="205" fill="#C586C0">Add</text>
+        <text x="80" y="205" fill="#9CDCFE">aws_lb.main_balancer</text>
+        <text x="260" y="205" fill="#4EC9B0">(type=alb)</text>
+        
+        <!-- Line 7: Confirmation -->
+        <text x="25" y="245" fill="#E5E5E5">Are you ready to deploy? [y/N]</text>
+        
+        <!-- Line 8: User Input -->
+        <text x="25" y="270" fill="#E5E5E5">y</text>
+        
+        <!-- Line 9: Action -->
+        <text x="25" y="300" fill="#4AF626">✓ Deployment queued (ID: dep-9928)</text>
+        <text x="25" y="325" fill="#4AF626">✓ Monitoring dashboard active</text>
+        
+        <!-- Cursor -->
+        <rect x="25" y="340" width="10" height="18" fill="#E5E5E5">
+             <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
+        </rect>
+    </g>
+</svg>
