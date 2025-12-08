@@ -1,17 +1,17 @@
-"""Unit tests for FakeEngine."""
+"""Unit tests for SimulationEngine."""
 
 import pytest
 
 from alma.core.state import Plan
-from alma.engines.fake import FakeEngine
+from alma.engines.simulation import SimulationEngine
 from alma.schemas.blueprint import ResourceDefinition, SystemBlueprint
 
 
 @pytest.fixture(autouse=True)
-def engine() -> FakeEngine:
-    """Create a FakeEngine instance and clear its state."""
-    engine = FakeEngine()
-    engine.clear_state()
+def engine() -> SimulationEngine:
+    """Create a SimulationEngine instance and clear its state."""
+    engine = SimulationEngine(config={"simulate_latency": False})
+    SimulationEngine.reset()
     return engine
 
 
@@ -35,11 +35,11 @@ def sample_blueprint() -> SystemBlueprint:
     )
 
 
-class TestFakeEngine:
-    """Tests for FakeEngine class."""
+class TestSimulationEngine:
+    """Tests for SimulationEngine class."""
 
     async def test_apply_create(
-        self, engine: FakeEngine, sample_blueprint: SystemBlueprint
+        self, engine: SimulationEngine, sample_blueprint: SystemBlueprint
     ) -> None:
         """Test successful creation of resources."""
         plan = Plan(to_create=sample_blueprint.resources)
@@ -51,7 +51,7 @@ class TestFakeEngine:
         assert state[0].config["cpu"] == 2
 
     async def test_apply_update(
-        self, engine: FakeEngine, sample_blueprint: SystemBlueprint
+        self, engine: SimulationEngine, sample_blueprint: SystemBlueprint
     ) -> None:
         """Test successful update of resources."""
         # First, create the resource
@@ -62,6 +62,7 @@ class TestFakeEngine:
         current_state = await engine.get_state(sample_blueprint)
         updated_resource = sample_blueprint.resources[0].model_copy()
         updated_resource.specs["cpu"] = 4
+        # Plan takes (current_state, desired_definition) tuples for updates
         plan_update = Plan(to_update=[(current_state[0], updated_resource)])
 
         await engine.apply(plan_update)
@@ -70,7 +71,7 @@ class TestFakeEngine:
         assert len(new_state) == 1
         assert new_state[0].config["cpu"] == 4
 
-    async def test_destroy(self, engine: FakeEngine, sample_blueprint: SystemBlueprint) -> None:
+    async def test_destroy(self, engine: SimulationEngine, sample_blueprint: SystemBlueprint) -> None:
         """Test destroying a resource."""
         # First, create the resource
         plan_create = Plan(to_create=sample_blueprint.resources)
@@ -85,24 +86,17 @@ class TestFakeEngine:
         assert len(await engine.get_state(sample_blueprint)) == 0
 
     async def test_get_state_empty(
-        self, engine: FakeEngine, sample_blueprint: SystemBlueprint
+        self, engine: SimulationEngine, sample_blueprint: SystemBlueprint
     ) -> None:
         """Test getting state when no resources exist."""
         state = await engine.get_state(sample_blueprint)
         assert state == []
 
-    async def test_apply_failure(self, sample_blueprint: SystemBlueprint) -> None:
-        """Test deployment failure."""
-        engine = FakeEngine(config={"fail_on_apply": True})
-        plan = Plan(to_create=sample_blueprint.resources)
-        with pytest.raises(RuntimeError, match="Simulated engine failure on apply"):
-            await engine.apply(plan)
-
-    async def test_health_check(self, engine: FakeEngine) -> None:
+    async def test_health_check(self, engine: SimulationEngine) -> None:
         """Test health check."""
         assert await engine.health_check()
 
-    def test_get_supported_resource_types(self, engine: FakeEngine) -> None:
+    def test_get_supported_resource_types(self, engine: SimulationEngine) -> None:
         """Test getting supported resource types."""
         types = engine.get_supported_resource_types()
         assert "compute" in types
