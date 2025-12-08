@@ -274,7 +274,7 @@ def get_metrics_collector() -> MetricsCollector:
 
         # Set application info
         app_info.info(
-            {"version": "0.1.0", "name": "ALMA", "description": "Infrastructure as Conversation"}
+            {"version": "0.7.6", "name": "ALMA", "description": "Infrastructure as Conversation"}
         )
 
     return _metrics_collector

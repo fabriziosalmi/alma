@@ -186,7 +186,7 @@ async def detailed_health() -> Response:
     response = {
         "status": overall_status,
         "uptime_seconds": collector.get_uptime(),
-        "version": "0.4.3",
+        "version": "0.7.6",
         "components": components,
     }
 
@@ -214,7 +214,7 @@ async def system_overview() -> dict[str, Any]:
     return {
         "system": {
             "uptime_seconds": collector.get_uptime(),
-            "version": "0.1.0",
+            "version": "0.7.6",
             "status": "operational",
         },
         "rate_limiting": {
