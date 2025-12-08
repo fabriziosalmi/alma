@@ -6,7 +6,7 @@ import asyncio
 import json
 from typing import Any
 
-import torch  # type: ignore[import]
+import torch  # type: ignore
 
 from alma.core.config import get_settings
 from alma.core.llm import LLMInterface
@@ -59,7 +59,7 @@ class Qwen3LLM(LLMInterface):
             return
 
         try:
-            from transformers import AutoModelForCausalLM, AutoTokenizer  # type: ignore[import]
+            from transformers import AutoModelForCausalLM, AutoTokenizer  # type: ignore
 
             # Run initialization in thread pool to avoid blocking
             loop = asyncio.get_event_loop()
@@ -116,6 +116,8 @@ class Qwen3LLM(LLMInterface):
         loop = asyncio.get_event_loop()
 
         # Tokenize input
+        if self.tokenizer is None:
+            raise RuntimeError("Tokenizer not initialized")
         text = self.tokenizer.apply_chat_template(
             messages,
             tokenize=False,
@@ -205,8 +207,10 @@ class Qwen3LLM(LLMInterface):
         # Generate in thread pool
         loop = asyncio.get_event_loop()
 
-        def _generate():
+        def _generate_sync() -> str:
             # Apply chat template
+            if self.tokenizer is None:
+                raise RuntimeError("Tokenizer not initialized")
             text = self.tokenizer.apply_chat_template(
                 messages,
                 tokenize=False,
@@ -222,6 +226,8 @@ class Qwen3LLM(LLMInterface):
 
             # Generate
             with torch.no_grad():
+                if self.model is None:
+                    raise RuntimeError("Model not initialized")
                 outputs = self.model.generate(
                     **inputs,
                     max_new_tokens=self.max_tokens,
@@ -239,7 +245,7 @@ class Qwen3LLM(LLMInterface):
 
             return generated_text.strip()
 
-        return await loop.run_in_executor(None, _generate)
+        return await loop.run_in_executor(None, _generate_sync)
 
     async def function_call(self, prompt: str, functions: list[dict[str, Any]]) -> dict[str, Any]:
         """

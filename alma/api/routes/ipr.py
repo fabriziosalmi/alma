@@ -311,23 +311,28 @@ async def deploy_ipr(
 
         deploy_result = await engine.deploy(cast(dict[str, Any], blueprint))
 
-        if deploy_result.status.value == "completed":
+        if hasattr(deploy_result.status, "value"):
+            status_val = deploy_result.status.value
+        else:
+            status_val = str(deploy_result.status)
+
+        if status_val == "completed":
             ipr.status = IPRStatus.DEPLOYED  # type: ignore[assignment]
-            ipr.deployment_id = deploy_result.metadata.get("deployment_id")  # type: ignore[assignment]
+            ipr.ipr_metadata = deploy_result.metadata.get("deployment_id")  # type: ignore[assignment]
             ipr.deployed_at = datetime.utcnow()  # type: ignore[assignment]
         else:
             ipr.status = IPRStatus.FAILED  # type: ignore[assignment]
-            ipr.metadata = {
+            ipr.ipr_metadata = {
                 "error": deploy_result.message,
                 "failed_resources": deploy_result.resources_failed,
-            }
+            }  # type: ignore[assignment]
 
         await session.commit()
         await session.refresh(ipr)
 
     except Exception as e:
         ipr.status = IPRStatus.FAILED  # type: ignore[assignment]
-        ipr.metadata = {"error": str(e)}
+        ipr.ipr_metadata = {"error": str(e)}  # type: ignore[assignment]
         await session.commit()
         await session.refresh(ipr)
 

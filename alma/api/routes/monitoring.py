@@ -61,7 +61,7 @@ async def get_metrics_summary() -> MetricsSummary:
 
 
 @router.get("/metrics/prometheus")
-async def prometheus_metrics():
+async def prometheus_metrics() -> Response:
     """
     Get Prometheus-formatted metrics.
 

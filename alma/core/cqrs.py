@@ -58,11 +58,11 @@ class InfrastructureProjector(Projector):
 
                 # Update based on event type
                 if event.event_type == "DeploymentStarted":
-                    view.status = "DEPLOYING"
+                    view.status = "DEPLOYING"  # type: ignore[assignment]
                 elif event.event_type == "DeploymentCompleted":
-                    view.status = "ACTIVE"
+                    view.status = "ACTIVE"  # type: ignore[assignment]
                 elif event.event_type == "DeploymentFailed":
-                    view.status = "FAILED"
+                    view.status = "FAILED"  # type: ignore[assignment]
                 elif event.event_type == "ResourceProvisioned":
                     # Update resource list in the view
                     # Payload: {"resource_id": "...", "status": "..."}
@@ -70,6 +70,6 @@ class InfrastructureProjector(Projector):
                     res_id = event.model_dump().get("payload", {}).get("resource_id")
                     if res_id:
                         resources[res_id] = "PROVISIONED"
-                        view.resources = resources
-                view.last_updated = datetime.utcnow()
+                        view.resources = resources  # type: ignore[assignment]
+                view.last_updated = datetime.utcnow()  # type: ignore[assignment]
                 logger.debug(f"Updated InfrastructureView for {blueprint_id} to {view.status}")

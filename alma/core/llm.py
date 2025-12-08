@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Protocol, Sequence
 
 
 class LLMInterface(ABC):
@@ -153,7 +153,7 @@ class ConversationalOrchestrator:
         # Simple rule-based conversion for demonstration
         # In production, this would use the LLM
 
-        blueprint = {
+        blueprint: dict[str, Any] = {
             "version": "1.0",
             "name": "ai-generated-blueprint",
             "description": description,

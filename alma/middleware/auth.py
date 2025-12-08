@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import Any
 
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader
@@ -12,14 +13,18 @@ logger = logging.getLogger(__name__)
 
 # Try to import argon2, fall back to passlib if not available
 try:
-    from argon2 import PasswordHasher  # type: ignore[import]
-    from argon2.exceptions import InvalidHash, VerifyMismatchError  # type: ignore[import]
+    from argon2 import PasswordHasher
+    from argon2.exceptions import InvalidHash, VerifyMismatchError
 
     HAS_ARGON2 = True
+    HAS_ARGON2_CFFI = True
+    HAS_ARGON2_PASSLIB = False
 except ImportError:
     try:
-        from passlib.hash import argon2  # type: ignore[import]
+        from passlib.hash import argon2
 
+        HAS_ARGON2_CFFI = False
+        HAS_ARGON2_PASSLIB = True
         HAS_ARGON2 = True
     except ImportError:
         logger.warning(
@@ -27,6 +32,8 @@ except ImportError:
         )
         import hashlib
 
+        HAS_ARGON2_CFFI = False
+        HAS_ARGON2_PASSLIB = False
         HAS_ARGON2 = False
 
 
@@ -36,12 +43,17 @@ class APIKeyAuth:
     def __init__(self) -> None:
         """Initialize API key authentication."""
         self.api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
-        if HAS_ARGON2:
+        if HAS_ARGON2_CFFI:
             try:
-                self.ph = PasswordHasher()
+                self.ph: Any = PasswordHasher()
             except Exception:  # noqa: S110
-                # Fallback to passlib
+                # Fallback to passlib if argon2-cffi PasswordHasher fails for some reason
+                # This case should ideally not happen if HAS_ARGON2_CFFI is True
+                logger.error("argon2-cffi PasswordHasher initialization failed. Falling back to None.")
                 self.ph = None
+        elif HAS_ARGON2_PASSLIB:
+            # passlib's argon2 is used directly, no PasswordHasher object needed
+            self.ph = None
         else:
             self.ph = None
         self._load_api_keys()
@@ -53,13 +65,12 @@ class APIKeyAuth:
         WARNING: SHA-256 fallback is INSECURE for production.
         Install argon2-cffi: pip install argon2-cffi
         """
-        if HAS_ARGON2:
-            if self.ph:
-                # Using argon2-cffi
-                return self.ph.hash(key)
-            else:
-                # Using passlib
-                return argon2.hash(key)
+        if HAS_ARGON2_CFFI and self.ph:
+            # Using argon2-cffi
+            return str(self.ph.hash(key))
+        elif HAS_ARGON2_PASSLIB:
+            # Using passlib
+            return str(argon2.hash(key))
         else:
             # INSECURE FALLBACK - only for development
             logger.warning("Using SHA-256 for API key hashing - INSECURE for production!")
@@ -67,16 +78,18 @@ class APIKeyAuth:
 
     def _verify_key(self, key: str, hash: str) -> bool:
         """Verify a key against its hash."""
-        if HAS_ARGON2:
+        if HAS_ARGON2_CFFI and self.ph:
             try:
-                if self.ph:
-                    # Using argon2-cffi
-                    self.ph.verify(hash, key)
-                    return True
-                else:
-                    # Using passlib
-                    return argon2.verify(key, hash)
+                # Using argon2-cffi
+                self.ph.verify(hash, key)
+                return True
             except (VerifyMismatchError, InvalidHash, ValueError):
+                return False
+        elif HAS_ARGON2_PASSLIB:
+            try:
+                # Using passlib
+                return bool(argon2.verify(key, hash))
+            except ValueError: # passlib's argon2.verify can raise ValueError for invalid hash format
                 return False
         else:
             # Fallback to simple comparison

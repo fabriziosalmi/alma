@@ -3,7 +3,7 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from alma.api.routes import blueprints, conversation, ipr, monitoring, templates, tools
@@ -107,7 +107,7 @@ async def health_check() -> dict[str, str]:
 
 
 @app.get("/metrics")
-async def metrics_endpoint():
+async def metrics_endpoint() -> Response:
     """
     Prometheus metrics endpoint.
 

@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from kubernetes_asyncio import client, config
-from kubernetes_asyncio.client.exceptions import ApiException
+from kubernetes_asyncio import client, config  # type: ignore[import-untyped]
+from kubernetes_asyncio.client.exceptions import ApiException  # type: ignore[import-untyped]
 
 from alma.core.state import Plan, ResourceState
 from alma.engines.base import Engine

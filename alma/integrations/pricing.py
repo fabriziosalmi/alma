@@ -47,7 +47,7 @@ class AWSPricingClient(PricingClient):
     def __init__(self) -> None:
         self.enabled = False
         try:
-            import boto3  # type: ignore[import]
+            import boto3  # type: ignore
 
             self.client = boto3.client("pricing", region_name="us-east-1")
             self.enabled = True

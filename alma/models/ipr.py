@@ -37,7 +37,7 @@ class InfrastructurePullRequestModel(Base):
         nullable=False,
         default=IPRStatus.PENDING,
         index=True,
-    )
+    )  # type: ignore[var-annotated]
     created_by = Column(String(255), nullable=False)
     reviewed_by = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

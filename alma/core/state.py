@@ -80,8 +80,8 @@ class Plan(BaseModel):
             details.append(f"  + Create {r.name} (type: {r.type})")
         for _, r in self.to_update:
             details.append(f"  ~ Modify {r.name} (type: {r.type})")
-        for r in self.to_delete:
-            details.append(f"  - Destroy {r.id} (type: {r.type})")
+        for resource_state in self.to_delete:
+            details.append(f"  - Destroy {resource_state.id} (type: {resource_state.type})")
 
         return f"{summary}\n\nDetails:\n" + "\n".join(details)
 
@@ -108,8 +108,8 @@ class Plan(BaseModel):
 
         if self.to_delete:
             lines.append("\n[bold red]Resources to DESTROY:[/]")
-            for resource in self.to_delete:
-                lines.append(f"  [red][-][/] [bold]{resource.id}[/] ({resource.type})")
+            for resource_state in self.to_delete:
+                lines.append(f"  [red][-][/] [bold]{resource_state.id}[/] ({resource_state.type})")
                 lines.append("      (Resource will be permanently deleted)")
 
         summary = f"Plan: {len(self.to_create)} to create, {len(self.to_update)} to change, {len(self.to_delete)} to destroy."

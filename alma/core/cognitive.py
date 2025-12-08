@@ -39,11 +39,9 @@ CONTEXT_KEYWORDS = {
 class FocusContext(BaseModel):
     """Tracks the user's current conversational focus."""
 
-    active_resource_id: str | None = Field(
-        None, description="The specific resource being discussed."
-    )
-    current_topic: str = Field("general", description="The general topic of conversation.")
-    topic_confidence: float = Field(0.0, description="Confidence score for the detected topic.")
+    active_resource_id: str | None = None
+    current_topic: str = "general"
+    topic_confidence: float = 0.0
 
 
 class CommandRiskLevel(str, Enum):
@@ -164,10 +162,22 @@ class AdvancedCognitiveEngine:
     A stateful engine that integrates context, risk, and persona.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.focus = FocusContext()
         self.frustration_level = 0.0
         self.system_health = SystemHealth.OPTIMAL
+
+    def _update_frustration(self, user_input: str) -> None:
+        """Update frustration level based on user input."""
+        # Simple keyword matching for demonstrated frustration
+        frustration_keywords = {"fail", "error", "broken", "stupid", "bad", "slow", "wrong"}
+        words = set(user_input.lower().split())
+        match_count = len(words.intersection(frustration_keywords))
+
+        if match_count > 0:
+            self.frustration_level = min(1.0, self.frustration_level + (0.1 * match_count))
+        else:
+            self.frustration_level = max(0.0, self.frustration_level - 0.05)
 
     def process_advanced(self, user_input: str, intent: str) -> dict[str, Any]:
         """

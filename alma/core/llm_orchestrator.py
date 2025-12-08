@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
+from typing import Any, cast
 
-import yaml  # type: ignore[import]  # type: ignore[import]
+import yaml  # type: ignore[import]
 
 from alma.core.llm import ConversationalOrchestrator, LLMInterface
 from alma.core.prompts import InfrastructurePrompts
 from alma.core.tools import InfrastructureTools
+from alma.schemas.tools import ToolResponse
 
 
 class EnhancedOrchestrator(ConversationalOrchestrator):
@@ -63,8 +64,8 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
             tool_name = function_call.get("function")
             arguments = function_call.get("arguments", {})
 
-            result = self.tools.execute_tool(str(tool_name), arguments, context)
-            return result
+            result: ToolResponse = await self.tools.execute_tool(str(tool_name), arguments, context)
+            return result.model_dump()
 
         except Exception as e:
             return {"success": False, "error": f"Function call execution failed: {e}"}
@@ -288,8 +289,8 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
             response = await self.llm.generate(prompt)
 
             # Parse findings (simple text parsing)
-            findings = []
-            current_finding = {}
+            findings: list[dict[str, str]] = []
+            current_finding: dict[str, str] = {}
 
             for line in response.split("\n"):
                 line = line.strip()
@@ -332,7 +333,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
         if start_idx != -1 and end_idx > start_idx:
             json_str = text[start_idx:end_idx]
             try:
-                return json.loads(json_str)
+                return cast(dict[str, Any], json.loads(json_str))
             except json.JSONDecodeError:
                 pass
 
@@ -354,13 +355,13 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
 
         for match in matches:
             try:
-                return yaml.safe_load(match)
+                return cast(dict[str, Any], yaml.safe_load(match))
             except yaml.YAMLError:
                 continue
 
         # Try parsing entire text as YAML
         try:
-            return yaml.safe_load(text)
+            return cast(dict[str, Any], yaml.safe_load(text))
         except yaml.YAMLError:
             pass
 

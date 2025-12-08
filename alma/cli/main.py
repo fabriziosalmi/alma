@@ -4,7 +4,7 @@ import asyncio
 
 import httpx
 import typer
-import yaml  # type: ignore[import]
+import yaml
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -121,7 +121,8 @@ def deploy(
             console.print("[blue]Deploying resources...[/blue]")
             result = await engine_instance.deploy(blueprint)
 
-            if result.status.value == "completed":
+            status_val = result.status.value if hasattr(result.status, "value") else str(result.status)
+            if status_val == "completed":
                 console.print(f"[green]✓ {result.message}[/green]")
                 if result.resources_created:
                     console.print("\n[green]Resources created:[/green]")
@@ -199,7 +200,7 @@ def init(
     """
     import os
 
-    project_path = os.path.join(path, name)
+    project_path = os.path.join(path or ".", name)
     console.print(f"[blue]Creating new ALMA project: {name}[/blue]")
     console.print(f"[blue]Location: {project_path}[/blue]")
 
@@ -231,7 +232,7 @@ def init(
 
 
 @app.command("chat")
-def chat(message: str):
+def chat(message: str) -> None:
     """
     Talk to the ALMA Cognitive Engine.
     """

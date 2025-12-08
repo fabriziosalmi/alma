@@ -6,7 +6,7 @@ import os
 from typing import Any
 
 try:
-    import ansible_runner
+    import ansible_runner  # type: ignore[import-untyped]
 except ImportError:
     ansible_runner = None
 

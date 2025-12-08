@@ -57,7 +57,7 @@ class CircuitBreaker:
         async def wrapper(*args: Any, **kwargs: Any) -> T:
             return await self.call(func, *args, **kwargs)
 
-        return wrapper
+        return wrapper  # type: ignore[return-value]
 
     async def call(self, func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
         if self.state == CircuitState.OPEN:
@@ -119,7 +119,7 @@ class Retrier:
         async def wrapper(*args: Any, **kwargs: Any) -> T:
             return await self.call(func, *args, **kwargs)
 
-        return wrapper
+        return wrapper  # type: ignore[return-value]
 
     async def call(self, func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
         import asyncio

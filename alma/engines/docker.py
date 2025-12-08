@@ -8,9 +8,9 @@ try:
     import docker
     from docker.errors import DockerException, NotFound
 except ImportError:
-    docker = None
-    DockerException = Exception
-    NotFound = Exception
+    docker = None  # type: ignore[assignment]
+    DockerException = Exception  # type: ignore[misc, assignment]
+    NotFound = Exception  # type: ignore[misc, assignment]
 
 from alma.core.state import Plan, ResourceState
 from alma.engines.base import Engine
@@ -34,7 +34,7 @@ class DockerEngine(Engine):
         """
         super().__init__(config)
         self.base_url = self.config.get("base_url")
-        self.client = None
+        self.client: Any = None
 
     def _get_client(self) -> Any:
         """Get Docker client."""

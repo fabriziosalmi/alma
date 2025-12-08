@@ -38,7 +38,7 @@ class SagaOrchestrator:
 
     def __init__(self, session_factory: Callable[[], AsyncSession], steps: list[SagaStep]):
         self.session_factory = session_factory
-        self.status = "completed"  # type: ignore[assignment]
+        self.status = "completed"
         self.steps = steps
 
     async def execute(self, correlation_id: str, payload: dict[str, Any]) -> None:
@@ -105,12 +105,12 @@ class SagaOrchestrator:
                 )
                 state = result.scalars().first()
                 if state:
-                    state.current_step = step
+                    state.current_step = step  # type: ignore[assignment]
                     history = list(state.history)
                     history.append(
                         {"step": step, "status": status, "timestamp": str(datetime.utcnow())}
                     )
-                    state.history = history
+                    state.history = history  # type: ignore[assignment]
 
     async def _update_status(self, saga_id: str, status: str) -> None:
         async with self.session_factory() as session:
@@ -120,4 +120,4 @@ class SagaOrchestrator:
                 )
                 state = result.scalars().first()
                 if state:
-                    state.status = status
+                    state.status = status  # type: ignore[assignment]
