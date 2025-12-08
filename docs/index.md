@@ -74,28 +74,19 @@ Horizontally scalable design with support for distributed deployments and high-t
 
 ## Roadmap
 
-### Implemented & Ready
-- **Natural Language Interface**: Chat with your infrastructure.
-- **Provider Agnostic**: Support for AWS, Azure, GCP, Kubernetes, and Proxmox.
-- **Terraform Engine**: Built-in Terraform plan execution and state management.
-- **Architecture Patterns**: Core built on CQRS and Event Sourcing for reliability.
-- **Observability**: Prometheus metrics enabled by default.
+### Q1 2025: Intelligent Orchestration (In Progress)
+- **Multi-Agent Architecture**: Specialized agents for Architecture, Security, and Cost.
+- **Proactive Security**: Pre-deployment vulnerability scanning in IPRs.
+- **Cost Estimation**: Real-time cloud pricing integration.
 
-### Future Enhancements
+### Q2 2025: Predictive Operations
+- **Anomaly Detection**: ML-based resource usage analysis.
+- **Capacity Forecasting**: Historical data-driven scaling predictions.
+- **Auto-Remediation**: Automated recovery runbooks.
 
-**Short Term**
-- [ ] WebSocket support for real-time updates
-- [ ] GraphQL API
-- [ ] Web UI
-
-**Medium Term**
-- [ ] Multi-tenancy
-- [ ] RBAC (Role-Based Access Control)
-- [ ] Kubernetes operator (Native Controller)
-
-**Long Term**
-- [ ] Distributed deployment
-- [ ] Blockchain audit trail
+### Q3 2025: Universal Abstraction
+- **Cloud Portability**: Abstracted blueprints for AWS/Azure/GCP migration.
+- **Hybrid Deployment**: Unified management for On-Prem and Cloud.
 
 ## Getting Started
 
