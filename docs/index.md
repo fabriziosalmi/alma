@@ -77,7 +77,6 @@ Horizontally scalable design with support for distributed deployments and high-t
 ### Q1 2025: Intelligent Orchestration (In Progress)
 - **Multi-Agent Architecture**: Specialized agents for Architecture, Security, and Cost.
 - **Proactive Security**: Pre-deployment vulnerability scanning in IPRs.
-- **Cost Estimation**: Real-time cloud pricing integration.
 
 ### Q2 2025: Predictive Operations
 - **Anomaly Detection**: ML-based resource usage analysis.

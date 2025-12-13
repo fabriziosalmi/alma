@@ -1,0 +1,8 @@
+data: {"type": "intent", "data": {"intent": "deploy", "confidence": 0.95, "entities": {"os": "ubuntu"}, "raw_input": "deploy ubuntu", "reasoning": "The input 'deploy ubuntu' indicates the user wants to deploy infrastructure with Ubuntu as the operating system."}}
+
+data: {"type": "status", "data": "Validating requirements..."}
+
+data: {"type": "error", "data": ""}
+
+data: {"type": "done", "data": "complete"}
+

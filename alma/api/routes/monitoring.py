@@ -231,3 +231,94 @@ async def system_overview() -> dict[str, Any]:
             "llm": (await check_llm_health()).get("status", "unknown"),
         },
     }
+
+
+@router.get("/stats/infrastructure")
+async def infrastructure_graph() -> dict[str, Any]:
+    """
+    Get infrastructure graph for visualization.
+
+    Returns:
+        Nodes and edges for React Flow
+    """
+    from alma.core.config import get_settings
+    from alma.engines.proxmox import ProxmoxEngine
+
+    settings = get_settings()
+    engine = ProxmoxEngine({
+        "host": settings.proxmox_host,
+        "username": settings.proxmox_username,
+        "password": settings.proxmox_password,
+        "verify_ssl": settings.proxmox_verify_ssl,
+        "node": settings.proxmox_node
+    })
+
+    nodes = []
+    edges = []
+    
+    # 1. Add Cloud/Internet Node
+    nodes.append({
+        "id": "internet",
+        "type": "custom",
+        "position": {"x": 250, "y": 0},
+        "data": {
+            "label": "Internet",
+            "subLabel": "Public Network",
+            "icon": "Cloud", # Mapped in frontend
+            "colorClass": "bg-blue-500/20",
+            "iconClass": "text-blue-400"
+        }
+    })
+
+    # 2. Get Real Resources
+    try:
+        resources = await engine.list_resources()
+    except Exception as e:
+        print(f"Failed to list resources: {e}")
+        resources = []
+
+    # 3. Create Nodes from Resources
+    x_pos = 50
+    y_pos = 150
+    
+    for res in resources:
+        vmid = str(res.get("vmid"))
+        name = res.get("name", f"VM {vmid}")
+        status = res.get("status", "unknown")
+        type_ = res.get("type", "qemu")
+        
+        # Color coding by status
+        color_class = "bg-green-500/20" if status == "running" else "bg-slate-700/50"
+        icon_class = "text-green-400" if status == "running" else "text-slate-400"
+        
+        icon_name = "Database" if type_ == "lxc" else "Server"
+
+        node = {
+            "id": vmid,
+            "type": "custom",
+            "position": {"x": x_pos, "y": y_pos},
+            "data": {
+                "label": name,
+                "subLabel": f"{type_} • {status}",
+                "icon": icon_name, 
+                "colorClass": color_class,
+                "iconClass": icon_class
+            }
+        }
+        nodes.append(node)
+        
+        # Add edge from internet
+        edges.append({
+            "id": f"e-internet-{vmid}",
+            "source": "internet",
+            "target": vmid,
+            "animated": status == "running",
+            "style": {"stroke": "#475569"}
+        })
+        
+        x_pos += 200
+        if x_pos > 800:
+            x_pos = 50
+            y_pos += 200
+
+    return {"nodes": nodes, "edges": edges}

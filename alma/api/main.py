@@ -2,9 +2,11 @@
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+import os
 
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from alma.api.routes import blueprints, conversation, ipr, monitoring, templates, tools
 from alma.core.config import get_settings
@@ -79,6 +81,14 @@ app.middleware("http")(rate_limit_middleware)
 app.middleware("http")(metrics_middleware)
 app.add_middleware(ImmuneMiddleware)
 app.add_middleware(IdempotencyMiddleware)
+
+# Mount static files for dashboard
+dashboard_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "alma-web/dist")
+if os.path.exists(dashboard_path):
+    print(f"Mounting dashboard from {dashboard_path}")
+    app.mount("/dashboard", StaticFiles(directory=dashboard_path, html=True), name="dashboard")
+else:
+    print(f"Dashboard not found at {dashboard_path}")
 
 
 @app.get("/")

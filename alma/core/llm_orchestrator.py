@@ -12,6 +12,7 @@ from alma.core.llm import ConversationalOrchestrator, LLMInterface
 from alma.core.prompts import InfrastructurePrompts
 from alma.core.tools import InfrastructureTools
 from alma.schemas.tools import ToolResponse
+from alma.core.exceptions import MissingResourceError
 
 
 class EnhancedOrchestrator(ConversationalOrchestrator):
@@ -51,7 +52,39 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
             return {"success": False, "error": "LLM not available for function calling"}
 
         # Get available tools
-        available_tools = self.tools.get_available_tools()
+        # 1. Native InfrastructureTools
+        native_tools = self.tools.get_available_tools()
+        
+        # 2. Loading MCP Tools Dynamically
+        mcp_tool_definitions = []
+        try:
+            from alma.mcp_server import mcp
+            # FastMCP stores tools in _tool_manager.tool_registry usually, 
+            # but let's check the public API or internal structure.
+            # mcp.list_tools() is async.
+            # We can also access decorated functions directly if we know them, 
+            # OR we can replicate the schema generation.
+            
+            # For simplicity and robustness, let's use the list_tools() if possible, 
+            # but we are in async context here? Yes.
+            
+            # However, list_tools() returns a list of Tool objects with schema.
+            # We need to map that to OpenAI format.
+            
+            # Since mcp internal structure might vary, let's rely on `mcp._tool_manager.list_tools()` 
+            # if we can't await here easily (we can, we are in async def).
+            
+            # Wait, `get_available_tools` is SYNC in the original code below (def get_available_tools).
+            # But here we are in `execute_function_call` which IS async.
+            # The LLM needs the tools *before* calling this.
+            
+            # So we need to update `get_available_tools` to be robust or pre-load them.
+            # Let's handle this in `get_available_tools` (which is sync).
+            pass 
+        except ImportError:
+            pass
+
+        available_tools = self.get_available_tools()
 
         try:
             # Ask LLM to select and call appropriate function
@@ -64,20 +97,141 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
             tool_name = function_call.get("function")
             arguments = function_call.get("arguments", {})
 
+            # Check if it's an MCP tool
+            try:
+                from alma.mcp_server import mcp
+                # Check directly in the underlying registry if possible
+                # Accessing private members is risky but efficient for 'internalizing'
+                # FastMCP uses a dictionary for tools
+                tool_func = None
+                
+                # Check explicit MCP tools we know
+                if tool_name == "deploy_vm":
+                    # We might have name collision with native tools.
+                    # Prioritize MCP?
+                     from alma.mcp_server import deploy_vm
+                     tool_func = deploy_vm
+                elif tool_name == "control_vm":
+                     from alma.mcp_server import control_vm
+                     tool_func = control_vm
+                elif tool_name == "list_resources":
+                     from alma.mcp_server import list_resources
+                     tool_func = list_resources
+                elif tool_name == "get_resource_stats":
+                     from alma.mcp_server import get_resource_stats
+                     tool_func = get_resource_stats
+                elif tool_name == "download_template":
+                     from alma.mcp_server import download_template
+                     tool_func = download_template
+                     # Set default storage if missing
+                     if "storage" not in arguments:
+                         arguments["storage"] = "local"
+
+                if tool_func:
+                    print(f"Executing Internal MCP Tool: {tool_name}")
+                    # FastMCP tools are async.
+                    result = await tool_func(**arguments)
+                    # Result is a JSON string usually (as per our MCP impl).
+                    try:
+                        return json.loads(result)
+                    except:
+                        # If simple string
+                         return {"result": result}
+            except ImportError:
+                pass
+
+            # Fallback to native tools
             result: ToolResponse = await self.tools.execute_tool(str(tool_name), arguments, context)
             return result.model_dump()
 
+        except MissingResourceError as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "status": "needs_clarification",
+                "missing_resource": {
+                    "type": e.resource_type,
+                    "name": e.resource_name
+                }
+            }
         except Exception as e:
             return {"success": False, "error": f"Function call execution failed: {e}"}
 
-    def get_available_tools(self) -> list[dict[str, Any]]:
         """
         Get list of available tools for function calling.
 
         Returns:
             List of tool definitions
         """
-        return self.tools.get_available_tools()
+        tools = self.tools.get_available_tools()
+        
+        # Add MCP tools
+        # We manually define schemas for our known MCP tools for now
+        # Ideally we'd convert FastMCP schemas
+        
+        tools.append({
+            "type": "function",
+            "function": {
+                "name": "deploy_vm",
+                "description": "Deploy a new VM from a template using Proxmox MCP",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Name of the new VM"},
+                        "template": {"type": "string", "description": "Template to clone from"},
+                        "cores": {"type": "integer", "description": "CPU cores (default 2)"},
+                        "memory": {"type": "integer", "description": "Memory in MB (default 2048)"}
+                    },
+                    "required": ["name", "template"]
+                }
+            }
+        })
+        
+        tools.append({
+             "type": "function",
+             "function": {
+                 "name": "control_vm",
+                 "description": "Control a VM (start, stop, reboot) using Proxmox MCP",
+                 "parameters": {
+                     "type": "object",
+                     "properties": {
+                         "vmid": {"type": "string", "description": "VMID to control"},
+                         "action": {"type": "string", "enum": ["start", "stop", "reboot", "shutdown"], "description": "Action to perform"}
+                     },
+                     "required": ["vmid", "action"]
+                 }
+             }
+         })
+
+        tools.append({
+             "type": "function",
+             "function": {
+                 "name": "list_resources",
+                 "description": "List all Proxmox resources (VMs and Containers) using MCP",
+                 "parameters": {
+                     "type": "object",
+                     "properties": {},
+                 }
+             }
+         })
+
+        tools.append({
+             "type": "function",
+             "function": {
+                 "name": "download_template",
+                 "description": "Download a template to storage using MCP (e.g. download ubuntu-template to local)",
+                 "parameters": {
+                     "type": "object",
+                     "properties": {
+                         "storage": {"type": "string", "description": "Storage ID (default 'local')"},
+                         "template": {"type": "string", "description": "Template name"}
+                     },
+                     "required": ["template"]
+                 }
+             }
+         })
+
+        return tools
 
     async def parse_intent_with_llm(self, user_input: str) -> dict[str, Any]:
         """

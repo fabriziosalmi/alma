@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "ALMA"
-    app_version: str = "0.7.6"
+    app_version: str = "0.7.8"
     debug: bool = False
     environment: str = "development"
 
@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     # LLM
     llm_model_name: str = "Qwen/Qwen2-0.5B"
     llm_device: str = "cpu"
-    llm_max_tokens: int = 512
+    llm_max_tokens: int = 2048
     llm_local_studio_url: str = "http://localhost:1234/v1/chat/completions"
     llm_local_studio_model: str = "qwen/qwen3-1.7b"
 
@@ -64,6 +64,13 @@ class Settings(BaseSettings):
     ipr_enabled: bool = True
     ipr_auto_approve: bool = False
     ipr_require_review: bool = True
+
+    # Proxmox
+    proxmox_host: str = "https://localhost:8006"
+    proxmox_username: str = "root@pam"
+    proxmox_password: str = ""
+    proxmox_verify_ssl: bool = True
+    proxmox_node: str = "pve"
 
 
 # Global settings instance

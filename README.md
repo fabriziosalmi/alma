@@ -46,7 +46,6 @@ ALMA (Autonomous Language Model Architecture) is an infrastructure orchestration
 
 1.  **Production-Ready Security**: Standard WAF patterns (SQL injection, XSS, path traversal) with input size limits and rate limiting.
 2.  **Type-Safe Architecture**: Pydantic models throughout, proper exception handling, and strict validation.
-3.  **Real Cloud Integration**: Actual pricing APIs (Infracost, AWS) instead of hardcoded estimates.
 
 ### Zero-Energy Defense
 
