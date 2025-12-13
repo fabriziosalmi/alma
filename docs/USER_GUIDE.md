@@ -501,6 +501,14 @@ Store blueprints in Git:
 # Export blueprint
 curl http://localhost:8000/api/v1/blueprints/5 > infrastructure.yaml
 
+# Start the interactive dashboard with Resource View
+alma dashboard
+
+# List available templates
+alma templates list
+
+# Deploy a blueprint
+alma deploy blueprint.yaml
 # Commit to Git
 git add infrastructure.yaml
 git commit -m "Add production web app infrastructure"

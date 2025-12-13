@@ -58,11 +58,16 @@ docker compose up -d
 
 ## Core Features
  
+### ⚡ Quick Wins (v0.8.3)
+- **🐳 Docker Engine**: Native support for managing containers with robust logging.
+- **📊 Live Dashboard**: Visualize system resources (VMs, Containers) in real-time with `alma dashboard`.
+- **📚 Template Catalog**: Discover ready-to-use blueprints with `alma templates list`.
+
 ### 🧠 LangGraph Orchestration
-Resilient, self-healing deployment workflows that handle validation, execution, and verification automatically.
+ALMA uses a sophisticated state machine to handle complex deployment workflows, error recovery, and verification loops.
 
 ### 🔌 MCP Native
-Exposes infrastructure as tools via the **Model Context Protocol**, enabling seamless integration with advanced LLMs like Claude and Gemini.
+Built on the **Model Context Protocol**, allowing seamless integration with Claude Desktop, Cursor, and other AI agents.
 
 ### ⚡ Proxmox Intelligence
 Advanced engine with task-aware waiting (no more race conditions), dual SSH/API modes, and automatic template management.
