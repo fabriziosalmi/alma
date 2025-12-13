@@ -1,132 +1,84 @@
 # ALMA: Infrastructure as Conversation
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![PyPI version](https://img.shields.io/pypi/v/alma.svg)](https://pypi.org/project/alma/)
-[![Status](https://img.shields.io/badge/Status-Resilient_Beta-purple.svg)](https://github.com/fabriziosalmi/alma/releases)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![MCP Compliant](https://img.shields.io/badge/MCP-Compliant-orange.svg)](https://modelcontextprotocol.io)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Orchestrated-blueviolet.svg)](https://langchain-ai.github.io/langgraph/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Policy](https://img.shields.io/badge/Policy-Resiliency-green.svg)](SECURITY.md)
 
-**Stop writing YAML. Start conversing.**
-ALMA (Autonomous Language Model Architecture) is an infrastructure orchestration platform that combines natural language interfaces with robust execution engines.
+**Stop writing YAML. Start conversing.**  
+ALMA (Autonomous Language Model Architecture) is a resilient, self-healing infrastructure orchestration platform. It combines natural language interfaces with **LangGraph** state machines and the **Model Context Protocol (MCP)** to reliably deploy and manage resources on Proxmox and beyond.
 
-## Core Principles
+## Core Capabilities
 
-1. **Security First**: Argon2id authentication, input validation, rate limiting
-2. **Type Safety**: Pydantic models throughout, strict validation
-3. **Auditability**: Event Sourcing for complete audit trail (compliance-ready)
-4. **Reliability**: Saga Pattern for automatic rollback on failures
-
-## Roadmap
-
-### Implemented & Ready
-- **Natural Language Interface**: Chat with your infrastructure.
-- **Provider Agnostic**: Support for AWS, Azure, GCP, Kubernetes, and Proxmox.
-- **Terraform Engine**: Built-in Terraform plan execution and state management.
-- **Architecture Patterns**: Core built on CQRS and Event Sourcing for reliability.
-- **Observability**: Prometheus metrics enabled by default.
-
-### Future Enhancements
-
-**Short Term**
-- [ ] WebSocket support for real-time updates
-- [ ] GraphQL API
-- [ ] Web UI
-
-**Medium Term**
-- [ ] Multi-tenancy
-- [ ] RBAC (Role-Based Access Control)
-- [ ] Kubernetes operator (Native Controller)
-
-**Long Term**
-- [ ] Distributed deployment
-- [ ] Blockchain audit trail
-
-
-## Why ALMA?
-
-1.  **Production-Ready Security**: Standard WAF patterns (SQL injection, XSS, path traversal) with input size limits and rate limiting.
-2.  **Type-Safe Architecture**: Pydantic models throughout, proper exception handling, and strict validation.
-
-### Zero-Energy Defense
-
-Input validation before it reaches the core:
-
-- **L0 (Regex Guard)**: Blocks known malicious patterns (SQL injection, XSS, path traversal, code injection).
-- **L2 (Size Limits)**: 2KB query parameters, 1MB request body.
-- **L3 (Rate Limiting)**: Redis-backed rate limiting per IP/API key.
-
-### Developer-Friendly Error Handling
-
-ALMA provides clear error messages with proper debugging support:
-- **Debug Mode**: Use `--debug` flag for full stack traces
-- **Production Mode**: User-friendly error messages without exposing internals
-- **Proper Logging**: All errors logged with full context for ops teams
-
-### TUI Dashboard
-Real-time terminal UI (`ALMA monitor`) featuring:
-- **Live Neural Status**: Watch the switch between Cloud and Local brain.
-- **Immune Activity**: See blocked threats in real-time.
-- **System Health**: Latency, tokens/sec, and resource usage.
+- **🗣️ Natural Language Interface**: Chat with your infrastructure ("Deploy an Alpine LXC named web-01").
+- **🧠 Resilient State Machine**: deployments are managed by a **LangGraph** workflow that handles validation, execution, and verification with automatic retries.
+- **🛡️ Self-Healing**: Automatically detects missing dependencies (e.g., templates) and resolves them (downloads) without user intervention.
+- **🔌 MCP Native**: Exposes infrastructure tools via a standard **Model Context Protocol** server, making it compatible with Anthropic Claude, Google Gemini, and other LLMs.
+- **⚡ Proxmox Integration**: Advanced engine with task-aware waiting, SSH/API dual-mode, and robust LXC/VM management.
 
 ## Architecture
 
+ALMA uses a layered architecture designed for resilience:
+
 ```mermaid
 graph TD
-    User[User / CLI] --> API[ALMA API FastAPI]
-    API --> Immune[Immune System L0/L0.5]
-    Immune --> Auth[Auth and Rate Limit]
-    Auth --> Orch[Cognitive Orchestrator L4]
+    User[User / Chat UI] --> API[FastAPI / Chat Stream]
+    API --> Graph[LangGraph Orchestrator]
     
-    subgraph "The Brain L3"
-        Orch --> Cloud[Tier 1: Cloud LLM]
-        Orch --> Local[Tier 2: Local Mesh]
-        Orch --> Panic[Tier 3: Panic Mode]
+    subgraph "Resilient Deployment Workflow"
+        Graph --> Parse[Parse Intent]
+        Parse --> Validate[Validate Params]
+        Validate --> Check[Check Resources]
+        Check -->|Missing Template| Heal[Self-Healing / Download]
+        Check -->|Ready| Exec[Execute Deployment]
+        Exec --> Verify[Verify Deployment]
+        Verify -->|Retry Loop| Verify
     end
-    
-    Orch --> Tools[Infrastructure Tools]
-    Tools --> Engines[Execution Layer L1]
-    Engines --> K8s[Kubernetes]
-    Engines --> Prox[Proxmox]
-    Engines --> Docker[Docker]
+
+    Exec --> MCP[MCP Server]
+    MCP --> Engine[Proxmox Engine]
+    Engine --> Proxmox[Proxmox VE (API/SSH)]
 ```
 
 ## Quick Start
 
 ### Prerequisites
-- Python 3.10+
-- Docker (for metrics stack)
-- LM Studio (optional, for local fallback)
+- Docker & Docker Compose
+- Proxmox VE (Credentials)
+- OpenAI/Anthropic/Google API Key (for LLM features)
 
 ### Installation
 
-1.  **Install via PyPI**:
+1.  **Clone the Repository**:
     ```bash
-    pip install alma
+    git clone https://github.com/fabriziosalmi/alma.git
+    cd alma
     ```
 
-2.  **Initialize the Brain**:
+2.  **Configure Environment**:
     ```bash
-    # Start the API Server
-    alma start-server
+    cp .env.example .env
+    # Edit .env with your Proxmox and LLM credentials
     ```
 
-3.  **Launch the Dashboard**:
+3.  **Launch with Docker Compose**:
     ```bash
-    # In a new terminal
-    alma monitor
+    docker compose up -d --build
     ```
+
+4.  **Access the Dashboard**:
+    Open [http://localhost:3000](http://localhost:3000) to start chatting with your infrastructure.
 
 ## Documentation
 
 - **[User Guide](docs/USER_GUIDE.md)**: Complete manual for daily usage.
-- **[API Reference](docs/API_REFERENCE.md)**: Detailed endpoint documentation.
-- **[Security Policy](SECURITY.md)**: Vulnerability reporting and security features.
-- **[Contributing](CONTRIBUTING.md)**: Setup guide for developers.
+- **[Architecture](docs/ARCHITECTURE.md)**: Deep dive into LangGraph and MCP implementation.
+- **[Contributing](CONTRIBUTING.md)**: Development setup.
 
-## Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to set up your development environment and submit Pull Requests.
+## Community & Support
+- [GitHub Discussions](https://github.com/fabriziosalmi/alma/discussions)
+- [Issue Tracker](https://github.com/fabriziosalmi/alma/issues)
 
 ## License
-
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

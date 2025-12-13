@@ -251,92 +251,55 @@ async def chat_stream(
         yield f"data: {json.dumps({'type': 'intent', 'data': intent_result})}\n\n"
         print(f"DEBUG: Intent={intent_result['intent']}, Message='{request.message}'")
 
-        # --- FAST TRACK: Direct Execution for 'Deploy' with explicit parameters ---
+        # --- RESILIENT EXECUTION: LangGraph ---
         if intent_result["intent"] == "deploy":
-            import re
-            name_match = re.search(r"named\s+([a-zA-Z0-9\-\_]+)", request.message, re.IGNORECASE)
-            template_match = re.search(r"(alpine|ubuntu|debian)", request.message, re.IGNORECASE)
+            from alma.core.agent.graph import app
+            from langchain_core.messages import HumanMessage
             
-            print(f"DEBUG: FastTrack check - NameMatch={name_match}, TemplateMatch={template_match}")
+            from typing import cast
+            
+            yield f"data: {json.dumps({'type': 'status', 'data': 'Starting resilient deployment workflow...'})}\n\n"
+            
+            inputs = {
+                "messages": [HumanMessage(content=request.message)],
+                "intent": "deploy", 
+                "vm_name": None,
+                "template": None,
+                "error": None,
+                "status": "Initializing",
+                "execution_result": None
+            }
+            
+            final_state = None
+            async for event in app.astream(cast(dict[str, Any], inputs)):
+                # event is a dict of the validation/execution steps
+                # e.g. {'parse_intent': {'intent': 'deploy', ...}}
+                for node_name, state_update in event.items():
+                    if "status" in state_update:
+                        yield f"data: {json.dumps({'type': 'status', 'data': state_update['status']})}\n\n"
+                    if "error" in state_update and state_update["error"]:
+                        yield f"data: {json.dumps({'type': 'error', 'data': state_update['error']})}\n\n"
+                    
+                    # Capture final state
+                    final_state = state_update
 
-            if name_match:
-                vm_name = name_match.group(1)
-                template = template_match.group(1) if template_match else "alpine" # Default to alpine
-                
-                yield f"data: {json.dumps({'type': 'status', 'data': f'Initiating deployment of {vm_name} ({template})...'})}\n\n"
-                
-                try:
-                    # Execute directly via Orchestrator -> Tool
-                    from alma.mcp_server import deploy_vm, download_template
-                    from alma.engines.proxmox import ProxmoxEngine
-                    from alma.core.config import get_settings
-                    
-                    # 1. Check if template exists
-                    settings = get_settings()
-                    engine = ProxmoxEngine({
-                        "host": settings.proxmox_host,
-                        "username": settings.proxmox_username,
-                        "password": settings.proxmox_password,
-                        "verify_ssl": settings.proxmox_verify_ssl,
-                        "node": settings.proxmox_node
-                    })
-                    
-                    # Ensure template is available (Logic similar to apply but proactive)
-                    # We need to check if "alpine" implies a filename or VM
-                    # For Fast Track "alpine", we assume LXC template
-                    exists = False
-                    # Check list_resources (only covers VMs/CTs, not templates in storage)
-                    # We need a proper 'list_templates' but engine doesn't expose it publicy efficiently
-                    # So we use a heuristic: try to find it.
-                    # Actually, let's just Try to Deploy. 
-                    # If deploy fails with "Template not found" error string?
-                    # But deploy_vm logic swallows error details often?
-                    
-                    # BETTER: Just try to download "alpine" if it's alpine/ubuntu
-                    # download_template is idempotent (skips if exists)?
-                    # Let's check download_template implementation.
-                    # It calls `pveam download`. Proxmox handles idempotency? 
-                    # Usually returns "already exists" error if exists.
-                    
-                    # Let's just run download_template for common OSes to be safe?
-                    # That slows things down.
-                    
-                    # Let's try to verify via engine internal
-                    # We can use `pveam list local` via SSH or API `nodes/node/storage/local/content`
-                    # Too complex for inline.
-                    
-                    # PROACTIVE DOWNLOAD:
-                    # If template is "alpine", ensure we have it.
-                    if template in ["alpine", "ubuntu", "debian"]:
-                         yield f"data: {json.dumps({'type': 'status', 'data': f'Ensuring {template} template is available...'})}\n\n"
-                         # We blindly try to download (or check) 
-                         # download_template tool implementation:
-                         # It maps "alpine" to "alpine-3.19..." and calls pveam download.
-                         # If we call it, and it exists, it might error or succeed fast.
-                         # orchestrator.execute uses mcp_server.download_template
-                         dl_result = await orchestrator.execute_function_call("download_template", {"os_type": template, "storage": "local"}) 
-                         if not dl_result.get("success") and "already exists" not in str(dl_result.get("error", "")):
-                              # Log warning but proceed?
-                              pass
-
-                    # 2. Deploy
-                    result = await orchestrator.execute_function_call("deploy_vm", {"name": vm_name, "template": template})
-                    
-                    if result.get("success"):
-                        response = f"Deployment of **{vm_name}** ({template}) started successfully! \n\nDetails: {result.get('content')}"
-                        yield f"data: {json.dumps({'type': 'text', 'data': response})}\n\n"
-                        # Also send done
-                        yield f"data: {json.dumps({'type': 'done', 'data': 'complete'})}\n\n"
-                    else:
-                        response = f"Deployment failed: {result.get('error')}"
-                        yield f"data: {json.dumps({'type': 'error', 'data': response})}\n\n"
-                        yield f"data: {json.dumps({'type': 'done', 'data': 'error'})}\n\n"
-                        
-                except Exception as e:
-                     yield f"data: {json.dumps({'type': 'error', 'data': f'Execution error: {str(e)}'})}\n\n"
-                     yield f"data: {json.dumps({'type': 'done', 'data': 'error'})}\n\n"
-                
-                return
+            # Final response handling
+            # Note: 'final_state' in loop might be partial. Use invoke result if needed, but stream gives progress.
+            # We can check the very last event or just reconstructing
+            # Better: After loop, we assume workflow finished.
+            
+            if final_state and final_state.get("execution_result"):
+                res_msg = f"Deployment Complete! \n\nResult: {final_state['execution_result']}"
+                yield f"data: {json.dumps({'type': 'text', 'data': res_msg})}\n\n"
+                yield f"data: {json.dumps({'type': 'done', 'data': 'complete'})}\n\n"
+            elif final_state and final_state.get("error"):
+                 yield f"data: {json.dumps({'type': 'done', 'data': 'error'})}\n\n"
+            else:
+                 # Fallback
+                 yield f"data: {json.dumps({'type': 'text', 'data': 'Workflow finished without clear result.'})}\n\n"
+                 yield f"data: {json.dumps({'type': 'done', 'data': 'complete'})}\n\n"
+            
+            return
 
         # Proactive Validation for Deploy/Blueprint (Classic Flow)
         if intent_result["intent"] in ["create_blueprint", "deploy"]:

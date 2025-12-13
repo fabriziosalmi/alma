@@ -19,44 +19,24 @@ ALMA follows a **4-layer architecture** that separates concerns and enables clea
 ┌───────────────────────────────────────────────────────────┐
 │                   L4: Intent Layer                        │
 │           User interfaces (CLI, API, Web UI)              │
-│                                                           │
-│  Responsibilities:                                        │
-│  • Accept user input (natural language or structured)    │
-│  • Display results and feedback                          │
-│  • Handle authentication and authorization               │
 └─────────────────────┬─────────────────────────────────────┘
                       │
 ┌─────────────────────▼─────────────────────────────────────┐
-│                L3: Reasoning Layer                        │
-│      LLM + Conversational Orchestrator + Prompts          │
-│                                                           │
-│  Responsibilities:                                        │
-│  • Understand user intent                                │
-│  • Generate infrastructure blueprints                    │
-│  • Provide recommendations                               │
-│  • Validate and improve configurations                   │
+│             L3: Reasoning & Orchestration                 │
+│   1. Intent Parsing (Qwen/LLM)                            │
+│   2. Resilient Workflow (LangGraph State Machine)         │
+│      [Validate -> Check -> Heal -> Execute -> Verify]     │
 └─────────────────────┬─────────────────────────────────────┘
                       │
 ┌─────────────────────▼─────────────────────────────────────┐
-│                L2: Modeling Layer                         │
-│       SystemBlueprints + Schemas + Validation             │
-│                                                           │
-│  Responsibilities:                                        │
-│  • Define infrastructure declaratively                   │
-│  • Validate blueprint structure                          │
-│  • Manage dependencies between resources                 │
-│  • Track changes and versions                            │
+│                L2: Interface Layer                        │
+│             Model Context Protocol (MCP) Server           │
+│      Standardized Tooling for LLMs (List, Deploy, etc.)   │
 └─────────────────────┬─────────────────────────────────────┘
                       │
 ┌─────────────────────▼─────────────────────────────────────┐
 │               L1: Execution Layer                         │
-│     Controller + Engine Plugins + State Management        │
-│                                                           │
-│  Responsibilities:                                        │
-│  • Execute deployments                                   │
-│  • Manage infrastructure state                           │
-│  • Interact with providers (Proxmox, Docker, etc.)       │
-│  • Handle rollbacks and recovery                         │
+│     ProxmoxEngine (Task-Aware) + Docker + K8s             │
 └───────────────────────────────────────────────────────────┘
 ```
 
@@ -119,41 +99,7 @@ GET /api/v1/blueprints/{id}/deploy
         *   **OPERATOR**: Concise, JSON-heavy, status-focused. (Trigger: `deploy`, `scale`)
         *   **MEDIC**: Systematic, inquisitive, reassuring. (Trigger: `troubleshoot`, `fix`)
 
-### Layer 3: Reasoning Layer
 
-**Purpose**: AI-powered intelligence and decision making
-
-**Components**:
-- **LLM Engine** (`alma/core/llm_qwen.py`): Qwen3 model integration
-- **Orchestrator** (`alma/core/llm_orchestrator.py`): Conversation management
-- **Prompts** (`alma/core/prompts.py`): Specialized prompt templates
-- **Service** (`alma/core/llm_service.py`): LLM lifecycle management
-
-**Capabilities**:
-1. **Intent Classification**: Understand what the user wants
-2. **Blueprint Generation**: Convert NL → Infrastructure code
-3. **Description Generation**: Convert Infrastructure → NL
-4. **Improvement Suggestions**: AI-powered recommendations
-5. **Security Audits**: Automated security analysis
-6. **Resource Sizing**: Workload-based sizing recommendations
-
-**Example Flow**:
-```
-User: "I need a high-availability web application"
-  ↓
-Intent: create_blueprint
-  ↓
-Analysis:
-  - Workload type: web application
-  - Requirement: high availability
-  - Implied needs: load balancer, multiple servers, database
-  ↓
-Generated Blueprint:
-  - 3x web servers
-  - 1x load balancer
-  - 1x PostgreSQL primary + standby
-  - Monitoring stack
-```
 
 ### Layer 2: Modeling Layer
 

@@ -41,31 +41,33 @@ features:
 
 ## Quick Example
 
-Transform natural language into infrastructure:
+Conversational Infrastructure Management:
 
 ```bash
-# Install ALMA
-pip install alma
+# 1. Clone & Configure
+git clone https://github.com/fabriziosalmi/alma.git
+cd alma
+cp .env.example .env
 
-# Start the server
-alma serve
+# 2. Start ALMA Stack (API + Web + Redis)
+docker compose up -d
 
-# Use the API
-curl -X POST http://localhost:8000/api/v1/conversation/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "Create a highly available web application with 3 servers"
-  }'
+# 3. Chat with your Infrastructure
+# Open http://localhost:3000
 ```
 
 ## Core Features
+ 
+### 🧠 LangGraph Orchestration
+Resilient, self-healing deployment workflows that handle validation, execution, and verification automatically.
 
-### Blueprint Generation
+### 🔌 MCP Native
+Exposes infrastructure as tools via the **Model Context Protocol**, enabling seamless integration with advanced LLMs like Claude and Gemini.
 
-Generate infrastructure blueprints from natural language descriptions with AI-powered optimization and cost estimation.
+### ⚡ Proxmox Intelligence
+Advanced engine with task-aware waiting (no more race conditions), dual SSH/API modes, and automatic template management.
 
-### Security First
-
+### 🛡️ Security First
 Built-in security auditing, compliance checking, and best practices enforcement for production deployments.
 
 ### Scalable Architecture

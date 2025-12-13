@@ -128,6 +128,36 @@ class ProxmoxEngine(Engine):
             response.raise_for_status()
             return response.json().get("data", {})
 
+    async def _wait_for_task(self, upid: str) -> bool:
+        """Wait for a Proxmox task (UPID) to complete."""
+        import asyncio
+        print(f"Waiting for task {upid}...")
+        while True:
+            # Check task status using correct node from UPID if possible, or current node
+            # UPID format: UPID:node:hex:hex:type:id:user:
+            try:
+                task_node = upid.split(":")[1]
+            except IndexError:
+                task_node = self.node
+            
+            try:
+                status = await self._api_request("GET", f"nodes/{task_node}/tasks/{upid}/status")
+                # status is dict with 'status': 'stopped', 'exitstatus': 'OK' or 'ERROR'
+                if status.get("status") == "stopped":
+                    exit_status = status.get("exitstatus")
+                    if exit_status == "OK":
+                        print("Task completed successfully.")
+                        return True
+                    else:
+                        print(f"Task failed with exit status: {exit_status}")
+                        return False
+            except Exception as e:
+                print(f"Error checking task status: {e}")
+                # Don't break immediately, might be transient
+            
+            await asyncio.sleep(1)
+
+
     async def _get_next_vmid(self) -> int:
         """Get next available VMID."""
         if self.use_ssh:
@@ -202,14 +232,20 @@ class ProxmoxEngine(Engine):
                 for vm in vms:
                     vm["type"] = "qemu"
                     resources.append(vm)
-            except Exception: pass
+            except Exception as e:
+                print(f"Failed to fetch QEMU via API: {e}")
+                pass
+
 
             try:
                 cts = await self._api_request("GET", f"nodes/{self.node}/lxc")
                 for ct in cts:
                     ct["type"] = "lxc"
                     resources.append(ct)
-            except Exception: pass
+            except Exception as e:
+                print(f"Failed to fetch LXC via API: {e}") 
+                pass
+
             
         return resources
 
@@ -290,7 +326,7 @@ class ProxmoxEngine(Engine):
                     # The user said "alpine".
                     if template_name == "alpine":
                          # Minimal working Alpine template name guess
-                         cmd = f"pct create {new_vmid} local:vztmpl/alpine-3.19-default_20240207_amd64.tar.xz --hostname {resource_def.name} --storage {storage} --memory 512 --cores 1 --net0 name=eth0,bridge=vmbr0,ip=dhcp --unprivileged 1"
+                         cmd = f"pct create {new_vmid} local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz --hostname {resource_def.name} --storage {storage} --memory 512 --cores 1 --net0 name=eth0,bridge=vmbr0,ip=dhcp --unprivileged 1"
                     
                     await self._run_ssh_command(cmd)
                     await self._run_ssh_command(f"pct start {new_vmid}")
@@ -319,7 +355,7 @@ class ProxmoxEngine(Engine):
                     storage = "local-lvm"
                     ostemplate = f"local:vztmpl/{template_name}-3.18-x86_64.tar.zst"
                     if template_name == "alpine":
-                         ostemplate = "local:vztmpl/alpine-3.19-default_20240207_amd64.tar.xz"
+                         ostemplate = "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz"
                     
                     data = {
                         "vmid": new_vmid,
@@ -331,15 +367,14 @@ class ProxmoxEngine(Engine):
                         "net0": "name=eth0,bridge=vmbr0,ip=dhcp",
                         "unprivileged": 1
                     }
-                    await self._api_request("POST", f"nodes/{self.node}/lxc", data=data)
-                    # Start
-                    # Wait a bit? API is async task usually.
-                    # _api_request waits for response, but task runs in background. 
-                    # Ideally we should wait for task, but for now we fire start and hope processing is fast or queued
-                    # Actually start might fail if locked. 
-                    # Let's verify status loop or sleep.
-                    import asyncio
-                    await asyncio.sleep(5) 
+                    upid = await self._api_request("POST", f"nodes/{self.node}/lxc", data=data)
+                    # Use _wait_for_task if UPID returned (POST usually returns UPID string)
+                    if isinstance(upid, str) and upid.startswith("UPID:"):
+                        await self._wait_for_task(upid)
+                    else:
+                        import asyncio
+                        await asyncio.sleep(5) # Fallback if no UPID
+                    
                     await self._api_request("POST", f"nodes/{self.node}/lxc/{new_vmid}/status/start")
                     continue
 
@@ -393,6 +428,9 @@ class ProxmoxEngine(Engine):
         # For now we trust the internal flow / MCP input sanitization
         
         if self.use_ssh:
+            if template == "alpine":
+                template = "alpine-3.22-default_20250617_amd64.tar.xz"
+            
             cmd = f"pveam download {storage} {template}"
             try:
                 await self._run_ssh_command(cmd)
@@ -437,7 +475,7 @@ class ProxmoxEngine(Engine):
              # If using API-only mode (rare for this user), we might fail or need to implement listing available templates first.
              
              # Check if we can switch to SSH
-             if await self._check_ssh_access():
+             if self._check_ssh_access():
                  return await self.download_template(storage, template)
              
              # API Implementation Fallback for known templates
@@ -449,22 +487,30 @@ class ProxmoxEngine(Engine):
              if "alpine" in template:
                  # Use a reliable mirror or constructing it?
                  # Assuming standard Proxmox Repo structure for 3.19
-                 url = "http://download.proxmox.com/images/system/alpine-3.19-default_20240207_amd64.tar.xz"
-                 filename = "alpine-3.19-default_20240207_amd64.tar.xz"
+                 url = "http://download.proxmox.com/images/system/alpine-3.22-default_20250617_amd64.tar.xz"
+                 filename = "alpine-3.22-default_20250617_amd64.tar.xz"
              
              if url:
                  try:
                      # POST /nodes/{node}/storage/{storage}/download-url
                      # params: content=vztmpl, filename=..., url=...
-                     await self._api_request("POST", f"nodes/{self.node}/storage/{storage}/download-url", data={
+                     upid = await self._api_request("POST", f"nodes/{self.node}/storage/{storage}/download-url", data={
                          "content": "vztmpl",
                          "filename": filename,
                          "url": url
                      })
-                     # Wait for download...
-                     import asyncio
-                     await asyncio.sleep(10)
-                     return True
+                    
+                     if isinstance(upid, str) and upid.startswith("UPID:"):
+                         success = await self._wait_for_task(upid)
+                         if not success:
+                              print("Templates download task reported failure.")
+                              return False
+                         return True
+                     else:
+                         # Fallback
+                         import asyncio
+                         await asyncio.sleep(10)
+                         return True
                  except Exception as e:
                      print(f"API Download failed: {e}")
                      return False
