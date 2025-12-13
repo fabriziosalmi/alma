@@ -58,10 +58,11 @@ docker compose up -d
 
 ## Core Features
  
-### ⚡ Quick Wins (v0.8.3)
+### ⚡ Quick Wins (v0.8.3 - v0.8.4)
 - **🐳 Docker Engine**: Native support for managing containers with robust logging.
-- **📊 Live Dashboard**: Visualize system resources (VMs, Containers) in real-time with `alma dashboard`.
-- **📚 Template Catalog**: Discover ready-to-use blueprints with `alma templates list`.
+- **📊 Live Dashboard**: Visualize system resources (VMs, Containers) in real-time.
+- **🔄 Real-Time API**: WebSocket support (`/ws/deployments`) for live status updates.
+- **🕸️ GraphQL API**: Flexible data querying (`/graphql`) powered by Strawberry.
 
 ### 🧠 LangGraph Orchestration
 ALMA uses a sophisticated state machine to handle complex deployment workflows, error recovery, and verification loops.

@@ -14,6 +14,8 @@ http://localhost:8000/api/v1
 **Production Environment:**
 ```
 https://api.alma.dev/v1
+wss://api.alma.dev/v1/ws
+https://api.alma.dev/graphql
 ```
 
 ## Authentication
@@ -798,6 +800,48 @@ All endpoints are rate-limited to ensure fair usage.
 
 - **Global**: 60 requests/minute per IP
 - **Burst**: 10 requests (token bucket)
+
+---
+
+## Real-Time API (WebSocket)
+
+Connect to receive live infrastructure events.
+
+### Deployments Stream
+
+```http
+WS /ws/deployments
+```
+
+**Events:**
+- `DeploymentStarted`
+- `ResourceProvisioned`
+- `DeploymentCompleted`
+- `DeploymentFailed`
+
+---
+
+## GraphQL API
+
+Flexible data fetching for complex requirements.
+
+### Endpoint
+
+```http
+POST /graphql
+```
+
+### Example Query
+
+```graphql
+query {
+  systemStatus {
+    status
+    uptimeSeconds
+    activeConnections
+  }
+}
+```
 
 ### Per-Endpoint Limits
 

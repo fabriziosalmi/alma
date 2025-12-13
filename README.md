@@ -23,6 +23,7 @@ ALMA generate "web app with database"
 - **🛡️ Self-Healing**: Automatically detects missing dependencies (e.g., templates) and resolves them (downloads) without user intervention.
 - **🔌 MCP Native**: Exposes infrastructure tools via a standard **Model Context Protocol** server (compatible with Claude Desktop, etc.).
 - **⚡ Proxmox Integration**: Primary engine with task-aware execution, SSH/API dual-mode, and LXC/VM management.
+- **🔄 Real-Time & Flexible**: **WebSocket** support for live monitoring and **GraphQL** API for complex queries.
 - **☸️ Kubernetes Support**: Experimental engine for Deployments and Services.
 
 ## Architecture
