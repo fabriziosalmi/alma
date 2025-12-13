@@ -21,6 +21,7 @@ ALMA generate "web app with database"
 - **🗣️ Natural Language Interface**: Chat with your infrastructure ("Deploy an Alpine LXC named web-01").
 - **🧠 Resilient State Machine**: deployments are managed by a **LangGraph** workflow that handles validation, execution, and verification with automatic retries.
 - **🛡️ Self-Healing**: Automatically detects missing dependencies (e.g., templates) and resolves them (downloads) without user intervention.
+- **⚡ Circuit Breakers**: Built-in **Resilience** patterns (Circuit Breaker, Retrier) ensure system stability under load or failure.
 - **🔌 MCP Native**: Exposes infrastructure tools via a standard **Model Context Protocol** server (compatible with Claude Desktop, etc.).
 - **⚡ Proxmox Integration**: Primary engine with task-aware execution, SSH/API dual-mode, and LXC/VM management.
 - **🔄 Real-Time & Flexible**: **WebSocket** support for live monitoring and **GraphQL** API for complex queries.

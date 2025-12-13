@@ -1,6 +1,6 @@
 "Unit tests for ProxmoxEngine."
 
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 import pytest
 
@@ -181,5 +181,141 @@ class TestProxmoxEngine:
 
             # Verify config update
             mock_req.assert_any_call(
-                "POST", f"nodes/{engine.node}/qemu/101/config", data={"cores": 2}
+                "POST", f"nodes/{engine.node}/qemu/101/config", data={"cores": 2, "memory": "4GB"}
             )
+
+    async def test_wait_for_task_success(self, engine: ProxmoxEngine) -> None:
+        """Test waiting for task success."""
+        with (
+            patch.object(engine, "_api_request", return_value={"status": "stopped", "exitstatus": "OK"}) as mock_req,
+            patch("asyncio.sleep", return_value=None)
+        ):
+            result = await engine._wait_for_task("UPID:pve:1234:...")
+            assert result is True
+
+    async def test_wait_for_task_failure(self, engine: ProxmoxEngine) -> None:
+        """Test waiting for task failure."""
+        with (
+            patch.object(engine, "_api_request", return_value={"status": "stopped", "exitstatus": "ERROR"}),
+            patch("asyncio.sleep", return_value=None)
+        ):
+            result = await engine._wait_for_task("UPID:pve:1234:...")
+            assert result is False
+
+    async def test_wait_for_task_timeout(self, engine: ProxmoxEngine) -> None:
+        """Test waiting for task timeout."""
+        with (
+            patch.object(engine, "_api_request", return_value={"status": "running"}),
+            patch("asyncio.sleep", return_value=None)
+        ):
+            # Short timeout
+            result = await engine._wait_for_task("UPID:pve:1234:...", timeout=0.01)
+            assert result is False
+
+    async def test_api_circuit_breaker(self, engine: ProxmoxEngine) -> None:
+        """Test Circuit Breaker opens after failures."""
+        from alma.core.resilience import CircuitBreakerOpenException
+
+        # Mock authentication to pass first
+        with patch.object(engine, "_authenticate", return_value=True):
+            engine.ticket = "ticket"
+            engine.csrf_token = "token"
+
+            # 1. Fail 5 times (Default Threshold)
+            with patch("httpx.AsyncClient.request", side_effect=IndexError("Network Error")):
+                for _ in range(5):
+                    try:
+                        await engine._api_request("GET", "cluster/status")
+                    except Exception:
+                        pass
+            
+            # 2. Check Circuit is Open
+            assert engine.circuit_breaker.state.value == "OPEN"
+            
+            # 3. Next call should raise CircuitBreakerOpenException immediately (wrapped as ConnectionError)
+            with pytest.raises(ConnectionError, match="Circuit Broken"):
+                await engine._api_request("GET", "cluster/status")
+
+    async def test_download_template_api(self, engine: ProxmoxEngine) -> None:
+        """Test download_template via API path."""
+        # Mock API success for valid template
+        with (
+            patch.object(engine, "_authenticate", return_value=True),
+            patch.object(engine, "_api_request", return_value="UPID:node:123:download") as mock_req,
+            patch.object(engine, "_wait_for_task", return_value=True)
+        ):
+            success = await engine.download_template("local", "alpine")
+            assert success is True
+            mock_req.assert_called_once()
+            args, kwargs = mock_req.call_args
+            assert kwargs["data"]["filename"] == "alpine-3.22-default_20250617_amd64.tar.xz"
+
+    async def test_download_template_unknown(self, engine: ProxmoxEngine) -> None:
+        """Test download_template returns False for unknown template."""
+        success = await engine.download_template("local", "unknown-distro")
+        assert success is False
+
+    @patch("asyncio.create_subprocess_exec")
+    async def test_run_ssh_command(self, mock_exec, engine: ProxmoxEngine) -> None:
+        """Test SSH command execution."""
+        # Mock successful process
+        mock_process = AsyncMock()
+        mock_process.communicate.return_value = (b"output\n", b"")
+        mock_process.returncode = 0
+        mock_exec.return_value = mock_process
+
+        output = await engine._run_ssh_command(["echo", "hello"])
+        assert output == "output"
+        
+        # Verify SSH args safe from injection (list format)
+        mock_exec.assert_called_once()
+        args = mock_exec.call_args[0]
+        assert "ssh" in args[0]
+        assert "-o" in args
+        assert "BatchMode=yes" in args
+        assert "echo" in args
+
+    @patch("asyncio.create_subprocess_exec")
+    async def test_run_ssh_command_failure(self, mock_exec, engine: ProxmoxEngine) -> None:
+        """Test SSH command failure."""
+        mock_process = AsyncMock()
+        mock_process.communicate.return_value = (b"", b"permission denied")
+        mock_process.returncode = 1
+        mock_exec.return_value = mock_process
+
+        with pytest.raises(Exception, match="SSH Command failed"):
+            await engine._run_ssh_command(["ls"])
+
+    async def test_get_vm_by_name_lxc(self, engine: ProxmoxEngine) -> None:
+        """Test finding LXC container by name."""
+        mock_lxc = [{"vmid": 102, "name": "my-container", "status": "running"}]
+        
+        async def api_side_effect(method, endpoint, data=None):
+            if "qemu" in endpoint:
+                return []
+            if "lxc" in endpoint:
+                return mock_lxc
+            return []
+
+        with patch.object(engine, "_api_request", side_effect=api_side_effect):
+            result = await engine._get_vm_by_name("my-container")
+            assert result is not None
+            assert result["vmid"] == 102
+            assert result["type"] == "lxc"
+
+    async def test_list_resources(self, engine: ProxmoxEngine) -> None:
+        """Test listing all resources."""
+        # Mock QEMU and LXC returns
+        async def api_side_effect(method, endpoint, data=None):
+            if "qemu" in endpoint:
+                return [{"vmid": 101, "name": "vm1"}]
+            if "lxc" in endpoint:
+                return [{"vmid": 102, "name": "ct1"}]
+            return []
+
+        with patch.object(engine, "_api_request", side_effect=api_side_effect):
+            resources = await engine.list_resources()
+            assert len(resources) == 2
+            assert resources[0]["type"] == "qemu"
+            assert resources[1]["type"] == "lxc"
+

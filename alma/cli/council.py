@@ -37,7 +37,7 @@ def convene(intent: str = typer.Argument(..., help="What do you want to build?")
 
     result = asyncio.run(run_session())
 
-    # Pretty print the transcript
+        # Pretty print the transcript
     for msg in result.transcript:
         color = "blue"
         title = msg.agent_name
@@ -50,14 +50,19 @@ def convene(intent: str = typer.Argument(..., help="What do you want to build?")
         else:
             color = "blue"
             icon = "🏗️"
-            
+        
+        content_to_print = msg.content
+        if isinstance(content_to_print, dict):
+            # Convert structured content to pretty JSON or YAML for display
+            import json
+            content_to_print = f"```json\n{json.dumps(content_to_print, indent=2)}\n```"
+
         console.print(Panel(
-            Markdown(msg.content),
+            Markdown(str(content_to_print)),
             title=f"{icon} [bold {color}]{title}[/]",
             border_style=color,
             subtitle=msg.role.upper()
         ))
-        # time.sleep(1) # Dramatic pause?
 
     # Print Final Blueprint
     console.print(Panel(

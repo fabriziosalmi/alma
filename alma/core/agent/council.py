@@ -1,33 +1,41 @@
-
 """Multi-Agent Council implementation."""
 
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
-import json
 import logging
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Type, TypeVar
 
 from rich.console import Console
-from rich.panel import Panel
-from rich.text import Text
+from pydantic import BaseModel
 
 from alma.core.llm import LLMInterface
 from alma.core.llm_service import get_llm
+from alma.schemas.council import (
+    InfrastructureDraft,
+    SecurityCritique,
+    CostAnalysis,
+    FinalDecree,
+)
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T", bound=BaseModel)
+
 
 @dataclass
 class AgentMessage:
     agent_name: str
-    content: str
-    role: str  # 'proposal', 'critique', 'analysis'
+    content: dict[str, Any] | str
+    role: str  # 'proposal', 'critique', 'analysis', 'finalization', 'error'
+
 
 @dataclass
 class CouncilResult:
     transcript: list[AgentMessage]
-    final_blueprint: dict[str, Any]
+    final_blueprint: dict[str, Any] | None
+
 
 class Agent:
     def __init__(self, name: str, role: str, persona: str, color: str):
@@ -35,10 +43,12 @@ class Agent:
         self.role = role
         self.persona = persona
         self.color = color
-        # LLM is fetched asynchronously
 
-    async def speak(self, context: str, task: str) -> str:
+    async def speak(
+        self, context: str, task: str, response_model: Type[T] | None = None
+    ) -> T | str:
         llm: LLMInterface = await get_llm()
+        
         prompt = f"""
         You are {self.name}, the {self.role}.
         Your Persona: {self.persona}
@@ -46,104 +56,120 @@ class Agent:
         Context: {context}
 
         Task: {task}
-        
-        Respond entirely in the voice of your persona. Be concise but impactful.
-        If you are producing JSON, ensure it is valid.
         """
-        # In a real implementation, we'd use a specific method to enforce JSON if needed
-        # For this "Wow" demo, we trust the prompt engineering capabilities
-        if self.name == "Architect" and self.role == "Infrastructure Designer" and "Final Synthesis" in context:
-            # Enforce Blueprint Schema for the Final Decree
-            blueprint_schema = {
-                "type": "object",
-                "properties": {
-                    "version": {"type": "string"},
-                    "name": {"type": "string"},
-                    "description": {"type": "string"},
-                    "resources": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "type": {"type": "string"},
-                                "name": {"type": "string"},
-                                "provider": {"type": "string"},
-                                "specs": {"type": "object"}
-                            },
-                            "required": ["type", "name"]
-                        }
-                    }
-                },
-                "required": ["version", "name", "resources"]
-            }
-            response = await llm.generate(prompt, schema=blueprint_schema)
-        else:
-            response = await llm.generate(prompt)
+
+        if response_model:
+            # SOTA Pattern: Schema Enforcement
+            schema = response_model.model_json_schema()
+            prompt += f"\nOutput must strictly adhere to this JSON schema:\n{schema}"
             
-        return response.strip()
+            try:
+                # We pass the schema to the LLM interface
+                response_text = await llm.generate(prompt, schema=schema)
+                
+                # SOTA Pattern: Robust parsing (even if LLM wraps in code blocks)
+                clean_text = response_text.replace("```json", "").replace("```", "").strip()
+                return response_model.model_validate_json(clean_text)
+            except Exception as e:
+                logger.error(f"Agent {self.name} failed to adhere to schema: {e}")
+                raise e
+        else:
+            return await llm.generate(prompt)
+
 
 class Council:
-    def __init__(self):
+    def __init__(self) -> None:
         self.architect = Agent(
             name="Architect",
             role="Infrastructure Designer",
-            persona="You are a visionary cloud architect. You design robust, scalable systems. You prioritize functionality and modern patterns.",
-            color="blue"
+            persona="You are a visionary cloud architect. Design robust, scalable systems using modern patterns.",
+            color="blue",
         )
         self.secops = Agent(
             name="SecOps",
             role="Security Auditor",
-            persona="You are a paranoid security expert. You trust no one. You hate open ports, root users, and weak passwords. You are harsh but fair.",
-            color="red"
+            persona="You are a paranoid security expert. Trust no one. Find vulnerabilities.",
+            color="red",
         )
         self.finops = Agent(
             name="FinOps",
             role="Financial Analyst",
-            persona="You are a frugal budget keeper. You want to save money. You spot waste instantly. You suggest cheaper alternatives.",
-            color="green"
+            persona="You are a frugal budget keeper. Identify waste and suggest savings.",
+            color="green",
         )
-        self.logger = []
+        self.transcript: list[AgentMessage] = []
 
-    def _log(self, agent: Agent, content: str, role: str):
-        self.logger.append(AgentMessage(agent_name=agent.name, content=content, role=role))
+    def _log(self, agent: Agent, content: Any, role: str) -> None:
+        # Convert Pydantic models to dict for storage/viewing
+        if isinstance(content, BaseModel):
+            log_content = content.model_dump()
+        else:
+            log_content = str(content)
+            
+        self.transcript.append(AgentMessage(agent_name=agent.name, content=log_content, role=role))
 
     async def convene(self, user_intent: str) -> CouncilResult:
-        transcript = []
-        
-        # 1. Architect Draft
-        draft_task = f"User Intent: '{user_intent}'. Create a preliminary infrastructure blueprint JSON structure. Focus on resources."
-        draft_bp_text = await self.architect.speak("New Project", draft_task)
-        self._log(self.architect, draft_bp_text, "proposal")
-        
-        # 2. SecOps Review
-        sec_task = f"Review this blueprint for vulnerabilities: {draft_bp_text}. Critique it mercilessly."
-        sec_critique = await self.secops.speak("Security Review", sec_task)
-        self._log(self.secops, sec_critique, "critique")
+        logger.info(f"Council convened for: {user_intent}")
+        self.transcript = []
 
-        # 3. FinOps Review
-        fin_task = f"Estimate the cost of this blueprint: {draft_bp_text}. Suggest 1 way to save money."
-        fin_estimate = await self.finops.speak("Cost Analysis", fin_task)
-        self._log(self.finops, fin_estimate, "analysis")
-
-        # 4. Architect Final Polish
-        final_task = f"""
-        incorporate this feedback into a FINAL valid JSON blueprint.
-        Security Feedback: {sec_critique}
-        Financial Feedback: {fin_estimate}
-        Original Draft: {draft_bp_text}
-        
-        Output ONLY valid JSON. No markdown formatting.
-        """
-        final_bp_text = await self.architect.speak("Final Synthesis", final_task)
-        
-        # Try to parse JSON, if fail, fallback to empty dict (demo resilience)
         try:
-            # Strip markdown code blocks if present
-            clean_json = final_bp_text.replace("```json", "").replace("```", "").strip()
-            final_blueprint = json.loads(clean_json)
-        except json.JSONDecodeError:
-            final_blueprint = {"error": "Failed to parse final blueprint", "raw": final_bp_text}
+            # 1. Architect Drafts Blueprint
+            draft_context = f"User Intent: '{user_intent}'"
+            draft = await self.architect.speak(
+                context=draft_context, 
+                task="Create a preliminary infrastructure blueprint.", 
+                response_model=InfrastructureDraft
+            )
+            self._log(self.architect, draft, "proposal")
             
-        self._log(self.architect, "Final blueprint generated.", "finalization")
+            # 2. Parallel Review (SecOps & FinOps) - SOTA Pattern: Async/Await Gather
+            logger.info("Starting parallel review...")
+            if isinstance(draft, InfrastructureDraft):
+                draft_json = draft.model_dump_json()
+            else:
+                draft_json = str(draft)
 
-        return CouncilResult(transcript=self.logger, final_blueprint=final_blueprint)
+            async def run_secops() -> SecurityCritique:
+                return await self.secops.speak(
+                    context=f"Blueprint: {draft_json}",
+                    task="Analyze for security risks.",
+                    response_model=SecurityCritique
+                )
+
+            async def run_finops() -> CostAnalysis:
+                return await self.finops.speak(
+                    context=f"Blueprint: {draft_json}",
+                    task="Estimate costs and savings.",
+                    response_model=CostAnalysis
+                )
+
+            # Parallel execution
+            sec_review, fin_review = await asyncio.gather(run_secops(), run_finops())
+            
+            self._log(self.secops, sec_review, "critique")
+            self._log(self.finops, fin_review, "analysis")
+
+            # 3. Final Synthesis
+            final_context = f"""
+            Original Draft: {draft_json}
+            Security Feedback: {sec_review.model_dump_json()}
+            Financial Feedback: {fin_review.model_dump_json()}
+            """
+            
+            final_decree = await self.architect.speak(
+                context=final_context,
+                task="Synthesize all feedback into a Final Decree and Blueprint.",
+                response_model=FinalDecree
+            )
+            self._log(self.architect, final_decree, "finalization")
+
+            return CouncilResult(
+                transcript=self.transcript, 
+                final_blueprint=final_decree.blueprint.model_dump() if final_decree.approved else None
+            )
+
+        except Exception as e:
+            logger.error(f"The Council collapsed: {e}")
+            # Graceful degradation
+            self.transcript.append(AgentMessage(agent_name="System", content=f"Council Error: {e}", role="error"))
+            return CouncilResult(transcript=self.transcript, final_blueprint=None)

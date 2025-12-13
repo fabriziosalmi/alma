@@ -1,67 +1,105 @@
+"""Unit tests for Docker Engine."""
 
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, AsyncMock, patch
 from alma.engines.docker import DockerEngine
-from alma.schemas.blueprint import ResourceDefinition, SystemBlueprint
-from alma.core.state import Plan, ResourceState
-
-# Mock docker package
-import sys
-sys.modules['docker'] = MagicMock()
-import docker
-docker.errors = MagicMock()
-docker.errors.DockerException = Exception
-docker.errors.NotFound = Exception
-docker.errors.APIError = Exception
+from alma.schemas.blueprint import SystemBlueprint, ResourceDefinition
+from datetime import datetime
 
 @pytest.fixture
-def resource_def():
-    return ResourceDefinition(
-        name="test-container",
-        type="container",
-        provider="docker",
-        specs={"image": "nginx", "ports": {"80/tcp": 8080}}
-    )
-
-@pytest.fixture
-def plan(resource_def):
-    return Plan(
-        to_create=[resource_def],
-        to_update=[],
-        to_delete=[]
-    )
-
-@pytest.mark.asyncio
-async def test_apply_create(plan):
-    with patch("alma.engines.docker.docker") as mock_docker:
+def mock_docker_lib():
+    """Mock the docker library."""
+    with patch("alma.engines.docker.docker", create=True) as mock_dock:
         mock_client = MagicMock()
-        mock_docker.from_env.return_value = mock_client
-        mock_client.containers.run = MagicMock()
+        mock_dock.DockerClient.return_value = mock_client
+        mock_dock.from_env.return_value = mock_client
+        yield mock_dock, mock_client
+
+@pytest.fixture
+def engine(mock_docker_lib):
+    """Create DockerEngine with mocked client."""
+    return DockerEngine(config={"base_url": "unix:///var/run/docker.sock"})
+
+class TestDockerEngine:
+    
+    @pytest.mark.asyncio
+    async def test_health_check_success(self, engine, mock_docker_lib):
+        _, mock_client = mock_docker_lib
         
-        engine = DockerEngine()
+        assert await engine.health_check() is True
+        mock_client.ping.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_health_check_failure(self, engine, mock_docker_lib):
+        _, mock_client = mock_docker_lib
+        mock_client.ping.side_effect = Exception("Docker Down")
+        
+        assert await engine.health_check() is False
+
+    @pytest.mark.asyncio
+    async def test_apply_create_container(self, engine, mock_docker_lib):
+        _, mock_client = mock_docker_lib
+        
+        resource = ResourceDefinition(
+            name="test-redis",
+            type="container", 
+            provider="docker",
+            specs={"image": "redis:alpine", "ports": {"6379/tcp": 6379}}
+        )
+        plan = MagicMock()
+        plan.to_create = [resource]
+        plan.to_update = []
+        
         await engine.apply(plan)
         
         mock_client.containers.run.assert_called_once()
         args, kwargs = mock_client.containers.run.call_args
-        assert args[0] == "nginx"
-        assert kwargs["name"] == "test-container"
-        assert kwargs["ports"] == {"80/tcp": 8080}
+        assert args[0] == "redis:alpine"
+        assert kwargs["name"] == "test-redis"
+        assert kwargs["detach"] is True
 
-@pytest.mark.asyncio
-async def test_apply_destroy():
-    state = ResourceState(id="test-container", type="container", config={})
-    plan = Plan(to_create=[], to_update=[], to_delete=[state])
-    
-    with patch("alma.engines.docker.docker") as mock_docker:
-        mock_client = MagicMock()
-        mock_docker.from_env.return_value = mock_client
+    @pytest.mark.asyncio
+    async def test_apply_update_container(self, engine, mock_docker_lib):
+        _, mock_client = mock_docker_lib
+        
+        # Mock existing container found
+        mock_container = MagicMock()
+        mock_client.containers.get.return_value = mock_container
+        
+        resource = ResourceDefinition(
+            name="test-redis",
+            type="container", 
+            provider="docker",
+            specs={"image": "redis:latest"}
+        )
+        plan = MagicMock()
+        plan.to_create = []
+        plan.to_update = [(MagicMock(), resource)]
+        
+        await engine.apply(plan)
+        
+        # Should stop and remove old container
+        mock_container.stop.assert_called_once()
+        mock_container.remove.assert_called_once()
+        
+        # Should run new one
+        mock_client.containers.run.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_destroy_container(self, engine, mock_docker_lib):
+        _, mock_client = mock_docker_lib
         
         mock_container = MagicMock()
         mock_client.containers.get.return_value = mock_container
         
-        engine = DockerEngine()
+        res_state = MagicMock()
+        res_state.id = "test-redis"
+        
+        plan = MagicMock()
+        plan.to_delete = [res_state]
+        
         await engine.destroy(plan)
         
-        mock_client.containers.get.assert_called_with("test-container")
+        mock_client.containers.get.assert_called_with("test-redis")
         mock_container.stop.assert_called_once()
         mock_container.remove.assert_called_once()

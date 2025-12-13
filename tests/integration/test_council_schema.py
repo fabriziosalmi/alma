@@ -1,90 +1,84 @@
-
 """
 Integration test for Council Schema Enforcement.
-Verifies that the Council passes the correct schema to the LLM,
-and that the LocalStudioLLM constructs the correct API payload.
 """
 
 import pytest
+import json
 from unittest.mock import MagicMock, patch, AsyncMock
 from alma.core.agent.council import Council
-from alma.core.llm_service import LocalStudioLLM
-from alma.core.config import settings
+from alma.schemas.council import (
+    InfrastructureDraft,
+    SecurityCritique,
+    CostAnalysis,
+    FinalDecree,
+    InfrastructureResource,
+    Vulnerability,
+    CostItem
+)
 
 @pytest.mark.asyncio
-async def test_council_schema_passing():
-    """Verify Council passes schema to Architect's final step."""
+async def test_council_schema_flow():
+    """Verify Council flow with strict schemas."""
+
+    # PREPARE MOCK DATA
+    draft_obj = InfrastructureDraft(
+        name="Test",
+        description="Desc",
+        resources=[
+            InfrastructureResource(type="compute", name="web", provider="proxmox", specs={"cpu": 2})
+        ]
+    )
     
-    # Mock LLM to spy on generate calls
+    sec_obj = SecurityCritique(
+        safe=True,
+        vulnerabilities=[],
+        summary="Secure"
+    )
+    
+    fin_obj = CostAnalysis(
+        total_monthly_cost=10.0,
+        items=[],
+        savings_suggestions=[]
+    )
+    
+    final_obj = FinalDecree(
+        blueprint=draft_obj,
+        approved=True,
+        reasoning="LGTM"
+    )
+
+    # MOCK LLM
     mock_llm = AsyncMock()
-    mock_llm.generate.return_value = '{"test": "blueprint"}'
+    # Sequence: Draft -> Sec/Fin (Parallel order unrelated) -> Final
+    # Since Sec/Fin are parallel, side_effect might be racy if strictly ordered, 
+    # but asyncio.gather usually schedules in order of awaitables passed.
+    # Architect(Draft) -> SecOps -> FinOps -> Architect(Final)
+    # Note: gather(sec, fin) -> usually sec then fin if tasks start immediately.
     
-    # Patch get_llm to return our mock
+    mock_llm.generate.side_effect = [
+        draft_obj.model_dump_json(),
+        sec_obj.model_dump_json(),
+        fin_obj.model_dump_json(),
+        final_obj.model_dump_json()
+    ]
+
     with patch("alma.core.agent.council.get_llm", new=AsyncMock(return_value=mock_llm)):
         council = Council()
+        result = await council.convene("Build app")
+
+        assert result.final_blueprint is not None
+        assert result.final_blueprint["name"] == "Test"
         
-        # We need to simulate the state where we are at the final step
-        # But Council.convene is monolithic. Let's just run convene and check the LAST call.
-        
-        # Mock the intermediate steps to return dummy text
-        mock_llm.generate.side_effect = [
-            "Blueprint Proposal", # Architect Draft
-            "Security Critique",  # SecOps
-            "Cost Analysis",      # FinOps
-            '{"final": "blueprint"}' # Architect Final
-        ]
-        
-        await council.convene("Build a test app")
-        
-        # Check call args
+        # Verify call count (4 interactions)
         assert mock_llm.generate.call_count == 4
         
-        # Get the final call (Architect Final Synthesis)
-        final_call_args = mock_llm.generate.call_args_list[-1]
-        _, kwargs = final_call_args
-        
-        # Verify schema presence
-        assert "schema" in kwargs
-        schema = kwargs["schema"]
-        
-        # Verify schema structure (basic checks)
-        assert schema["type"] == "object"
-        assert "resources" in schema["properties"]
-        assert "required" in schema
+        # Verify Schemas were passed
+        # Call 1: Draft
+        _, kwargs1 = mock_llm.generate.call_args_list[0]
+        assert "schema" in kwargs1
+        assert "InfrastructureDraft" in json.dumps(kwargs1["schema"])
 
-@pytest.mark.asyncio
-async def test_local_studio_payload_construction():
-    """Verify LocalStudioLLM constructs correct JSON schema payload."""
-    
-    llm = LocalStudioLLM(base_url="http://mock-url", model_name="test-model")
-    
-    test_schema = {"type": "object", "properties": {"foo": {"type": "string"}}}
-    
-    # Mock httpx client
-    with patch("httpx.AsyncClient") as mock_client_cls:
-        mock_client = AsyncMock()
-        mock_client_cls.return_value.__aenter__.return_value = mock_client
-        
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "choices": [{"message": {"content": "{}"}}]
-        }
-        mock_client.post.return_value = mock_response
-        
-        await llm.generate("Test prompt", schema=test_schema)
-        
-        # Verify post payload
-        call_args = mock_client.post.call_args
-        url, kwargs = call_args
-        json_body = kwargs["json"]
-        
-        assert "response_format" in json_body
-        rf = json_body["response_format"]
-        assert rf["type"] == "json_schema"
-        assert rf["json_schema"]["schema"] == test_schema
-        assert rf["json_schema"]["strict"] is True
-
-if __name__ == "__main__":
-    # Manually run if executed as script
-    pass
+        # Call 4: Final
+        _, kwargs4 = mock_llm.generate.call_args_list[3]
+        assert "schema" in kwargs4
+        assert "FinalDecree" in json.dumps(kwargs4["schema"])

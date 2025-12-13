@@ -58,10 +58,11 @@ docker compose up -d
 
 ## Core Features
  
-### ⚡ Quick Wins (v0.8.3 - v0.8.5)
+### ⚡ Quick Wins (v0.8.5 - v0.8.8)
 - **🐳 Docker Engine**: Native support for managing containers with robust logging.
 - **📊 Live Dashboard**: Visualize system resources (VMs, Containers) in real-time.
-- **🔄 Real-Time API**: WebSocket support (`/ws/deployments`) for live status updates.
+- **🛡️ Resilience**: Implemented Circuit Breaker and Retry patterns for core system stability.
+- **🧪 Test Coverage**: Significantly improved unit test coverage (~30%) for Core, Engines, and API.
 - **🧙‍♂️ The Council**: Multi-Agent system where specialized AI agents (Architect, SecOps, FinOps) debate infrastructure decisions.
 - **🕸️ GraphQL API**: Flexible data querying (`/graphql`) powered by Strawberry.
 

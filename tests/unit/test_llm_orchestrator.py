@@ -1,6 +1,7 @@
 """Unit tests for Enhanced LLM Orchestrator."""
 
 import pytest
+from unittest.mock import AsyncMock, patch
 
 from alma.core.llm import MockLLM
 from alma.core.llm_orchestrator import EnhancedOrchestrator
@@ -137,6 +138,115 @@ class TestEnhancedOrchestrator:
 
         assert len(findings) > 0
         assert "severity" in findings[0]
+
+    async def test_execute_function_call_native(
+        self, orchestrator_with_llm: EnhancedOrchestrator, mock_llm
+    ) -> None:
+        """Test executing a native function call."""
+        
+        # Setup mock LLM response
+        mock_llm.function_call = AsyncMock(return_value={
+            "function": "create_blueprint",
+            "arguments": {
+                "name": "test-bp",
+                "description": "desc",
+                "resources": [{"name": "vm1", "type": "compute"}]
+            }
+        })
+        
+        result = await orchestrator_with_llm.execute_function_call("Create a blueprint")
+        
+        assert result["success"] is True
+        assert result["tool"] == "create_blueprint"
+        assert result["result"]["blueprint"]["name"] == "test-bp"
+
+    async def test_parse_intent_with_llm(
+        self, orchestrator_with_llm: EnhancedOrchestrator, mock_llm
+    ) -> None:
+        """Test parsing intent with LLM JSON response."""
+        json_resp = '{"intent": "deploy", "confidence": 0.9, "entities": ["vm"]}'
+        mock_llm.generate = AsyncMock(return_value=json_resp)
+        
+        intent = await orchestrator_with_llm.parse_intent_with_llm("Deploy a VM")
+        
+        assert intent["intent"] == "deploy"
+        assert intent["confidence"] == 0.9
+
+    async def test_natural_language_to_blueprint_with_llm(
+        self, orchestrator_with_llm: EnhancedOrchestrator, mock_llm
+    ) -> None:
+        """Test blueprint generation from LLM YAML response."""
+        yaml_resp = """
+```yaml
+version: "1.0"
+name: generated-bp
+resources:
+  - name: server1
+    type: compute
+```
+"""
+        mock_llm.generate = AsyncMock(return_value=yaml_resp)
+        
+        bp = await orchestrator_with_llm.natural_language_to_blueprint("Make a server")
+        
+        assert bp["name"] == "generated-bp"
+        assert len(bp["resources"]) == 1
+        assert bp["metadata"]["generated_by"] == "ALMA-llm"
+
+    async def test_security_audit_with_llm(
+        self, orchestrator_with_llm: EnhancedOrchestrator, mock_llm
+    ) -> None:
+        """Test security audit with LLM text response."""
+        audit_resp = """
+Severity: high
+Issue: Public access
+Recommendation: Close ports
+
+Severity: medium
+Issue: Weak password
+Recommendation: Rotate
+"""
+        mock_llm.generate = AsyncMock(return_value=audit_resp)
+        
+        findings = await orchestrator_with_llm.security_audit({})
+        
+        assert len(findings) == 2
+        assert findings[0]["severity"] == "high"
+        assert findings[1]["issue"] == "Weak password"
+
+    async def test_execute_function_call_mcp(
+        self, orchestrator_with_llm: EnhancedOrchestrator, mock_llm
+    ) -> None:
+        """Test executing an MCP function call."""
+        
+        # Mock LLM to return deploy_vm
+        mock_llm.function_call = AsyncMock(return_value={
+            "function": "deploy_vm",
+            "arguments": {"name": "mcp-vm", "template": "ubuntu"}
+        })
+        
+        # Mock sys.modules to simulate alma.mcp_server
+        from unittest.mock import MagicMock
+        mock_mcp = MagicMock()
+        mock_deploy = AsyncMock(return_value='{"status": "deploying", "vmid": "100"}')
+        
+        with patch.dict("sys.modules", {"alma.mcp_server": mock_mcp}):
+            # We need to ensure import alma.mcp_server works inside the method
+            # And that from alma.mcp_server import deploy_vm works
+            mock_mcp.deploy_vm = mock_deploy
+            
+            result = await orchestrator_with_llm.execute_function_call("Deploy via MCP")
+            
+            assert result["status"] == "deploying"
+            assert result["vmid"] == "100"
+
+    async def test_execute_function_call_no_llm(
+        self, orchestrator_without_llm
+    ) -> None:
+        """Test function call fails gracefully without LLM."""
+        res = await orchestrator_without_llm.execute_function_call("test")
+        assert res["success"] is False
+        assert "not available" in res["error"]
 
     def test_extract_json_valid(self, orchestrator_with_llm: EnhancedOrchestrator) -> None:
         """Test JSON extraction from text."""
