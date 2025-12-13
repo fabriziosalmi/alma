@@ -1,0 +1,57 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: alma-backend
+    restart: unless-stopped
+    environment:
+      - ALMA_ENV=production
+      - ALMA_DEBUG=false
+      - ALMA_DATABASE_URL=sqlite+aiosqlite:////app/data/alma.db
+      - ALMA_REDIS_URL=redis://redis:6379/0
+      # Proxmox config can be passed here or loaded from .env
+      - PROXMOX_HOST=${PROXMOX_HOST:-}
+      - PROXMOX_USER=${PROXMOX_USER:-}
+      - PROXMOX_PASSWORD=${PROXMOX_PASSWORD:-}
+      - PROXMOX_NODE=${PROXMOX_NODE:-}
+    volumes:
+      - alma-data:/app/data
+      # Bind mount local SSH keys for Proxmox access
+      # Read-only for security
+      - ${HOME}/.ssh:/home/alma/.ssh:ro
+    depends_on:
+      - redis
+    networks:
+      - alma-net
+
+  frontend:
+    build:
+      context: ./alma-web
+      dockerfile: Dockerfile
+    container_name: alma-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - alma-net
+
+  redis:
+    image: redis:alpine
+    container_name: alma-redis
+    restart: unless-stopped
+    volumes:
+      - alma-redis:/data
+    networks:
+      - alma-net
+
+volumes:
+  alma-data:
+  alma-redis:
+
+
+networks:
+  alma-net:
+    driver: bridge
