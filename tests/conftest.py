@@ -52,3 +52,12 @@ async def test_db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
 
     async with async_session() as session:
         yield session
+
+
+@pytest.fixture(autouse=True)
+def disable_rate_limiting():
+    """Disable rate limiting for all tests."""
+    from unittest.mock import patch
+    with patch("alma.middleware.rate_limit.RateLimiter.is_rate_limited") as mock_limit:
+        mock_limit.return_value = (False, 0.0)
+        yield mock_limit

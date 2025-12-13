@@ -56,7 +56,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
         native_tools = self.tools.get_available_tools()
         
         # 2. Loading MCP Tools Dynamically
-        mcp_tool_definitions = []
+        mcp_tool_definitions: list[dict[str, Any]] = []
         try:
             from alma.mcp_server import mcp
             # FastMCP stores tools in _tool_manager.tool_registry usually, 
@@ -157,6 +157,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
         except Exception as e:
             return {"success": False, "error": f"Function call execution failed: {e}"}
 
+    def get_available_tools(self) -> list[dict[str, Any]]:
         """
         Get list of available tools for function calling.
 

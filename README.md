@@ -26,19 +26,19 @@ graph TD
     User[User / Chat UI] --> API[FastAPI / Chat Stream]
     API --> Graph[LangGraph Orchestrator]
     
-    subgraph "Resilient Deployment Workflow"
+    subgraph Workflow [Resilient Deployment Workflow]
         Graph --> Parse[Parse Intent]
         Parse --> Validate[Validate Params]
         Validate --> Check[Check Resources]
-        Check -->|Missing Template| Heal[Self-Healing / Download]
-        Check -->|Ready| Exec[Execute Deployment]
+        Check -- Missing Template --> Heal[Self-Healing / Download]
+        Check -- Ready --> Exec[Execute Deployment]
         Exec --> Verify[Verify Deployment]
-        Verify -->|Retry Loop| Verify
+        Verify -- Retry Loop --> Verify
     end
 
     Exec --> MCP[MCP Server]
     MCP --> Engine[Proxmox Engine]
-    Engine --> Proxmox[Proxmox VE (API/SSH)]
+    Engine --> Proxmox[Proxmox VE API/SSH]
 ```
 
 ## Quick Start

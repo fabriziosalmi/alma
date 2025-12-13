@@ -133,7 +133,7 @@ class TestBlueprintAPI:
 
     # --- REFACTORED DEPLOYMENT TESTS ---
 
-    @patch("alma.api.routes.blueprints.FakeEngine")
+    @patch("alma.api.routes.blueprints.SimulationEngine")
     async def test_deploy_blueprint_dry_run(
         self,
         MockFakeEngine,
@@ -169,7 +169,7 @@ class TestBlueprintAPI:
         assert data["deployment_id"] == "dry-run"
         assert "1 to create" in data["plan_summary"]  # Check the plan is returned
 
-    @patch("alma.api.routes.blueprints.FakeEngine")
+    @patch("alma.api.routes.blueprints.SimulationEngine")
     async def test_deploy_blueprint_actual(
         self,
         MockFakeEngine,
@@ -207,7 +207,7 @@ class TestBlueprintAPI:
         mock_engine_instance.apply.assert_called_once()
         mock_engine_instance.destroy.assert_called_once()
 
-    @patch("alma.api.routes.blueprints.FakeEngine")
+    @patch("alma.api.routes.blueprints.SimulationEngine")
     async def test_deploy_no_changes(
         self,
         MockFakeEngine,

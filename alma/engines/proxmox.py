@@ -177,7 +177,7 @@ class ProxmoxEngine(Engine):
             for vm in vms:
                 if vm.get("name") == name:
                     vm["type"] = "qemu"
-                    return vm
+                    return cast(dict[str, Any], vm)
             
             # Try CTs
             lxc_out = await self._run_ssh_command(f"pvesh get /nodes/{self.node}/lxc --output-format json")
@@ -185,7 +185,7 @@ class ProxmoxEngine(Engine):
             for ct in cts:
                 if ct.get("name") == name:
                     ct["type"] = "lxc"
-                    return ct
+                    return cast(dict[str, Any], ct)
             return None
 
         # API Implementation

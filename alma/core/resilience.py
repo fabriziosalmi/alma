@@ -52,14 +52,14 @@ class CircuitBreaker:
         self.failure_count = 0
         self.last_failure_time = 0.0
 
-    def __call__(self, func: Callable[..., T]) -> Callable[..., T]:
+    def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> T:
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             return await self.call(func, *args, **kwargs)
 
-        return wrapper  # type: ignore[return-value]
+        return wrapper
 
-    async def call(self, func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
+    async def call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         if self.state == CircuitState.OPEN:
             if time.time() - self.last_failure_time > self.recovery_timeout:
                 logger.info(f"Circuit '{self.name}' attempting recovery (HALF_OPEN)")

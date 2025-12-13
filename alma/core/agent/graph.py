@@ -21,10 +21,12 @@ class DeploymentState(TypedDict):
 
 # --- Nodes ---
 
-async def parse_intent(state: DeploymentState):
+async def parse_intent(state: DeploymentState) -> dict[str, Any]:
     """Extract intent and params from the latest message."""
     import re
     last_msg = state["messages"][-1].content
+    if isinstance(last_msg, list):
+        last_msg = str(last_msg)  # Simple fallback for multimodal
     
     # Simple regex parsing (Fast Track logic extracted here)
     name_match = re.search(r"named\s+([a-zA-Z0-9\-\_]+)", last_msg, re.IGNORECASE)
@@ -41,7 +43,7 @@ async def parse_intent(state: DeploymentState):
         "status": f"Parsing... Intent={intent}"
     }
 
-async def validate_params(state: DeploymentState):
+async def validate_params(state: DeploymentState) -> dict[str, Any]:
     """Check if we have enough info to proceed."""
     if not state["vm_name"]:
         return {"error": "Missing VM Name", "status": "Error: Missing Name"}
@@ -50,7 +52,7 @@ async def validate_params(state: DeploymentState):
     
     return {"error": None, "status": "Valid parameters."}
 
-async def check_resources(state: DeploymentState):
+async def check_resources(state: DeploymentState) -> dict[str, Any]:
     """Verify if template exists, attempt self-healing (download) if needed."""
     template = state["template"]
     
@@ -68,10 +70,12 @@ async def check_resources(state: DeploymentState):
     # The 'download_template' tool in MCP handles the actual check/download idempotency
     return {"status": f"Resources check passed for {template}"}
 
-async def execute_deployment(state: DeploymentState):
+async def execute_deployment(state: DeploymentState) -> dict[str, Any]:
     """Execute the deployment via MCP."""
     vm_name = state["vm_name"]
     template = state["template"]
+    if not vm_name or not template:
+        return {"error": "Missing params", "status": "Failed"}
     
     # 1. Ensure Template (Self-Healing Step integrated in execution for simplicity or separate node)
     # Let's call download_template first just in case (Idempotent)
@@ -93,7 +97,7 @@ async def execute_deployment(state: DeploymentState):
     except Exception as e:
         return {"error": str(e), "status": "Deployment Failed"}
 
-async def verify_deployment(state: DeploymentState):
+async def verify_deployment(state: DeploymentState) -> dict[str, Any]:
     """Verify state on Proxmox with retry."""
     if state.get("error"):
         return {"status": "Skipping verification due to error."}

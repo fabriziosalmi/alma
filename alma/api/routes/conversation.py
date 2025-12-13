@@ -271,7 +271,7 @@ async def chat_stream(
             }
             
             final_state = None
-            async for event in app.astream(cast(dict[str, Any], inputs)):
+            async for event in app.astream(cast(Any, inputs)):
                 # event is a dict of the validation/execution steps
                 # e.g. {'parse_intent': {'intent': 'deploy', ...}}
                 for node_name, state_update in event.items():
