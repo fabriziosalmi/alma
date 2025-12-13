@@ -24,6 +24,7 @@ ALMA generate "web app with database"
 - **🔌 MCP Native**: Exposes infrastructure tools via a standard **Model Context Protocol** server (compatible with Claude Desktop, etc.).
 - **⚡ Proxmox Integration**: Primary engine with task-aware execution, SSH/API dual-mode, and LXC/VM management.
 - **🔄 Real-Time & Flexible**: **WebSocket** support for live monitoring and **GraphQL** API for complex queries.
+- **🧙‍♂️ The Council**: **Multi-Agent Swarm** (Architect, SecOps, FinOps) that debates and validates usage before deployment.
 - **☸️ Kubernetes Support**: Experimental engine for Deployments and Services.
 
 ## Architecture
