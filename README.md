@@ -14,8 +14,9 @@ ALMA (Autonomous Language Model Architecture) is a resilient, self-healing infra
 - **🗣️ Natural Language Interface**: Chat with your infrastructure ("Deploy an Alpine LXC named web-01").
 - **🧠 Resilient State Machine**: deployments are managed by a **LangGraph** workflow that handles validation, execution, and verification with automatic retries.
 - **🛡️ Self-Healing**: Automatically detects missing dependencies (e.g., templates) and resolves them (downloads) without user intervention.
-- **🔌 MCP Native**: Exposes infrastructure tools via a standard **Model Context Protocol** server, making it compatible with Anthropic Claude, Google Gemini, and other LLMs.
-- **⚡ Proxmox Integration**: Advanced engine with task-aware waiting, SSH/API dual-mode, and robust LXC/VM management.
+- **🔌 MCP Native**: Exposes infrastructure tools via a standard **Model Context Protocol** server (compatible with Claude Desktop, etc.).
+- **⚡ Proxmox Integration**: Primary engine with task-aware execution, SSH/API dual-mode, and LXC/VM management.
+- **☸️ Kubernetes Support**: Experimental engine for Deployments and Services.
 
 ## Architecture
 

@@ -26,8 +26,8 @@ features:
   - title: Multi-Provider Support
     details: Deploy to Kubernetes, Proxmox, or any infrastructure provider through a unified, conversational interface.
   
-  - title: Infrastructure Pull Requests
-    details: Review, approve, and track infrastructure changes just like code changes with built-in versioning and rollback.
+  - title: Infrastructure Approval
+    details: Review, approve, and track deployment requests with a built-in approval workflow.
   
   - title: AI-Powered Orchestration
     details: Leverage advanced LLM capabilities for intelligent resource sizing, cost optimization, and security auditing.
@@ -35,8 +35,8 @@ features:
   - title: Real-time Monitoring
     details: Track deployments, metrics, and system health with Prometheus integration and streaming updates.
   
-  - title: Production Ready
-    details: Built with FastAPI, tested extensively, and designed for high-availability production environments.
+  - title: Modern Stack
+    details: Built with FastAPI, LangGraph, and Pydantic. Designed for reliability and type safety.
 ---
 
 ## Quick Example
@@ -104,5 +104,3 @@ Horizontally scalable design with support for distributed deployments and high-t
 
 - [GitHub Discussions](https://github.com/fabriziosalmi/alma/discussions)
 - [Issue Tracker](https://github.com/fabriziosalmi/alma/issues)
-- [Documentation](https://alma-docs.dev)
-- [Enterprise Support](mailto:enterprise@alma.dev)

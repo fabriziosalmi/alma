@@ -91,6 +91,9 @@ class KubernetesEngine(Engine):
     async def apply(self, plan: Plan) -> None:
         """Apply a plan to create or update Kubernetes resources."""
         await self._initialize_clients()
+        
+        # 1. Smart Namespace: Ensure it exists
+        await self._ensure_namespace(self.namespace)
 
         # We can process creates and updates together
         for resource in plan.to_create + [res for _, res in plan.to_update]:
@@ -118,6 +121,9 @@ class KubernetesEngine(Engine):
                     await self.apps_v1.delete_namespaced_deployment(
                         name=resource_state.id, namespace=self.namespace
                     )
+                    # Also delete auto-created service if it exists (heuristic: name-svc or name)
+                    # For now, we only delete explicitly tracked resources, or we could try to clean up.
+                    # Let's keep it safe.
                     logger.info(f"Deleted Deployment: {resource_state.id}")
                 elif resource_state.type == "network":
                     await self.core_v1.delete_namespaced_service(
@@ -135,25 +141,132 @@ class KubernetesEngine(Engine):
 
     # --- Helper methods for applying resources ---
 
+    async def _ensure_namespace(self, name: str) -> None:
+        """Idempotently create namespace."""
+        try:
+            await self.core_v1.read_namespace(name=name)
+        except ApiException as e:
+            if e.status == 404:
+                logger.info(f"Namespace '{name}' missing. Creating...")
+                ns = client.V1Namespace(metadata=client.V1ObjectMeta(name=name))
+                await self.core_v1.create_namespace(body=ns)
+            else:
+                raise
+
     async def _apply_deployment(self, resource: ResourceDefinition) -> None:
-        """Create or patch a Deployment."""
+        """Create or patch a Deployment, with Auto-Service and Wait logic."""
         deployment_body = self._construct_deployment(resource)
+        name = resource.name
+        
+        # 1. Apply Deployment
         try:
             await self.apps_v1.read_namespaced_deployment(
-                name=resource.name, namespace=self.namespace
+                name=name, namespace=self.namespace
             )
             await self.apps_v1.patch_namespaced_deployment(
-                name=resource.name, namespace=self.namespace, body=deployment_body
+                name=name, namespace=self.namespace, body=deployment_body
             )
-            logger.info(f"Patched Deployment: {resource.name}")
+            logger.info(f"Patched Deployment: {name}")
         except ApiException as e:
             if e.status == 404:
                 await self.apps_v1.create_namespaced_deployment(
                     namespace=self.namespace, body=deployment_body
                 )
-                logger.info(f"Created Deployment: {resource.name}")
+                logger.info(f"Created Deployment: {name}")
             else:
                 raise
+        
+        # 2. Auto-Service: If ports defined and not disabled
+        specs = resource.specs
+        if specs.get("ports") and specs.get("expose", True):
+            await self._ensure_auto_service(resource)
+
+        # 3. Wait for Ready
+        if specs.get("wait", True):
+            await self._wait_for_rollout(name)
+
+    async def _ensure_auto_service(self, resource: ResourceDefinition) -> None:
+        """Automatically create a Service for a Deployment with ports."""
+        name = resource.name # Service name same as deployment for simplicity
+        ports = resource.specs.get("ports", [])
+        if not ports:
+            return
+
+        # Construct minimal service def
+        svc_specs = {
+            "selector": name, # Matches deployment label
+            "ports": ports,   # List of ints
+            "service_type": resource.specs.get("service_type", "ClusterIP")
+        }
+        
+        # We construct a V1Service manually here or reuse _construct_service logic?
+        # _construct_service expects a ResourceDefinition. Let's make a temporary one.
+        # But _construct_service logic is slightly different (expects single port, target_port).
+        # Let's handle multi-port manually.
+        
+        svc_ports = []
+        for p in ports:
+            # Handle int or struct
+            if isinstance(p, int):
+                svc_ports.append(client.V1ServicePort(
+                    port=p, target_port=p, name=f"port-{p}"
+                ))
+            elif isinstance(p, dict):
+                 svc_ports.append(client.V1ServicePort(
+                    port=p["port"], 
+                    target_port=p.get("targetPort", p["port"]),
+                    name=p.get("name", f"port-{p['port']}")
+                ))
+        
+        svc_body = client.V1Service(
+            api_version="v1",
+            kind="Service",
+            metadata=client.V1ObjectMeta(
+                name=name, 
+                namespace=self.namespace,
+                labels={alma_BLUEPRINT_LABEL: resource.metadata.get("blueprint_name", "unknown"), "auto-generated": "true"}
+            ),
+            spec=client.V1ServiceSpec(
+                selector={"app": name},
+                ports=svc_ports,
+                type=svc_specs["service_type"]
+            )
+        )
+        
+        try:
+            await self.core_v1.read_namespaced_service(name=name, namespace=self.namespace)
+            # Patch/Update? For now, we assume if it exists, it's fine. 
+            # Or we could patch it.
+            logger.info(f"Auto-Service '{name}' already exists.")
+        except ApiException as e:
+            if e.status == 404:
+                await self.core_v1.create_namespaced_service(
+                    namespace=self.namespace, body=svc_body
+                )
+                logger.info(f"Auto-Created Service: {name}")
+
+    async def _wait_for_rollout(self, name: str, timeout: int = 60) -> None:
+        """Wait for Deployment to be ready."""
+        import asyncio
+        import time
+        
+        start = time.time()
+        logger.info(f"Waiting for rollout of '{name}'...")
+        
+        while time.time() - start < timeout:
+            dep = await self.apps_v1.read_namespaced_deployment(name, self.namespace)
+            # Check available replicas
+            # status.available_replicas might be None initially
+            available = dep.status.available_replicas or 0
+            desired = dep.spec.replicas or 1
+            
+            if available >= desired:
+                logger.info(f"Rollout '{name}' complete ({available}/{desired}).")
+                return
+            
+            await asyncio.sleep(2)
+        
+        logger.warning(f"Timeout waiting for rollout '{name}'")
 
     async def _apply_service(self, resource: ResourceDefinition) -> None:
         """Create or patch a Service."""
@@ -186,10 +299,21 @@ class KubernetesEngine(Engine):
             "app": name,
         }
 
+        # Handle 'port' vs 'ports' legacy
+        container_ports = []
+        if specs.get("ports"):
+             for p in specs.get("ports"):
+                  if isinstance(p, int):
+                      container_ports.append(client.V1ContainerPort(container_port=p))
+                  elif isinstance(p, dict):
+                      container_ports.append(client.V1ContainerPort(container_port=p["port"]))
+        elif specs.get("port"):
+             container_ports.append(client.V1ContainerPort(container_port=specs.get("port")))
+
         container = client.V1Container(
             name=name,
             image=specs.get("image"),
-            ports=[client.V1ContainerPort(container_port=specs.get("port", 80))],
+            ports=container_ports,
         )
 
         template = client.V1PodTemplateSpec(
@@ -251,28 +375,35 @@ class KubernetesEngine(Engine):
 
     def _deployment_to_resource_state(self, dep: client.V1Deployment) -> ResourceState:
         """Converts a V1Deployment to a ResourceState."""
+        config = {
+                "replicas": dep.spec.replicas,
+                "image": dep.spec.template.spec.containers[0].image,
+            }
+        # Try to get first port if exists
+        if dep.spec.template.spec.containers[0].ports:
+             config["port"] = dep.spec.template.spec.containers[0].ports[0].container_port
+             
         return ResourceState(
             id=dep.metadata.name,
             type="compute",
-            config={
-                "replicas": dep.spec.replicas,
-                "image": dep.spec.template.spec.containers[0].image,
-                "port": dep.spec.template.spec.containers[0].ports[0].container_port,
-            },
+            config=config,
         )
 
     def _service_to_resource_state(self, svc: client.V1Service) -> ResourceState:
         """Converts a V1Service to a ResourceState."""
         # This is a simplification; a real conversion might be more complex
+        config = {
+                "selector": list(svc.spec.selector.values())[0] if svc.spec.selector else None,
+                "service_type": svc.spec.type,
+            }
+        if svc.spec.ports:
+             config["port"] = svc.spec.ports[0].port
+             config["target_port"] = svc.spec.ports[0].target_port
+             
         return ResourceState(
             id=svc.metadata.name,
             type="network",
-            config={
-                "selector": list(svc.spec.selector.values())[0] if svc.spec.selector else None,
-                "port": svc.spec.ports[0].port,
-                "target_port": svc.spec.ports[0].target_port,
-                "service_type": svc.spec.type,
-            },
+            config=config,
         )
 
     def get_supported_resource_types(self) -> list[str]:

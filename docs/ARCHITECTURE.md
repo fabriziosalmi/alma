@@ -231,7 +231,7 @@ User Input
     ↓
 Prompt Template
     ↓
-LLM Processing (Qwen3)
+LLM Processing (Qwen2.5)
     ↓
 Response Parsing
     ↓
@@ -448,7 +448,8 @@ Strong typing throughout:
 - [ ] Distributed deployment
 - [ ] Event sourcing
 - [ ] CQRS pattern
-- [ ] Blockchain audit trail
+- [ ] Event sourcing
+- [ ] CQRS pattern
 
 ## References
 
