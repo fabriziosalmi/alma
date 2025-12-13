@@ -13,9 +13,9 @@ http://localhost:8000/api/v1
 
 **Production Environment:**
 ```
-https://api.alma.dev/v1
-wss://api.alma.dev/v1/ws
-https://api.alma.dev/graphql
+http://localhost:8000/api/v1
+ws://localhost:8000/ws
+http://localhost:8000/graphql
 ```
 
 ## Authentication
@@ -1000,7 +1000,7 @@ Real-time infrastructure monitoring and deployment status updates via WebSocket 
 
 ```
 ws://localhost:8000/ws/deployments
-wss://api.alma.dev/ws/deployments  # Production (Secure)
+ws://localhost:8000/ws/deployments  # Local Default
 ```
 
 ### Example Implementation
@@ -1216,7 +1216,7 @@ ALMA API follows semantic versioning principles through URL path versioning:
 
 ### Developer Support
 
-- **Documentation Portal**: https://alma-docs.dev
+- **Documentation Portal**: https://localhost/privacy
 - **GitHub Repository**: https://github.com/fabriziosalmi/alma
 - **Issue Tracker**: https://github.com/fabriziosalmi/alma/issues
 - **Community Discussions**: https://github.com/fabriziosalmi/alma/discussions
@@ -1224,7 +1224,7 @@ ALMA API follows semantic versioning principles through URL path versioning:
 ### Enterprise Support
 
 For production deployments and enterprise licensing:
-- **Email**: enterprise@alma.dev
+- **Email**: enterprise@localhost
 - **SLA Response Times**: 4-hour critical, 24-hour standard
 - **Dedicated Support Channel**: Available on request
 
@@ -1241,9 +1241,9 @@ ALMA is open-source and welcomes community contributions:
 ## Legal & Compliance
 
 - **License**: MIT (Open Source)
-- **Privacy Policy**: https://alma.dev/privacy
-- **Terms of Service**: https://alma.dev/terms
-- **Security Disclosures**: security@alma.dev
+- **Privacy Policy**: https://localhost/privacy
+- **Terms of Service**: https://localhost/terms
+- **Security Disclosures**: security@localhost
 
 ---
 

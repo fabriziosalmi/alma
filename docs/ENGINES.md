@@ -10,12 +10,12 @@ ALMA uses a **plugin architecture** for infrastructure providers. Each engine im
 
 | Engine | Provider | Status | Resources Supported |
 |--------|----------|--------|---------------------|
-| **FakeEngine** | Testing | ✅ Complete | All types (simulated) |
-| **ProxmoxEngine** | Proxmox VE | 🚧 In Progress | compute, storage |
-| DockerEngine | Docker | 📅 Planned | compute, network |
+| **FakeEngine** | Testing | ✅ Supported | All types (simulated) |
+| **ProxmoxEngine** | Proxmox VE | ✅ Supported | compute, storage |
+| **DockerEngine** | Docker | ✅ Supported | compute |
+| **KubernetesEngine** | K8s | 🧪 Experimental | compute, network (Service) |
 | AnsibleEngine | Ansible | 📅 Planned | compute, configure |
 | MikroTikEngine | MikroTik | 📅 Planned | network |
-| KubernetesEngine | K8s | 📅 Planned | All types |
 
 ## Engine Interface
 
@@ -97,7 +97,7 @@ print(f"Resources: {result.resources_created}")
 
 **Location**: `alma/engines/proxmox.py`
 
-**Status**: 🚧 In Development
+**Status**: ✅ Supported (Primary Engine)
 
 **Supported Resources**:
 - ✅ `compute`: Virtual machines

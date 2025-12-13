@@ -20,7 +20,7 @@ The ALMA team takes security vulnerabilities seriously. We appreciate your effor
 
 Instead, please report security vulnerabilities by emailing:
 
-**security@alma.dev**
+Please report vulnerabilities via **GitHub Security Advisories** or by opening a draft Security Advisory in the repository.
 
 Or use GitHub Security Advisories:
 https://github.com/fabriziosalmi/alma/security/advisories/new
@@ -205,7 +205,7 @@ These will be addressed in future releases.
 
 ## Security Contacts
 
-- **Primary**: security@alma.dev
+- **Primary**: Report via GitHub Repository
 - **GitHub**: [@fabriziosalmi](https://github.com/fabriziosalmi)
 - **Project Lead**: Fabrizio Salmi
 

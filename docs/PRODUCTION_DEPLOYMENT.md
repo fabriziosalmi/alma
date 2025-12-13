@@ -837,7 +837,7 @@ SELECT pg_reload_conf();
 SHOW ssl;
 
 -- Create encrypted backup
-pg_dump -Fc alma_production | gpg --encrypt --recipient admin@alma.dev > backup.pgdump.gpg
+pg_dump -Fc alma_production | gpg --encrypt --recipient admin@example.com > backup.pgdump.gpg
 ```
 
 ### 9. Security Audit Logging
@@ -1243,7 +1243,4 @@ LIMIT 10;
 
 ## Support
 
-For production support:
-- Enterprise support: enterprise@ALMA.dev
-- Security issues: security@ALMA.dev
-- GitHub: https://github.com/fabriziosalmi/alma/issues
+For production- GitHub Issues: https://github.com/fabriziosalmi/alma/issues

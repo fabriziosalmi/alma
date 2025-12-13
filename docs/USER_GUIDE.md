@@ -737,6 +737,6 @@ histogram_quantile(0.95, http_request_duration_seconds)
 - **Documentation**: All docs in `docs/` folder
 - **GitHub Issues**: Report bugs or request features
 - **Discord**: Community support and discussions
-- **Email**: support@ALMA.dev (for enterprise customers)
+- **GitHub Issues**: https://github.com/fabriziosalmi/alma/issues
 
 Happy infrastructure management! 🚀
