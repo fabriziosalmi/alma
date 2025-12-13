@@ -76,11 +76,20 @@ app.include_router(tools.router, prefix=settings.api_prefix)
 app.include_router(templates.router, prefix=settings.api_prefix)
 app.include_router(monitoring.router, prefix=settings.api_prefix)
 
+from alma.api.routes import websockets
+app.include_router(websockets.router) # WebSockets don't usually share the /api/v1 prefix conventions typically
+
 # Add middleware
 app.middleware("http")(rate_limit_middleware)
 app.middleware("http")(metrics_middleware)
 app.add_middleware(ImmuneMiddleware)
 app.add_middleware(IdempotencyMiddleware)
+
+# GraphQL
+from strawberry.fastapi import GraphQLRouter
+from alma.api.graphql.schema import schema
+graphql_app = GraphQLRouter(schema)
+app.include_router(graphql_app, prefix="/graphql")
 
 # Mount static files for dashboard
 dashboard_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "alma-web/dist")

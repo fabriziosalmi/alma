@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "alma-ai"
-version = "0.8.3"
+version = "0.8.4"
 description = "ALMA: The Soul of Your Infrastructure."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -46,7 +46,9 @@ dependencies = [
     "argon2-cffi>=23.1.0",
     "langgraph>=0.0.10",
     "langchain>=0.1.0",
+    "langchain>=0.1.0",
     "langchain-core>=0.1.0",
+    "strawberry-graphql>=0.219.0", # GraphQL Support
 ]
 
 [project.optional-dependencies]

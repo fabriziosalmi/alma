@@ -439,11 +439,11 @@ Strong typing throughout:
 - [x] CQRS pattern (`alma/core/cqrs.py`)
 - [x] Docker Engine Support
 
-### Short Term (v0.9.x)
-- [ ] WebSocket support for real-time updates
-- [ ] GraphQL API (for complex data fetching)
+### Completed (v0.8.4)
+- [x] WebSocket support for real-time updates (`/ws/deployments`)
+- [x] GraphQL API (`/graphql`)
 
-### Medium Term (v1.0)
+### Medium Term
 - [ ] Multi-tenancy
 - [ ] RBAC (Role-Based Access Control)
 - [ ] Native Terraform Provider (Go wrapper)
