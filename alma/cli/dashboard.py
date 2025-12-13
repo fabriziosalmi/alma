@@ -81,9 +81,10 @@ class DashboardApp:
             return
 
         try:
-            metrics_resp, iprs_resp = await asyncio.gather(
+            metrics_resp, iprs_resp, infra_resp = await asyncio.gather(
                 self.http_client.get("/monitoring/metrics/summary"),
                 self.http_client.get("/iprs/"),
+                self.http_client.get("/monitoring/stats/infrastructure"),
                 return_exceptions=True,
             )
 
@@ -91,7 +92,8 @@ class DashboardApp:
                 raise metrics_resp
             if isinstance(iprs_resp, Exception):
                 raise iprs_resp
-
+            # infra_resp might fail if Proxmox down, handle gracefully
+            
             assert isinstance(metrics_resp, httpx.Response)
             assert isinstance(iprs_resp, httpx.Response)
 
@@ -100,6 +102,12 @@ class DashboardApp:
 
             self.metrics = metrics_resp.json()
             self.iprs = iprs_resp.json()
+            
+            if isinstance(infra_resp, httpx.Response) and infra_resp.status_code == 200:
+                self.infra = infra_resp.json()
+            else:
+                self.infra = {"nodes": []}
+
             self.api_status = "connected"
             self.consecutive_errors = 0  # Reset on success
             self.logs.append(f"[dim]{time.strftime('%H:%M:%S')}[/] [green]✨ Data refreshed[/]")
@@ -124,100 +132,74 @@ class DashboardApp:
         except Exception:
             self.api_status = "Disconnected"
             self.consecutive_errors += 1
-            self.logs.append(
-                f"[dim]{time.strftime('%H:%M:%S')}[/] [red]An unexpected error occurred[/]"
-            )
+            # self.logs.append(
+            #    f"[dim]{time.strftime('%H:%M:%S')}[/] [red]An unexpected error occurred[/]"
+            # )
 
     def _generate_mock_data(self) -> None:
         # (Mock data generation remains the same as previous version)
         self.api_status = "connected"
         self.metrics = {"llm": {"last_intent": "mock_intent"}, "system": {}}
         self.iprs = []
+        self.infra = {"nodes": [
+            {"data": {"label": "mock-vm-1", "subLabel": "qemu • running", "icon": "Server", "colorClass": "bg-green-500/20"}},
+            {"data": {"label": "mock-db", "subLabel": "lxc • stopped", "icon": "Database", "colorClass": "bg-red-500/20"}}
+        ]}
         self.logs.append(f"[dim]{time.strftime('%H:%M:%S')}[/] [cyan]Mock data generated[/]")
 
-    def _render_header(self) -> Align:
-        """Renders the dashboard header."""
-        f = Figlet(font="slant")
-        ascii_art = Text(f.renderText("ALMA"), style="bold cyan", justify="center")
+    def generate_layout(self) -> Layout:
+        """Defines the visual layout of the dashboard."""
+        layout = Layout(name="root")
+        layout.split(
+            Layout(name="header", size=5),
+            Layout(ratio=1, name="main"),
+            Layout(size=7, name="footer"),
+        )
+        layout["main"].split_row(
+            Layout(name="left_col", ratio=1),
+            Layout(name="right_col", ratio=2),
+        )
+        layout["left_col"].split(
+            Layout(name="llm_status", size=10),
+            Layout(name="system_health")
+        )
+        layout["right_col"].split(
+            Layout(name="action", ratio=1),
+            Layout(name="resources", ratio=2)
+        )
+        return layout
 
-        status_dot = "🟢" if self.api_status == "connected" else "🔴"
-        status_text = Text(f"{status_dot} API: {self.api_status}", justify="right")
-        version_text = Text(f"v{APP_VERSION}", justify="right", style="dim")
-
-        grid = Table.grid(expand=True)
-        grid.add_column(ratio=1)
-        grid.add_column(width=25)
-        grid.add_row(ascii_art, f"{status_text}\n{version_text}")
-
-        return Align.center(grid, vertical="middle")
-
-    def _render_llm_panel(self) -> Panel:
-        """Renders the LLM Status panel."""
-        title = "[bold]🧠 LLM Status[/]"
-        if self.api_status != "connected" and not self.mock:
-            return Panel(Spinner("dots", "Connecting..."), title=title, border_style="red")
-
-        llm_metrics = self.metrics.get("llm", {})
-        grid = Table.grid(expand=True)
-        grid.add_column(justify="left", ratio=1)
-        grid.add_column(justify="right", ratio=1)
-        grid.add_row("Last Intent:", f"[bold magenta]{llm_metrics.get('last_intent', 'N/A')}[/]")
-        grid.add_row("Tokens/sec:", f"{llm_metrics.get('tokens_per_second', 0):.2f}")
-        grid.add_row("Total Tokens:", f"{llm_metrics.get('total_tokens', 0):,}")
-        return Panel(grid, title=title, border_style="cyan")
-
-    def _render_health_panel(self) -> Panel:
-        """Renders the System Health panel."""
-        title = "[bold]⚙️ System Health[/]"
-        if self.api_status != "connected" and not self.mock:
-            return Panel(Text("---", justify="center"), title=title, border_style="red")
-
-        system_metrics = self.metrics.get("system", {})
-        cpu = system_metrics.get("cpu_usage", 0)
-        mem = system_metrics.get("memory_usage", 0)
-        latency = system_metrics.get("avg_api_latency_ms", 0)
-
-        grid = Table.grid(expand=True)
-        grid.add_column()
-        grid.add_column(justify="right")
-        grid.add_row("CPU Usage:", f"[{'green' if cpu < 70 else 'red'}]{cpu:.1f}%[/]")
-        grid.add_row("Memory Usage:", f"[{'green' if mem < 70 else 'red'}]{mem:.1f}%[/]")
-        grid.add_row("API Latency:", f"{latency:.0f} ms")
-        return Panel(grid, title=title, border_style="cyan")
-
-    def _render_ipr_panel(self) -> Panel:
-        """Renders the Active Deployments/IPRs panel."""
-        table = Table(box=None, expand=True)
-        table.add_column("ID", justify="right", style="dim")
-        table.add_column("Title", style="magenta", ratio=2)
-        table.add_column("Status", justify="center")
-        table.add_column("Progress", justify="center", width=25)
-
-        if self.iprs:
-            for ipr in self.iprs:
-                progress = Progress(
-                    BarColumn(), TextColumn("{task.percentage:>3.0f}%"), expand=True
+    def _render_resources_panel(self) -> Panel:
+        """Renders the Infrastructure Resources panel."""
+        table = Table(box=None, expand=True, show_header=False)
+        table.add_column("Icon", width=3)
+        table.add_column("Name", style="bold white")
+        table.add_column("Type/Status", style="dim")
+        
+        nodes = self.infra.get("nodes", [])
+        # Filter out internet node
+        nodes = [n for n in nodes if n.get("id") != "internet"]
+        
+        if nodes:
+            for node in nodes:
+                data = node.get("data", {})
+                label = data.get("label", "Unknown")
+                sub = data.get("subLabel", "")
+                icon = "📦" if data.get("icon") == "Database" else "🖥️"
+                
+                status_color = "green" if "running" in sub else "red"
+                
+                table.add_row(
+                    icon, 
+                    label, 
+                    f"[{status_color}]{sub}[/]"
                 )
-
-                status_map = {
-                    "pending_approval": "[yellow]Pending[/]",
-                    "deploying": "[cyan]Deploying[/]",
-                    "completed": "[green]Completed[/]",
-                }
-                status_text = status_map.get(ipr["status"], ipr["status"])
-                task_id = progress.add_task(status_text, total=100)
-                progress.update(task_id, completed=ipr.get("progress", 0))
-
-                table.add_row(str(ipr["id"]), ipr["title"], status_text, progress)
-        elif self.api_status == "connected":
-            table.add_row(Text("No active deployments.", justify="center", style="dim"))
-
-        return Panel(table, title="[bold]🚀 Active Deployments[/]", border_style="green")
-
-    def _render_footer(self) -> Panel:
-        """Renders the scrolling log footer."""
-        log_text = "\n".join(self.logs)
-        return Panel(log_text, title="[bold]📜 System Events[/]", border_style="dim")
+        else:
+             table.add_row("❓", "No resources found", "[dim]Check provider connection[/]")
+             
+        return Panel(table, title="[bold]🏗️ Infrastructure[/]", border_style="blue")
+    
+    # ... existing render methods ...
 
     def render(self) -> Layout:
         """Renders the entire dashboard layout with fresh data."""
@@ -225,8 +207,12 @@ class DashboardApp:
         self.layout["llm_status"].update(self._render_llm_panel())
         self.layout["system_health"].update(self._render_health_panel())
         self.layout["action"].update(self._render_ipr_panel())
+        self.layout["resources"].update(self._render_resources_panel())
         self.layout["footer"].update(self._render_footer())
         return self.layout
+
+    # ... run methods ...
+
 
     async def run(self) -> None:
         """Run the dashboard's main async loop."""

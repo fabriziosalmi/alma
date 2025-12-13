@@ -9,6 +9,13 @@
 **Stop writing YAML. Start conversing.**  
 ALMA (Autonomous Language Model Architecture) is a resilient, self-healing infrastructure orchestration platform. It combines natural language interfaces with **LangGraph** state machines and the **Model Context Protocol (MCP)** to reliably deploy and manage resources on Proxmox and beyond.
 
+```bash
+ALMA deploy blueprint.yaml
+ALMA templates list
+ALMA dashboard
+ALMA generate "web app with database"
+```
+
 ## Core Capabilities
 
 - **🗣️ Natural Language Interface**: Chat with your infrastructure ("Deploy an Alpine LXC named web-01").

@@ -304,5 +304,8 @@ def chat(message: str) -> None:
         console.print(Markdown(data))
 
 
+from alma.cli.templates import templates_app
+app.add_typer(templates_app)
+
 if __name__ == "__main__":
     app()

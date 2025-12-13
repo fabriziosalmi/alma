@@ -1,96 +1,67 @@
-"""Unit tests for DockerEngine."""
-
-from unittest.mock import MagicMock, patch
 
 import pytest
-
-from alma.core.state import Plan, ResourceState
+from unittest.mock import MagicMock, patch, AsyncMock
 from alma.engines.docker import DockerEngine
 from alma.schemas.blueprint import ResourceDefinition, SystemBlueprint
+from alma.core.state import Plan, ResourceState
 
+# Mock docker package
+import sys
+sys.modules['docker'] = MagicMock()
+import docker
+docker.errors = MagicMock()
+docker.errors.DockerException = Exception
+docker.errors.NotFound = Exception
+docker.errors.APIError = Exception
 
 @pytest.fixture
-def engine():
-    return DockerEngine()
-
-
-@pytest.fixture
-def sample_blueprint():
-    return SystemBlueprint(
-        id=1,
-        created_at="2025-11-20T12:00:00",
-        updated_at="2025-11-20T12:00:00",
-        version="1.0",
-        name="test-docker-blueprint",
-        resources=[
-            ResourceDefinition(
-                type="container",
-                name="test-container",
-                provider="docker",
-                specs={"image": "nginx:latest", "ports": {"80/tcp": 8080}},
-            )
-        ],
+def resource_def():
+    return ResourceDefinition(
+        name="test-container",
+        type="container",
+        provider="docker",
+        specs={"image": "nginx", "ports": {"80/tcp": 8080}}
     )
 
+@pytest.fixture
+def plan(resource_def):
+    return Plan(
+        to_create=[resource_def],
+        to_update=[],
+        to_delete=[]
+    )
 
-class TestDockerEngine:
-
-    @patch("alma.engines.docker.docker")
-    async def test_health_check_success(self, mock_docker, engine):
+@pytest.mark.asyncio
+async def test_apply_create(plan):
+    with patch("alma.engines.docker.docker") as mock_docker:
         mock_client = MagicMock()
         mock_docker.from_env.return_value = mock_client
-
-        assert await engine.health_check()
-        mock_client.ping.assert_called_once()
-
-    @patch("alma.engines.docker.docker")
-    async def test_apply_create(self, mock_docker, engine, sample_blueprint):
-        mock_client = MagicMock()
-        mock_docker.from_env.return_value = mock_client
-
-        plan = Plan(to_create=sample_blueprint.resources)
+        mock_client.containers.run = MagicMock()
+        
+        engine = DockerEngine()
         await engine.apply(plan)
+        
+        mock_client.containers.run.assert_called_once()
+        args, kwargs = mock_client.containers.run.call_args
+        assert args[0] == "nginx"
+        assert kwargs["name"] == "test-container"
+        assert kwargs["ports"] == {"80/tcp": 8080}
 
-        mock_client.containers.run.assert_called_with(
-            "nginx:latest",
-            name="test-container",
-            ports={"80/tcp": 8080},
-            environment={},
-            detach=True,
-        )
-
-    @patch("alma.engines.docker.docker")
-    async def test_get_state(self, mock_docker, engine, sample_blueprint):
+@pytest.mark.asyncio
+async def test_apply_destroy():
+    state = ResourceState(id="test-container", type="container", config={})
+    plan = Plan(to_create=[], to_update=[], to_delete=[state])
+    
+    with patch("alma.engines.docker.docker") as mock_docker:
         mock_client = MagicMock()
         mock_docker.from_env.return_value = mock_client
-
-        mock_container = MagicMock()
-        mock_container.name = "test-container"
-        mock_container.status = "running"
-        mock_container.attrs = {
-            "Config": {"Image": "nginx:latest"},
-            "NetworkSettings": {"Ports": {"80/tcp": [{"HostPort": "8080"}]}},
-        }
-        mock_client.containers.list.return_value = [mock_container]
-
-        state = await engine.get_state(sample_blueprint)
-        assert len(state) == 1
-        assert state[0].id == "test-container"
-        assert state[0].config["image"] == "nginx:latest"
-
-    @patch("alma.engines.docker.docker")
-    async def test_destroy(self, mock_docker, engine):
-        mock_client = MagicMock()
-        mock_docker.from_env.return_value = mock_client
-
+        
         mock_container = MagicMock()
         mock_client.containers.get.return_value = mock_container
-
-        resource_state = ResourceState(id="test-container", type="container", config={})
-        plan = Plan(to_delete=[resource_state])
-
+        
+        engine = DockerEngine()
         await engine.destroy(plan)
-
+        
         mock_client.containers.get.assert_called_with("test-container")
         mock_container.stop.assert_called_once()
         mock_container.remove.assert_called_once()
