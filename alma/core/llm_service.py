@@ -45,7 +45,7 @@ class LocalStudioLLM(LLMInterface):
             print("  -> Local Studio is ONLINE.")
 
     async def generate(
-        self, prompt: str, context: dict[str, Any] | None = None, **kwargs: Any
+        self, prompt: str, context: dict[str, Any] | None = None, schema: dict[str, Any] | None = None, **kwargs: Any
     ) -> str:
         """
         Generates text using the local LLM.
@@ -63,6 +63,20 @@ class LocalStudioLLM(LLMInterface):
             "max_tokens": settings.llm_max_tokens,
             "stream": False,
         }
+
+        # Enhanced Feature: Structured Output / Schema Enforcement
+        if schema:
+            # If supported (LM Studio / OpenAI-compatible with strict logic)
+            payload["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "strict_response",
+                    "strict": True,
+                    "schema": schema
+                }
+            }
+            # Fallback/Safety: Instructions are key even with strict mode
+            # But here we relay on the API. Could also inject into prompt as backup.
 
         async def _request() -> str:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -109,7 +123,7 @@ class TinyLLM(LLMInterface):
         pass
 
     async def generate(
-        self, prompt: str, context: dict[str, Any] | None = None, **kwargs: Any
+        self, prompt: str, context: dict[str, Any] | None = None, schema: dict[str, Any] | None = None, **kwargs: Any
     ) -> str:
         """
         Generates a safe, minimal response.

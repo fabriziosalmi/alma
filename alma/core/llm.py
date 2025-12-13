@@ -10,7 +10,7 @@ class LLMInterface(ABC):
     """Abstract interface for LLM providers."""
 
     @abstractmethod
-    async def generate(self, prompt: str, context: dict[str, Any] | None = None) -> str:
+    async def generate(self, prompt: str, context: dict[str, Any] | None = None, schema: dict[str, Any] | None = None) -> str:
         """
         Generate text from prompt.
 
@@ -314,7 +314,7 @@ class ConversationalOrchestrator:
 class MockLLM(LLMInterface):
     """Mock LLM implementation for testing."""
 
-    async def generate(self, prompt: str, context: dict[str, Any] | None = None) -> str:
+    async def generate(self, prompt: str, context: dict[str, Any] | None = None, schema: dict[str, Any] | None = None) -> str:
         """Generate mock response."""
         return f"Mock response to: {prompt}"
 
