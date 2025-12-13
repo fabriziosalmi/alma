@@ -432,24 +432,26 @@ Strong typing throughout:
 
 ## Future Enhancements
 
-### Short Term
-- [ ] WebSocket support for real-time updates
-- [ ] Prometheus metrics
-- [ ] GraphQL API
-- [ ] Web UI
+### Completed (v0.8.x)
+- [x] Prometheus metrics (`alma/middleware/metrics.py`)
+- [x] Web UI (React-based Dashboard)
+- [x] Event sourcing (`alma/core/events.py`)
+- [x] CQRS pattern (`alma/core/cqrs.py`)
+- [x] Docker Engine Support
 
-### Medium Term
+### Short Term (v0.9.x)
+- [ ] WebSocket support for real-time updates
+- [ ] GraphQL API (for complex data fetching)
+
+### Medium Term (v1.0)
 - [ ] Multi-tenancy
 - [ ] RBAC (Role-Based Access Control)
-- [ ] Terraform provider
-- [ ] Kubernetes operator
+- [ ] Native Terraform Provider (Go wrapper)
+- [ ] Kubernetes Operator (CRD Controller)
 
-### Long Term
-- [ ] Distributed deployment
-- [ ] Event sourcing
-- [ ] CQRS pattern
-- [ ] Event sourcing
-- [ ] CQRS pattern
+### Long Term (v2.0)
+- [ ] Distributed deployment (Multi-Region)
+- [ ] Advanced Federation
 
 ## References
 
