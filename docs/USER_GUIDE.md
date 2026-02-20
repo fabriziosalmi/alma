@@ -1,6 +1,6 @@
 # User Guide - ALMA
 
-Welcome to ALMA! This guide will help you get started with Infrastructure as Conversation.
+This guide covers getting started with ALMA and using its core features.
 
 ## Table of Contents
 
@@ -15,15 +15,15 @@ Welcome to ALMA! This guide will help you get started with Infrastructure as Con
 
 ## What is ALMA?
 
-ALMA transforms infrastructure management from code-based IaC (Infrastructure as Code) to **conversation-based infrastructure**. Instead of writing YAML/Terraform, you describe what you need in natural language.
+ALMA is an infrastructure orchestration platform that provides a conversational interface on top of Proxmox VE (and other providers). Instead of writing low-level API calls, you can describe your intent in natural language and ALMA translates it into infrastructure operations.
 
-### Key Benefits
+### Key Features
 
-✅ **Natural Language**: "I need a highly available web app" → Complete infrastructure  
-✅ **AI-Powered**: LLM understands intent, suggests optimizations  
-✅ **Review Process**: Infrastructure Pull Requests (IPRs) like code reviews  
-✅ **Production Ready**: Rate limiting, metrics, streaming responses  
-✅ **Template Library**: 10+ pre-built templates for common scenarios  
+- **Natural Language**: "Deploy an Alpine LXC named web-01" → ALMA parses intent and triggers deployment.
+- **LLM-Assisted**: An LLM integration understands intent, generates blueprints, and uses 13 built-in tools for infrastructure tasks.
+- **Infrastructure Pull Requests (IPRs)**: A review workflow for infrastructure changes, similar to code pull requests.
+- **Rate Limiting and Metrics**: Built-in rate limiting and Prometheus metrics endpoint.
+- **Blueprint Templates**: 10 pre-built templates for common scenarios (loaded from `alma/config/blueprints.yaml`).
 
 ### Architecture
 
@@ -36,7 +36,7 @@ ALMA transforms infrastructure management from code-based IaC (Infrastructure as
          │
          ▼
 ┌─────────────────┐
-│  LLM Layer      │ ← Qwen2.5-0.5B-Instruct
+│  LLM Layer      │ ← Configurable LLM backend
 │  (Intent →      │   + Function Calling
 │   Blueprint)    │   + 13 Tools
 └────────┬────────┘
@@ -52,8 +52,8 @@ ALMA transforms infrastructure management from code-based IaC (Infrastructure as
          ▼
 ┌─────────────────┐
 │  Execution      │
-│  Engine         │ ← Proxmox, Docker, K8s
-│  (Deploy)       │   + Fake Engine (testing)
+│  Engine         │ ← Proxmox (primary), Docker, K8s
+│  (Deploy)       │   + Simulation Engine (testing)
 └─────────────────┘
 ```
 
@@ -65,8 +65,8 @@ ALMA transforms infrastructure management from code-based IaC (Infrastructure as
 
 ```bash
 # Clone repository
-git clone https://github.com/fabriziosalmi/cdn-sdk.git
-cd cdn-sdk
+git clone https://github.com/fabriziosalmi/alma.git
+cd alma
 
 # Install dependencies
 pip install -e .
@@ -281,20 +281,22 @@ curl -X POST http://localhost:8000/api/v1/tools/execute \
 
 ### 4. Templates
 
-Pre-built blueprints for common scenarios:
+Pre-built blueprints for common scenarios (see `alma/config/blueprints.yaml`):
 
-| Template | Complexity | Cost/Month | Use Case |
-|----------|------------|------------|----------|
-| `simple-web-app` | Low | $100-200 | Basic website |
-| `ha-web-app` | Medium | $300-500 | Production web app |
-| `microservices-k8s` | High | $800-1500 | Microservices platform |
-| `postgres-ha` | Medium | $400-700 | HA database cluster |
-| `data-pipeline` | High | $600-1200 | ETL/data processing |
-| `ml-training` | High | $1000-3000 | ML model training |
-| `zero-trust-network` | Medium | $500-800 | Security-first network |
-| `observability-stack` | Medium | $300-600 | Prometheus + Grafana |
-| `api-gateway` | Low | $200-400 | API management |
-| `redis-cluster` | Medium | $300-500 | Distributed cache |
+| Template | Complexity | Use Case |
+|----------|------------|----------|
+| `simple-web-app` | Low | Basic web app with load balancer and database |
+| `ha-web-app` | Medium | Production web app with HA configuration |
+| `microservices-k8s` | High | Microservices on Kubernetes |
+| `postgres-ha` | Medium | High-availability database cluster |
+| `data-pipeline` | High | ETL/data processing pipeline |
+| `ml-training` | High | ML model training environment |
+| `zero-trust-network` | Medium | Security-first network topology |
+| `observability-stack` | Medium | Prometheus + Grafana monitoring |
+| `api-gateway` | Low | API management layer |
+| `redis-cluster` | Medium | Distributed cache cluster |
+
+> **Note**: These templates describe resource topologies. Actual infrastructure costs depend on your hardware and provider pricing and are not estimated by ALMA.
 
 ---
 
@@ -501,14 +503,12 @@ Store blueprints in Git:
 # Export blueprint
 curl http://localhost:8000/api/v1/blueprints/5 > infrastructure.yaml
 
-# Start the interactive dashboard with Resource View
-alma dashboard
-
 # List available templates
 alma templates list
 
 # Deploy a blueprint
 alma deploy blueprint.yaml
+
 # Commit to Git
 git add infrastructure.yaml
 git commit -m "Add production web app infrastructure"
@@ -530,19 +530,16 @@ curl http://localhost:8000/api/v1/monitoring/metrics/summary
 curl http://localhost:8000/api/v1/monitoring/rate-limit/stats
 ```
 
-### 7. Use Streaming for Large Operations
+### 7. Use Streaming for Long-Running Operations
 
-For slow operations (LLM generation), use streaming:
+For operations that involve LLM generation, use streaming endpoints:
 
 ```bash
 curl -N http://localhost:8000/api/v1/conversation/chat-stream \
   -d '{"message": "Create complex microservices architecture"}'
 ```
 
-**Benefits**:
-- 96% faster time-to-first-byte
-- Real-time progress updates
-- Better user experience
+This provides real-time progress updates as the LLM generates a response, reducing perceived latency.
 
 ---
 
@@ -640,7 +637,7 @@ curl http://localhost:8000/api/v1/monitoring/health/detailed
 
 **Check logs:**
 ```bash
-tail -f logs/aicdn.log
+tail -f alma.log
 ```
 
 **Restart server:**
@@ -728,15 +725,13 @@ histogram_quantile(0.95, http_request_duration_seconds)
 2. **Try Templates**: `curl http://localhost:8000/api/v1/templates`
 3. **Read Architecture**: [docs/ARCHITECTURE.md](ARCHITECTURE.md)
 4. **Production Deploy**: [docs/PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md)
-5. **Join Community**: https://discord.gg/ALMA
 
 ---
 
 ## Support
 
 - **Documentation**: All docs in `docs/` folder
-- **GitHub Issues**: Report bugs or request features
-- **Discord**: Community support and discussions
-- **GitHub Issues**: https://github.com/fabriziosalmi/alma/issues
+- **GitHub Issues**: Report bugs or request features at https://github.com/fabriziosalmi/alma/issues
+- **GitHub Discussions**: Ask questions and share ideas at https://github.com/fabriziosalmi/alma/discussions
 
-Happy infrastructure management! 🚀
+---

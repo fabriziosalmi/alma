@@ -1,58 +1,58 @@
-# 📋 Project Status & Documentation Index
+# Project Status & Documentation Index
 
 **ALMA: Infrastructure as Conversation**  
-*Last Updated: December 3, 2024*  
-*Current Version: 0.7.0*
+*Current Version: 0.8.8*
 
 ---
 
-## ✅ Production Readiness Status
+## Feature Status
 
-**ALMA v0.7.0 is production-ready** with the following hardening phases complete:
-
-| Feature | Status | Impact | Files Created |
-|---------|--------|--------|---------------|
-| Enhanced Function Calling | ✅ Complete | 95% | `alma/core/tools.py` (650 lines, 13 tools) |
-| Streaming Responses | ✅ Complete | 90% | `alma/core/llm_qwen.py`, SSE endpoints |
-| Blueprint Templates | ✅ Complete | 85% | `alma/core/templates.py` (950 lines, 10 templates) |
-| Rate Limiting | ✅ Complete | 80% | `alma/middleware/rate_limit.py` (350 lines) |
-| Metrics Collection | ✅ Complete | 80% | `alma/middleware/metrics.py` (400 lines) |
-
-**Total Lines of Code Added**: ~3,500 lines  
-**Documentation Created**: ~15,000 lines
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Enhanced Function Calling | Complete | `alma/core/tools.py` — 13 tools |
+| Streaming Responses | Complete | SSE endpoints in `alma/api/routes/conversation.py` |
+| Blueprint Templates | Complete | `alma/config/blueprints.yaml` — 10 templates |
+| Rate Limiting | Complete | `alma/middleware/rate_limit.py` |
+| Metrics Collection | Complete | `alma/middleware/metrics.py` — Prometheus |
+| API Key Authentication | Complete | Configurable via `ALMA_API_KEY` env var |
+| Web UI | Complete | React-based dashboard in `alma-web/` |
+| LangGraph Workflow | Complete | `alma/core/agent/graph.py` |
+| Multi-Agent Council | Complete | `alma/core/agent/council.py` |
+| WebSocket Updates | Complete | `/ws/deployments` |
+| GraphQL API | Partial | Basic system status only (`/graphql`) |
+| Kubernetes Engine | Experimental | `alma/engines/kubernetes.py` |
+| RBAC | Planned | Not yet implemented |
+| Multi-tenancy | Planned | Not yet implemented |
 
 ---
 
-## 📚 Complete Documentation Suite
+## Documentation
 
 ### User Documentation
 
-| Document | Pages | Status | Purpose |
-|----------|-------|--------|---------|
-| [README.md](../README.md) | 4 | ✅ Updated | Project overview, quick start |
-| [USER_GUIDE.md](USER_GUIDE.md) | 35 | ✅ New | Complete user guide with examples |
-| [API_REFERENCE.md](API_REFERENCE.md) | 42 | ✅ New | Full API documentation |
-| [QUICKSTART_RATE_LIMITS.md](QUICKSTART_RATE_LIMITS.md) | 8 | ✅ New | Testing & verification guide |
+| Document | Purpose |
+|----------|---------|
+| [README.md](../README.md) | Project overview, quick start |
+| [USER_GUIDE.md](USER_GUIDE.md) | User guide with examples |
+| [API_REFERENCE.md](API_REFERENCE.md) | API documentation |
 
 ### Technical Documentation
 
-| Document | Pages | Status | Purpose |
-|----------|-------|--------|---------|
-| [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) | 38 | ✅ New | Production setup & operations |
-| [RATE_LIMITING_AND_METRICS.md](RATE_LIMITING_AND_METRICS.md) | 28 | ✅ New | Monitoring deep dive |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | 15 | ✅ Existing | Technical architecture |
-| [TOOLS_API.md](TOOLS_API.md) | 12 | ✅ New | LLM tools documentation |
-| [STREAMING_AND_TEMPLATES.md](STREAMING_AND_TEMPLATES.md) | 18 | ✅ New | Streaming & templates guide |
-
-**Total Documentation**: ~196 pages
+| Document | Purpose |
+|----------|---------|
+| [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) | Production setup & operations |
+| [RATE_LIMITING_AND_METRICS.md](RATE_LIMITING_AND_METRICS.md) | Monitoring reference |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Technical architecture |
+| [TOOLS_API.md](TOOLS_API.md) | LLM tools documentation |
+| [STREAMING_AND_TEMPLATES.md](STREAMING_AND_TEMPLATES.md) | Streaming & templates |
 
 ---
 
-## 🎯 Feature Highlights
+## Feature Highlights
 
 ### 1. Enhanced Function Calling (13 Tools)
 
-Comprehensive toolkit for infrastructure operations:
+The LLM can call these infrastructure tools:
 
 - `create_blueprint` - Generate infrastructure blueprints
 - `validate_blueprint` - Syntax and semantic validation
@@ -68,37 +68,33 @@ Comprehensive toolkit for infrastructure operations:
 - `check_compliance` - Compliance verification
 - `forecast_metrics` - Predictive analytics
 
-**Performance**: <100ms average execution time
-
 ### 2. Streaming Responses (SSE)
 
 Real-time streaming for LLM operations:
 
 - **Endpoints**: `/chat-stream`, `/generate-blueprint-stream`
-- **Performance**: 96% faster time-to-first-byte
-- **Benefits**: Progressive rendering, better UX
 - **Implementation**: Server-Sent Events (SSE)
 
-### 3. Blueprint Templates (10 Production Templates)
+### 3. Blueprint Templates (10 Templates)
 
-Pre-built, production-ready infrastructure:
+Pre-built infrastructure topologies (see `alma/config/blueprints.yaml`):
 
-| Template | Complexity | Cost/Month | Resources |
-|----------|------------|------------|-----------|
-| simple-web-app | Low | $100-200 | 3 |
-| ha-web-app | Medium | $300-500 | 8 |
-| microservices-k8s | High | $800-1500 | 15+ |
-| postgres-ha | Medium | $400-700 | 6 |
-| data-pipeline | High | $600-1200 | 12 |
-| ml-training | High | $1000-3000 | 10 |
-| zero-trust-network | Medium | $500-800 | 9 |
-| observability-stack | Medium | $300-600 | 7 |
-| api-gateway | Low | $200-400 | 4 |
-| redis-cluster | Medium | $300-500 | 5 |
+| Template | Complexity | Resources |
+|----------|------------|-----------|
+| simple-web-app | Low | 3 |
+| ha-web-app | Medium | 8 |
+| microservices-k8s | High | 15+ |
+| postgres-ha | Medium | 6 |
+| data-pipeline | High | 12 |
+| ml-training | High | 10 |
+| zero-trust-network | Medium | 9 |
+| observability-stack | Medium | 7 |
+| api-gateway | Low | 4 |
+| redis-cluster | Medium | 5 |
 
 ### 4. Rate Limiting
 
-Token bucket algorithm with intelligent limiting:
+Token bucket algorithm with per-endpoint limits:
 
 - **Global**: 60 RPM per IP
 - **Burst**: 10 requests (customizable)
@@ -108,13 +104,11 @@ Token bucket algorithm with intelligent limiting:
   - Tool execution: 40 RPM
   - CRUD operations: 100 RPM
 - **Headers**: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
-- **Performance**: <1ms overhead per request
 
 ### 5. Metrics Collection
 
-Comprehensive observability with Prometheus:
+Prometheus metrics endpoint (`/metrics`) with:
 
-**15+ Metric Types**:
 - HTTP requests (total, duration, sizes)
 - LLM operations (requests, tokens, duration)
 - Blueprint operations (CRUD, validation)
@@ -123,13 +117,13 @@ Comprehensive observability with Prometheus:
 - Rate limiting (hits, clients)
 - System metrics (connections, cache)
 
-**Dashboards**: Auto-generated Grafana dashboard with 9 panels
+A pre-configured Grafana dashboard is included in `grafana-dashboard.json`.
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
-### 1. Installation (5 minutes)
+### Installation
 
 ```bash
 git clone https://github.com/fabriziosalmi/alma.git
@@ -140,7 +134,7 @@ pip install -e .
 python run_server.py
 ```
 
-### 2. First API Call (1 minute)
+### First API Call
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/conversation/chat \
@@ -148,7 +142,7 @@ curl -X POST http://localhost:8000/api/v1/conversation/chat \
   -d '{"message": "Create a simple web application"}'
 ```
 
-### 3. Explore Templates (2 minutes)
+### Explore Templates
 
 ```bash
 # List templates
@@ -158,7 +152,7 @@ curl http://localhost:8000/api/v1/templates
 curl http://localhost:8000/api/v1/templates/ha-web-app
 ```
 
-### 4. Check Metrics (1 minute)
+### Check Metrics
 
 ```bash
 # Prometheus format
@@ -168,48 +162,46 @@ curl http://localhost:8000/metrics
 curl http://localhost:8000/api/v1/monitoring/metrics/summary
 ```
 
-**Total Time**: 9 minutes to full environment
-
 ---
 
-## 📊 API Endpoints Summary
+## API Endpoints Summary
 
 ### Core APIs
 
-| Endpoint | Method | Purpose | Rate Limit |
-|----------|--------|---------|------------|
-| `/api/v1/blueprints` | GET, POST | Blueprint CRUD | 100 RPM |
-| `/api/v1/blueprints/{id}` | GET, PUT, DELETE | Single blueprint | 100 RPM |
-| `/api/v1/blueprints/generate-blueprint` | POST | AI generation | 30 RPM |
-| `/api/v1/blueprints/generate-blueprint-stream` | POST | AI streaming | 30 RPM |
-| `/api/v1/conversation/chat` | POST | Chat interface | 60 RPM |
-| `/api/v1/conversation/chat-stream` | POST | Chat streaming | 20 RPM |
-| `/api/v1/iprs` | GET, POST | IPR management | 100 RPM |
-| `/api/v1/iprs/{id}/review` | POST | Review IPR | 100 RPM |
-| `/api/v1/iprs/{id}/deploy` | POST | Deploy IPR | 40 RPM |
-| `/api/v1/tools` | GET | List tools | 100 RPM |
-| `/api/v1/tools/execute` | POST | Execute tool | 40 RPM |
-| `/api/v1/templates` | GET | List templates | 100 RPM |
-| `/api/v1/templates/{id}` | GET | Get template | 100 RPM |
-| `/api/v1/templates/{id}/customize` | POST | Customize template | 60 RPM |
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/v1/blueprints` | GET, POST | Blueprint CRUD |
+| `/api/v1/blueprints/{id}` | GET, PUT, DELETE | Single blueprint |
+| `/api/v1/blueprints/generate-blueprint` | POST | AI generation |
+| `/api/v1/blueprints/generate-blueprint-stream` | POST | AI streaming |
+| `/api/v1/conversation/chat` | POST | Chat interface |
+| `/api/v1/conversation/chat-stream` | POST | Chat streaming |
+| `/api/v1/iprs` | GET, POST | IPR management |
+| `/api/v1/iprs/{id}/review` | POST | Review IPR |
+| `/api/v1/iprs/{id}/deploy` | POST | Deploy IPR |
+| `/api/v1/tools` | GET | List tools |
+| `/api/v1/tools/execute` | POST | Execute tool |
+| `/api/v1/templates` | GET | List templates |
+| `/api/v1/templates/{id}` | GET | Get template |
+| `/api/v1/templates/{id}/customize` | POST | Customize template |
 
 ### Monitoring APIs
 
-| Endpoint | Method | Purpose | Access |
-|----------|--------|---------|--------|
-| `/metrics` | GET | Prometheus metrics | Internal |
-| `/api/v1/monitoring/metrics/summary` | GET | Metrics summary | Public |
-| `/api/v1/monitoring/rate-limit/stats` | GET | Rate limit stats | Public |
-| `/api/v1/monitoring/health/detailed` | GET | Health check | Public |
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/metrics` | GET | Prometheus metrics |
+| `/api/v1/monitoring/metrics/summary` | GET | Metrics summary |
+| `/api/v1/monitoring/rate-limit/stats` | GET | Rate limit stats |
+| `/api/v1/monitoring/health/detailed` | GET | Health check |
 
 ---
 
-## 🏗️ Production Deployment
+## Production Deployment
 
 ### Docker Compose (Recommended)
 
 ```bash
-# Start full stack
+# Start full stack with monitoring
 docker-compose -f docker-compose.metrics.yml up -d
 ```
 
@@ -225,33 +217,16 @@ docker-compose -f docker-compose.metrics.yml up -d
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3000 (admin/admin)
 
-### Manual Deployment
-
-See [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) for:
-- System requirements
-- Security hardening
-- High availability setup
-- Backup strategies
-- Performance tuning
-- Monitoring configuration
+See [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) for full setup details.
 
 ---
 
-## 🧪 Testing
-
-### Automated Tests
+## Testing
 
 ```bash
 # Unit tests
 pytest tests/unit/ -v
 
-# Load testing
-python tests/load_test.py
-```
-
-### Manual Testing
-
-```bash
 # Test rate limiting
 for i in {1..70}; do curl http://localhost:8000/api/v1/blueprints; done
 
@@ -265,138 +240,63 @@ curl -N http://localhost:8000/api/v1/conversation/chat-stream \
 
 ---
 
-## 📈 Performance Metrics
+## Security
 
-### Benchmarks
-
-| Operation | Latency | Throughput |
-|-----------|---------|------------|
-| API request (CRUD) | 10-50ms | 1000 req/s |
-| Rate limit check | <1ms | N/A |
-| Metrics collection | <0.5ms | N/A |
-| LLM generation | 2-5s | 20 req/min |
-| Template instantiation | 50-100ms | 60 req/min |
-| Blueprint validation | 100-200ms | 40 req/min |
-
-### Resource Usage
-
-- **CPU**: 2-4 cores (normal), 8+ cores (high load)
-- **Memory**: 4GB (minimum), 8GB (recommended)
-- **Storage**: 50GB (development), 200GB (production)
-- **Database**: 5GB typical, 50GB+ with history
-
----
-
-## 🔐 Security Features
-
-### Current
-
-- ✅ IP-based rate limiting
-- ✅ SQL injection protection (ORM)
-- ✅ Input validation (Pydantic)
-- ✅ CORS configuration
-- ✅ Rate limit headers
+### Implemented
+- IP-based rate limiting
+- SQL injection protection (SQLAlchemy ORM)
+- Input validation (Pydantic)
+- CORS configuration
+- API key authentication (configurable via `ALMA_API_KEY`)
 
 ### Planned
-
-- 🔲 API key authentication
-- 🔲 JWT token support
-- 🔲 RBAC (Role-Based Access Control)
-- 🔲 OAuth2 integration
-- 🔲 Audit logging
-- 🔲 Encryption at rest
+- JWT token support
+- RBAC (Role-Based Access Control)
+- OAuth2 integration
+- Audit logging
+- Encryption at rest
 
 ---
 
-## 🗺️ Roadmap & Prioritization
+## Roadmap
 
-### Q1 2025: Intelligent Orchestration (In Progress)
+### Near Term
+- **RBAC**: Fine-grained role-based access control.
+- **Native K8s Operator**: CRD-based management instead of API-driven.
 
-- **Multi-Agent Architecture**: Decomposing monolithic LLM handling into specialized agents (Architecture, Security, Cost).
-- **Proactive Security**: Implementing pre-deployment vulnerability scanning within the IPR workflow.
-- **Cost Estimation**: Integrating real-time cloud pricing APIs for accurate pre-deployment estimates.
-
-### Q2 2025: Predictive Operations
-
-- **Anomaly Detection**: Machine learning models to identify resource usage deviations.
-- **Capacity Forecasting**: Historical data analysis to predict scaling requirements.
-- **Auto-Remediation**: Automated execution of predefined recovery runbooks.
-
-### Q3 2025: Universal Abstraction
-
-- **Cloud Portability**: Abstracted blueprint definitions for seamless migration between AWS, Azure, and GCP.
-- **Hybrid Deployment**: Unified management plane for mixed On-Prem (Proxmox/VMware) and Cloud resources.
+### Future
+- **Cloud Portability**: Abstracted blueprint definitions for AWS, Azure, GCP.
+- **Hybrid Deployment**: Unified management plane for On-Prem and Cloud.
+- **Anomaly Detection**: ML-based resource usage monitoring.
 
 ---
 
-## 📞 Support & Community
-
-### Resources
+## Support & Community
 
 - **Documentation**: [docs/](.)
 - **GitHub**: https://github.com/fabriziosalmi/alma
 - **Issues**: https://github.com/fabriziosalmi/alma/issues
 - **Discussions**: https://github.com/fabriziosalmi/alma/discussions
 
-### Getting Help
-
-1. **Documentation**: Start with [USER_GUIDE.md](USER_GUIDE.md)
-2. **API Reference**: See [API_REFERENCE.md](API_REFERENCE.md)
-3. **GitHub Issues**: Report bugs or request features
-4. **Discussions**: Ask questions, share ideas
-
 ---
 
-## 🎓 Learning Path
+## Implementation Status
 
-### Beginner (Day 1)
+### Completed
 
-1. Read [README.md](../README.md)
-2. Follow Quick Start
-3. Try first API call
-4. Explore templates
-
-### Intermediate (Week 1)
-
-1. Read [USER_GUIDE.md](USER_GUIDE.md)
-2. Create custom blueprint
-3. Set up IPR workflow
-4. Use LLM tools
-
-### Advanced (Month 1)
-
-1. Read [ARCHITECTURE.md](ARCHITECTURE.md)
-2. Deploy to production ([PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md))
-3. Customize metrics/dashboards
-4. Integrate with CI/CD
-
----
-
-## 📊 Project Statistics
-
-- **Total Code**: ~10,000 lines
-- **Documentation**: ~196 pages
-- **Test Coverage**: ~80%
-- **API Endpoints**: 22
-- **Infrastructure Engines**: 5 (Terraform, Kubernetes, Proxmox, Docker, Ansible)
-- **Templates**: 10 Production-ready patterns
-
----
-
-## 🎯 Implementation Status
-
-### Completed Features
-
-- [x] **Core Engines**: Terraform, Kubernetes, Proxmox, Docker, Ansible support.
-- [x] **IPR Workflow**: Full lifecycle management (Create, Review, Deploy, Rollback).
-- [x] **LLM Integration**: Qwen-based cognitive engine with 13 specialized tools.
-- [x] **Observability**: Prometheus metrics and OpenTelemetry tracing foundations.
-- [x] **Safety**: Token-bucket rate limiting and input sanitation.
-- [x] **Streaming**: SSE endpoints for real-time feedback.
+- [x] **Core Engines**: Proxmox (primary), Docker, Kubernetes (experimental), Simulation.
+- [x] **IPR Workflow**: Create, Review, Deploy lifecycle.
+- [x] **LLM Integration**: Configurable LLM backend with 13 specialized tools.
+- [x] **Multi-Agent Council**: Architect, SecOps, FinOps agents for blueprint review.
+- [x] **LangGraph Workflow**: State machine for deployment orchestration.
+- [x] **Observability**: Prometheus metrics.
+- [x] **Rate Limiting**: Token-bucket per-IP limiting.
+- [x] **Streaming**: SSE endpoints for real-time LLM output.
+- [x] **API Key Authentication**: Configurable auth middleware.
+- [x] **Web UI**: React-based dashboard (`alma-web/`).
 
 ### Active Development
 
-- [ ] **Multi-Agent System**: Splitting cognitive load across specialized agents.
-- [ ] **Native K8s Operator**: CRD-based management instead of API-driven.
+- [ ] **Native K8s Operator**: CRD-based management.
 - [ ] **RBAC**: Fine-grained role-based access control.
-- [ ] **Web UI**: React-based dashboard for visual management.
+- [ ] **Multi-tenancy**: Isolated namespaces per team.

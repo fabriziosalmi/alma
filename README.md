@@ -1,47 +1,46 @@
 # ALMA: Infrastructure as Conversation
 
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![MCP Compliant](https://img.shields.io/badge/MCP-Compliant-orange.svg)](https://modelcontextprotocol.io)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Orchestrated-blueviolet.svg)](https://langchain-ai.github.io/langgraph/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Stop writing YAML. Start conversing.**  
-ALMA (Autonomous Language Model Architecture) is a resilient, self-healing infrastructure orchestration platform. It combines natural language interfaces with **LangGraph** state machines and the **Model Context Protocol (MCP)** to reliably deploy and manage resources on Proxmox and beyond.
+ALMA (Autonomous Language Model Architecture) is an infrastructure orchestration platform that combines a natural language chat interface with **LangGraph** state machines and the **Model Context Protocol (MCP)** to deploy and manage resources on Proxmox and other providers.
 
 ```bash
-ALMA deploy blueprint.yaml
-ALMA templates list
-ALMA dashboard
-ALMA generate "web app with database"
+alma deploy blueprint.yaml
+alma templates list
+alma dashboard
+alma council convene "web app with database"
 ```
 
-## Core Capabilities
+## Core Features
 
-- **🗣️ Natural Language Interface**: Chat with your infrastructure ("Deploy an Alpine LXC named web-01").
-- **🧠 Resilient State Machine**: deployments are managed by a **LangGraph** workflow that handles validation, execution, and verification with automatic retries.
-- **🛡️ Self-Healing**: Automatically detects missing dependencies (e.g., templates) and resolves them (downloads) without user intervention.
-- **⚡ Circuit Breakers**: Built-in **Resilience** patterns (Circuit Breaker, Retrier) ensure system stability under load or failure.
-- **🔌 MCP Native**: Exposes infrastructure tools via a standard **Model Context Protocol** server (compatible with Claude Desktop, etc.).
-- **⚡ Proxmox Integration**: Primary engine with task-aware execution, SSH/API dual-mode, and LXC/VM management.
-- **🔄 Real-Time & Flexible**: **WebSocket** support for live monitoring and **GraphQL** API for complex queries.
-- **🧙‍♂️ The Council**: **Multi-Agent Swarm** (Architect, SecOps, FinOps) that debates and validates usage before deployment.
-- **☸️ Kubernetes Support**: Experimental engine for Deployments and Services.
+- **Natural Language Interface**: Chat with your infrastructure ("Deploy an Alpine LXC named web-01") via the REST API or CLI.
+- **LangGraph Workflow**: Deployments run through a state machine that handles intent parsing, parameter validation, resource checks, execution, and verification with retries.
+- **Self-Healing**: Detects missing templates and attempts to download them automatically before deployment (Proxmox engine).
+- **Circuit Breakers**: Built-in `CircuitBreaker` and `Retrier` patterns in `alma/core/resilience.py` improve stability under failure.
+- **MCP Server**: Exposes Proxmox tools (list, deploy, control, download template) via the Model Context Protocol, compatible with MCP clients such as Claude Desktop.
+- **Proxmox Engine**: Primary supported engine with API-based LXC/VM creation, cloning, and task tracking.
+- **WebSocket & GraphQL**: WebSocket endpoint for real-time deployment events; basic GraphQL endpoint for system status queries.
+- **The Council**: Multi-agent system (Architect, SecOps, FinOps) that collaborates via LLM calls to design and critique infrastructure blueprints before deployment.
+- **Kubernetes Engine**: Experimental engine for Deployments and Services (requires a reachable cluster).
 
 ## Architecture
 
-ALMA uses a layered architecture designed for resilience:
+ALMA uses a layered architecture:
 
 ```mermaid
 graph TD
     User[User / Chat UI] --> API[FastAPI / Chat Stream]
     API --> Graph[LangGraph Orchestrator]
     
-    subgraph Workflow [Resilient Deployment Workflow]
+    subgraph Workflow [Deployment Workflow]
         Graph --> Parse[Parse Intent]
         Parse --> Validate[Validate Params]
         Validate --> Check[Check Resources]
-        Check -- Missing Template --> Heal[Self-Healing / Download]
+        Check -- Missing Template --> Heal[Download Template]
         Check -- Ready --> Exec[Execute Deployment]
         Exec --> Verify[Verify Deployment]
         Verify -- Retry Loop --> Verify
@@ -49,15 +48,15 @@ graph TD
 
     Exec --> MCP[MCP Server]
     MCP --> Engine[Proxmox Engine]
-    Engine --> Proxmox[Proxmox VE API/SSH]
+    Engine --> Proxmox[Proxmox VE API]
 ```
 
 ## Quick Start
 
 ### Prerequisites
 - Docker & Docker Compose
-- Proxmox VE (Credentials)
-- OpenAI/Anthropic/Google API Key (for LLM features)
+- Proxmox VE credentials (for Proxmox engine)
+- An OpenAI-compatible LLM endpoint (local or cloud) for AI features
 
 ### Installation
 
@@ -78,8 +77,8 @@ graph TD
     docker compose up -d --build
     ```
 
-4.  **Access the Dashboard**:
-    Open [http://localhost:3000](http://localhost:3000) to start chatting with your infrastructure.
+4.  **Access the API**:
+    Open [http://localhost:8000/docs](http://localhost:8000/docs) for the interactive API documentation.
 
 ## Documentation
 

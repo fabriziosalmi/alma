@@ -49,20 +49,20 @@ ALMA follows a **4-layer architecture** that separates concerns and enables clea
 **Components**:
 - **CLI** (`alma/cli/`): Command-line interface using Typer
 - **REST API** (`alma/api/`): FastAPI-based HTTP API
-- **Web UI** (Future): Browser-based interface
+- **Web UI** (`alma-web/`): React-based browser dashboard
 
 **Key Features**:
 - Multiple input formats (natural language, YAML, JSON)
-- Rich output formatting (tables, charts, progress bars)
+- Rich output formatting (tables, progress bars)
 - Interactive mode for complex workflows
-- Authentication and authorization
+- API key authentication (configurable)
 
 **Example CLI Commands**:
 ```bash
-ALMA deploy blueprint.yaml
-ALMA generate "web app with database"
-ALMA status
-ALMA rollback deployment-123
+alma deploy blueprint.yaml
+alma council convene "web app with database"
+alma templates list
+alma dashboard
 ```
 
 **Example API Calls**:
@@ -223,7 +223,7 @@ CREATE TABLE system_blueprints (
 
 ### LLM Integration
 
-**Model**: Qwen2.5-0.5B-Instruct
+**Model**: Configurable (defaults to `Qwen/Qwen2.5-0.5B-Instruct` when using local Transformers; any OpenAI-compatible endpoint is also supported)
 
 **Architecture**:
 ```
@@ -357,9 +357,9 @@ Strong typing throughout:
 - **Alembic**: Database migrations
 
 ### AI/ML
-- **Transformers**: Hugging Face library
-- **PyTorch**: Deep learning framework
-- **Qwen3**: Large language model
+- **Transformers** (optional): Hugging Face library for local LLM inference
+- **PyTorch** (optional): Required when using local Transformers models
+- **LangGraph / LangChain**: Workflow orchestration and LLM tooling
 
 ### CLI
 - **Typer**: CLI framework
@@ -368,7 +368,7 @@ Strong typing throughout:
 
 ### Database
 - **PostgreSQL**: Production database
-- **SQLite**: Development database
+- **SQLite**: Development database (default)
 - **AsyncPG**: Async PostgreSQL driver
 
 ### Testing
@@ -404,9 +404,9 @@ Strong typing throughout:
 ## Security
 
 ### Authentication
-- API key authentication (future)
-- OAuth2 integration (future)
-- Role-based access control (future)
+- API key authentication (configurable via `ALMA_API_KEY` environment variable)
+- OAuth2 integration (planned)
+- Role-based access control (planned)
 
 ### Data Protection
 - Environment variables for secrets
@@ -430,28 +430,23 @@ Strong typing throughout:
 - LLM model size configurable
 - Database connection pooling
 
-## Future Enhancements
+## Current Status and Roadmap
 
-### Completed (v0.8.x)
+### Completed
 - [x] Prometheus metrics (`alma/middleware/metrics.py`)
-- [x] Web UI (React-based Dashboard)
+- [x] Web UI — React-based dashboard (`alma-web/`)
 - [x] Event sourcing (`alma/core/events.py`)
 - [x] CQRS pattern (`alma/core/cqrs.py`)
-- [x] Docker Engine Support
-
-### Completed (v0.8.4)
+- [x] Docker engine (`alma/engines/docker.py`)
 - [x] WebSocket support for real-time updates (`/ws/deployments`)
-- [x] GraphQL API (`/graphql`)
+- [x] GraphQL API (`/graphql`) — basic system status queries
+- [x] API key authentication
 
-### Medium Term
+### Planned
 - [ ] Multi-tenancy
 - [ ] RBAC (Role-Based Access Control)
 - [ ] Native Terraform Provider (Go wrapper)
 - [ ] Kubernetes Operator (CRD Controller)
-
-### Long Term (v2.0)
-- [ ] Distributed deployment (Multi-Region)
-- [ ] Advanced Federation
 
 ## References
 
