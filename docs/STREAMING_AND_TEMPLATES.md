@@ -1,14 +1,14 @@
 # Streaming Responses & Blueprint Templates
 
-## 🌊 Streaming Responses
+## Streaming Responses
 
-ALMA now supports **real-time streaming** of LLM responses using Server-Sent Events (SSE). This dramatically improves perceived performance and user experience.
+ALMA supports **real-time streaming** of LLM responses using Server-Sent Events (SSE), which reduces perceived latency.
 
 ### Benefits
 
 - **Instant Feedback**: Users see responses as they're generated, not after completion
 - **Better UX**: Progress indication and real-time thinking process
-- **Lower Perceived Latency**: 60-80% faster time-to-first-byte
+- **Lower Perceived Latency**: Faster time-to-first-byte
 - **Progressive Enhancement**: Shows partial results immediately
 
 ### Streaming Endpoints
@@ -130,25 +130,25 @@ The `-N` flag disables buffering for real-time streaming.
 
 ---
 
-## 📚 Blueprint Templates Library
+## Blueprint Templates Library
 
-ALMA includes **10 production-ready templates** for common infrastructure patterns. Templates follow best practices and can be customized.
+ALMA includes **10 templates** for common infrastructure patterns. Templates can be customized for your environment.
 
 ### Available Templates
 
-#### **Simple (Cost: $100-300/month)**
+#### Simple
 
 1. **simple-web-app**: Basic web app with load balancer and database
 2. **redis-cluster**: Redis cache with persistence and replication
 
-#### **Medium (Cost: $300-1000/month)**
+#### Medium
 
 3. **ha-web-app**: High-availability web app with autoscaling and CDN
 4. **postgres-ha**: PostgreSQL HA cluster with automated failover
 5. **observability-stack**: Prometheus, Grafana, Loki, Jaeger
 6. **api-gateway**: Kong-based API gateway with plugins
 
-#### **Advanced (Cost: $1000-5000/month)**
+#### Advanced
 
 7. **microservices-k8s**: Kubernetes platform with Istio service mesh
 8. **data-pipeline**: ETL pipeline with Airflow, Kafka, Spark
@@ -431,10 +431,6 @@ python examples/template_browser.py
 
 ## Summary
 
-✅ **Streaming Responses**: 2 new endpoints for real-time AI interaction
-✅ **Blueprint Templates**: 10 production-ready infrastructure patterns
-✅ **Better UX**: 60-80% faster perceived response time
-✅ **Easy Customization**: Scale and modify templates instantly
-✅ **Production Ready**: All templates follow best practices
-
-These features make ALMA significantly more user-friendly and practical for real-world use!
+- **Streaming Responses**: 2 endpoints for real-time LLM output via SSE
+- **Blueprint Templates**: 10 pre-built infrastructure patterns
+- **Easy Customization**: Scale and modify templates via the API

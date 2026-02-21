@@ -126,7 +126,7 @@ curl -X POST http://localhost:8000/api/v1/templates/simple-web-app/customize \
   }'
 ```
 
-#### Option 3: AI Generation
+#### Option 3: Blueprint Generation
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/blueprints/generate-blueprint \
