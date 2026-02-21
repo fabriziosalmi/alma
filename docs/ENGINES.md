@@ -10,12 +10,12 @@ ALMA uses a **plugin architecture** for infrastructure providers. Each engine im
 
 | Engine | Provider | Status | Resources Supported |
 |--------|----------|--------|---------------------|
-| **FakeEngine** | Testing | ✅ Supported | All types (simulated) |
-| **ProxmoxEngine** | Proxmox VE | ✅ Supported | compute, storage |
-| **DockerEngine** | Docker | ✅ Supported | compute |
-| **KubernetesEngine** | K8s | 🧪 Experimental | compute, network (Service) |
-| AnsibleEngine | Ansible | 📅 Planned | compute, configure |
-| MikroTikEngine | MikroTik | 📅 Planned | network |
+| **FakeEngine** | Testing | Supported | All types (simulated) |
+| **ProxmoxEngine** | Proxmox VE | Supported | compute, storage |
+| **DockerEngine** | Docker | Supported | compute |
+| **KubernetesEngine** | K8s | Experimental | compute, network (Service) |
+| AnsibleEngine | Ansible | Planned | compute, configure |
+| MikroTikEngine | MikroTik | Planned | network |
 
 ## Engine Interface
 
@@ -97,12 +97,12 @@ print(f"Resources: {result.resources_created}")
 
 **Location**: `alma/engines/proxmox.py`
 
-**Status**: ✅ Supported (Primary Engine)
+**Status**: Supported (Primary Engine)
 
 **Supported Resources**:
-- ✅ `compute`: Virtual machines
-- 🚧 `storage`: Storage volumes
-- 📅 `network`: Networks and VLANs
+- `compute`: Virtual machines (supported)
+- `storage`: Storage volumes (partial)
+- `network`: Networks and VLANs (planned)
 
 **Configuration**:
 ```python

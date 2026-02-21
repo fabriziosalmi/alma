@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-This guide will help you get started with ALMA in 5 minutes.
+This guide will help you get started with ALMA.
 
 ## Installation
 
@@ -175,4 +175,3 @@ mypy alma
 
 - Check the [documentation](../README.md)
 - Open an issue on GitHub
-- Join our community Discord (coming soon)

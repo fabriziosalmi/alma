@@ -1,16 +1,16 @@
 # ALMA LLM Integration Guide
 
-This guide explains how to use the Qwen3 LLM integration in ALMA for conversational infrastructure management.
+This guide explains how to configure and use the LLM integration in ALMA for conversational infrastructure management.
 
 ## Overview
 
-ALMA uses Qwen3-0.6B, a small but powerful language model, to provide:
+ALMA supports configurable LLM backends (defaulting to `Qwen/Qwen2.5-0.5B-Instruct` for local inference) to provide:
 - **Natural language to infrastructure** - Describe what you want, get a blueprint
 - **Infrastructure to natural language** - Understand what your blueprints do
-- **AI-powered suggestions** - Get recommendations for improvements
-- **Security audits** - Identify security issues automatically
-- **Resource sizing** - Get optimal resource recommendations
-- **Intent classification** - Understand user requests intelligently
+- **Improvement suggestions** - Get recommendations for improvements
+- **Security audits** - Identify security issues in blueprints
+- **Resource sizing** - Get resource recommendations
+- **Intent classification** - Understand user requests
 
 ## Installation
 
@@ -140,7 +140,7 @@ curl -X POST http://localhost:8000/api/v1/conversation/describe-blueprint \
 }
 ```
 
-### 4. Get AI Improvement Suggestions
+### 4. Get Improvement Suggestions
 
 Analyze your infrastructure and get recommendations:
 
@@ -174,7 +174,7 @@ curl -X POST http://localhost:8000/api/v1/conversation/suggest-improvements \
 
 ### 5. Resource Sizing Recommendations
 
-Get AI-powered resource sizing for your workload:
+Get resource sizing recommendations for your workload:
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/conversation/resource-sizing \
@@ -199,7 +199,7 @@ curl -X POST http://localhost:8000/api/v1/conversation/resource-sizing \
 
 ### 6. Security Audit
 
-Get AI-powered security analysis:
+Get security analysis of your blueprint:
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/conversation/security-audit \
@@ -281,7 +281,7 @@ blueprint = await orchestrator.natural_language_to_blueprint(
 
 ## CLI Usage
 
-The CLI automatically uses the LLM for intelligent interactions:
+The CLI uses the LLM for natural language processing:
 
 ```bash
 # Generate blueprint from natural language

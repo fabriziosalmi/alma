@@ -99,15 +99,15 @@ Complete guide for deploying ALMA in production environments.
 version: '3.8'
 
 services:
-  aicdn-app:
+  alma-app:
     build: .
-    image: aicdn:latest
-    container_name: aicdn-app
+    image: alma:latest
+    container_name: alma-app
     restart: always
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://aicdn:${DB_PASSWORD}@postgres:5432/aicdn
+      - DATABASE_URL=postgresql://alma:${DB_PASSWORD}@postgres:5432/alma
       - REDIS_URL=redis://redis:6379/0
       - API_CORS_ORIGINS=["https://your-domain.com"]
       - LOG_LEVEL=INFO
@@ -118,7 +118,7 @@ services:
     volumes:
       - ./logs:/app/logs
     networks:
-      - aicdn-network
+      - alma-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -127,33 +127,33 @@ services:
 
   postgres:
     image: postgres:15-alpine
-    container_name: aicdn-postgres
+    container_name: alma-postgres
     restart: always
     environment:
-      - POSTGRES_USER=aicdn
+      - POSTGRES_USER=alma
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=aicdn
+      - POSTGRES_DB=alma
       - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./backups:/backups
     networks:
-      - aicdn-network
+      - alma-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U aicdn"]
+      test: ["CMD-SHELL", "pg_isready -U alma"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: aicdn-redis
+    container_name: alma-redis
     restart: always
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis-data:/data
     networks:
-      - aicdn-network
+      - alma-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -162,7 +162,7 @@ services:
 
   nginx:
     image: nginx:alpine
-    container_name: aicdn-nginx
+    container_name: alma-nginx
     restart: always
     ports:
       - "80:80"
@@ -171,13 +171,13 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
     depends_on:
-      - aicdn-app
+      - alma-app
     networks:
-      - aicdn-network
+      - alma-network
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: aicdn-prometheus
+    container_name: alma-prometheus
     restart: always
     ports:
       - "9090:9090"
@@ -189,11 +189,11 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=30d'
     networks:
-      - aicdn-network
+      - alma-network
 
   grafana:
     image: grafana/grafana:latest
-    container_name: aicdn-grafana
+    container_name: alma-grafana
     restart: always
     ports:
       - "3000:3000"
@@ -207,7 +207,7 @@ services:
     depends_on:
       - prometheus
     networks:
-      - aicdn-network
+      - alma-network
 
 volumes:
   postgres-data:
@@ -216,7 +216,7 @@ volumes:
   grafana-data:
 
 networks:
-  aicdn-network:
+  alma-network:
     driver: bridge
 ```
 
@@ -242,7 +242,7 @@ docker-compose -f docker-compose.prod.yml up -d
 docker-compose -f docker-compose.prod.yml ps
 
 # View logs
-docker-compose -f docker-compose.prod.yml logs -f aicdn-app
+docker-compose -f docker-compose.prod.yml logs -f alma-app
 ```
 
 ### Option 2: Native Installation
@@ -260,15 +260,15 @@ sudo apt install -y python3.10 python3-pip python3-venv \
     build-essential libpq-dev
 
 # Create application user
-sudo useradd -m -s /bin/bash aicdn
-sudo usermod -aG sudo aicdn
+sudo useradd -m -s /bin/bash alma
+sudo usermod -aG sudo alma
 ```
 
 #### Step 2: Application Installation
 
 ```bash
-# Switch to aicdn user
-sudo su - aicdn
+# Switch to alma user
+sudo su - alma
 
 # Clone repository
 git clone https://github.com/fabriziosalmi/alma.git
@@ -289,18 +289,18 @@ mkdir -p logs
 #### Step 3: Systemd Service
 
 ```ini
-# /etc/systemd/system/aicdn.service
+# /etc/systemd/system/alma.service
 [Unit]
 Description=ALMA API Server
 After=network.target postgresql.service redis.service
 
 [Service]
 Type=notify
-User=aicdn
-Group=aicdn
+User=alma
+Group=alma
 WorkingDirectory=/home/alma/alma
 Environment="PATH=/home/alma/alma/venv/bin"
-Environment="DATABASE_URL=postgresql://aicdn:password@localhost/aicdn"
+Environment="DATABASE_URL=postgresql://alma:password@localhost/alma"
 ExecStart=/home/alma/alma/venv/bin/gunicorn alma.api.main:app \
     --workers 4 \
     --worker-class uvicorn.workers.UvicornWorker \
@@ -318,9 +318,9 @@ WantedBy=multi-user.target
 ```bash
 # Enable and start service
 sudo systemctl daemon-reload
-sudo systemctl enable aicdn
-sudo systemctl start aicdn
-sudo systemctl status aicdn
+sudo systemctl enable alma
+sudo systemctl start alma
+sudo systemctl status alma
 ```
 
 ---
@@ -333,7 +333,7 @@ Create `.env.production`:
 
 ```bash
 # Database
-DATABASE_URL=postgresql://aicdn:password@localhost:5432/aicdn
+DATABASE_URL=postgresql://alma:password@localhost:5432/alma
 DATABASE_POOL_SIZE=20
 DATABASE_MAX_OVERFLOW=10
 
@@ -364,7 +364,7 @@ METRICS_PORT=9090
 # Logging
 LOG_LEVEL=INFO
 LOG_FORMAT=json
-LOG_FILE=/var/log/aicdn/app.log
+LOG_FILE=/var/log/alma/app.log
 
 # Security
 SECRET_KEY=your-secret-key-here-generate-with-openssl-rand
@@ -374,15 +374,15 @@ JWT_EXPIRATION=3600
 
 # Deployment Engines
 PROXMOX_HOST=proxmox.internal.com
-PROXMOX_USER=aicdn@pve
+PROXMOX_USER=alma@pve
 PROXMOX_PASSWORD=secure-password
 ```
 
 ### Nginx Configuration
 
 ```nginx
-# /etc/nginx/sites-available/aicdn
-upstream aicdn_backend {
+# /etc/nginx/sites-available/alma
+upstream alma_backend {
     server 127.0.0.1:8000;
     # For multiple servers:
     # server 10.0.1.10:8000;
@@ -422,14 +422,14 @@ server {
     add_header X-XSS-Protection "1; mode=block" always;
 
     # Logging
-    access_log /var/log/nginx/aicdn-access.log combined;
-    error_log /var/log/nginx/aicdn-error.log warn;
+    access_log /var/log/nginx/alma-access.log combined;
+    error_log /var/log/nginx/alma-error.log warn;
 
     # Proxy settings
     location / {
         limit_req zone=api_limit burst=20 nodelay;
         
-        proxy_pass http://aicdn_backend;
+        proxy_pass http://alma_backend;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -450,7 +450,7 @@ server {
 
     # Health check endpoint
     location /health {
-        proxy_pass http://aicdn_backend/health;
+        proxy_pass http://alma_backend/health;
         access_log off;
     }
 
@@ -458,14 +458,14 @@ server {
     location /metrics {
         allow 10.0.0.0/8;  # Internal network only
         deny all;
-        proxy_pass http://aicdn_backend/metrics;
+        proxy_pass http://alma_backend/metrics;
     }
 }
 ```
 
 ```bash
 # Enable site and reload Nginx
-sudo ln -s /etc/nginx/sites-available/aicdn /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/alma /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 
@@ -484,10 +484,10 @@ sudo certbot --nginx -d api.your-domain.com
 sudo su - postgres
 
 # Create database and user
-createuser aicdn
-createdb -O aicdn aicdn
-psql -c "ALTER USER aicdn WITH PASSWORD 'secure-password';"
-psql -c "GRANT ALL PRIVILEGES ON DATABASE aicdn TO aicdn;"
+createuser alma
+createdb -O alma alma
+psql -c "ALTER USER alma WITH PASSWORD 'secure-password';"
+psql -c "GRANT ALL PRIVILEGES ON DATABASE alma TO alma;"
 ```
 
 ### PostgreSQL Tuning
@@ -537,7 +537,7 @@ source venv/bin/activate
 alembic upgrade head
 
 # Verify
-psql -U aicdn -d aicdn -c "\dt"
+psql -U alma -d alma -c "\dt"
 ```
 
 ---
@@ -641,21 +641,17 @@ groups:
 
 ### 2. API Key Authentication
 
-**Current Status**: Not yet implemented (v0.2.0 planned)
+API key authentication is enabled via the `ALMA_API_KEYS` environment variable. Set a comma-separated list of valid keys:
 
-**Future Implementation**:
+```bash
+# .env
+ALMA_API_KEYS=your-secret-key-1,your-secret-key-2
+```
 
-```python
-# alma/core/security.py
-from fastapi import Security, HTTPException
-from fastapi.security import APIKeyHeader
+Pass the key in the `X-API-Key` header for protected endpoints:
 
-API_KEY_HEADER = APIKeyHeader(name="X-API-Key")
-
-async def verify_api_key(api_key: str = Security(API_KEY_HEADER)):
-    if api_key not in VALID_API_KEYS:  # Store in database
-        raise HTTPException(status_code=403, detail="Invalid API key")
-    return api_key
+```bash
+curl -H "X-API-Key: your-secret-key-1" http://localhost:8000/api/v1/blueprints
 ```
 
 ### 3. Input Validation Protection
@@ -919,9 +915,9 @@ global:
     environment: 'prod'
 
 scrape_configs:
-  - job_name: 'aicdn-api'
+  - job_name: 'alma-api'
     static_configs:
-      - targets: ['aicdn-app:8000']
+      - targets: ['alma-app:8000']
     metrics_path: '/metrics'
     scrape_interval: 10s
 
@@ -949,9 +945,9 @@ rule_files:
 ### Alert Rules
 
 ```yaml
-# config/alerts/aicdn.yml
+# config/alerts/alma.yml
 groups:
-  - name: aicdn_alerts
+  - name: alma_alerts
     interval: 30s
     rules:
       - alert: HighErrorRate
@@ -1005,7 +1001,7 @@ services:
   promtail:
     image: grafana/promtail:latest
     volumes:
-      - ./logs:/var/log/aicdn
+      - ./logs:/var/log/alma
       - ./config/promtail.yml:/etc/promtail/config.yml
     depends_on:
       - loki
@@ -1021,19 +1017,19 @@ services:
 # HAProxy configuration
 frontend http_front
     bind *:80
-    bind *:443 ssl crt /etc/ssl/certs/aicdn.pem
+    bind *:443 ssl crt /etc/ssl/certs/alma.pem
     mode http
-    default_backend aicdn_backend
+    default_backend alma_backend
 
-backend aicdn_backend
+backend alma_backend
     mode http
     balance roundrobin
     option httpchk GET /health
     http-check expect status 200
     
-    server aicdn1 10.0.1.10:8000 check inter 5s fall 3 rise 2
-    server aicdn2 10.0.1.11:8000 check inter 5s fall 3 rise 2
-    server aicdn3 10.0.1.12:8000 check inter 5s fall 3 rise 2
+    server alma1 10.0.1.10:8000 check inter 5s fall 3 rise 2
+    server alma2 10.0.1.11:8000 check inter 5s fall 3 rise 2
+    server alma3 10.0.1.12:8000 check inter 5s fall 3 rise 2
 ```
 
 ### PostgreSQL Replication
@@ -1076,20 +1072,20 @@ sentinel failover-timeout mymaster 10000
 
 ```bash
 #!/bin/bash
-# /home/aicdn/backups/backup.sh
+# /home/alma/backups/backup.sh
 
 BACKUP_DIR="/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 
 # Database backup
-pg_dump -U aicdn aicdn | gzip > $BACKUP_DIR/db_$DATE.sql.gz
+pg_dump -U alma alma | gzip > $BACKUP_DIR/db_$DATE.sql.gz
 
 # Application files
 tar -czf $BACKUP_DIR/app_$DATE.tar.gz /home/alma/alma
 
 # Upload to S3
-aws s3 cp $BACKUP_DIR/db_$DATE.sql.gz s3://aicdn-backups/
-aws s3 cp $BACKUP_DIR/app_$DATE.tar.gz s3://aicdn-backups/
+aws s3 cp $BACKUP_DIR/db_$DATE.sql.gz s3://alma-backups/
+aws s3 cp $BACKUP_DIR/app_$DATE.tar.gz s3://alma-backups/
 
 # Cleanup old backups (keep 30 days)
 find $BACKUP_DIR -name "*.gz" -mtime +30 -delete
@@ -1097,20 +1093,20 @@ find $BACKUP_DIR -name "*.gz" -mtime +30 -delete
 
 ```bash
 # Crontab entry
-0 2 * * * /home/aicdn/backups/backup.sh
+0 2 * * * /home/alma/backups/backup.sh
 ```
 
 ### Disaster Recovery
 
 ```bash
 # Restore database
-gunzip < db_backup.sql.gz | psql -U aicdn aicdn
+gunzip < db_backup.sql.gz | psql -U alma alma
 
 # Restore application
-tar -xzf app_backup.tar.gz -C /home/aicdn/
+tar -xzf app_backup.tar.gz -C /home/alma/
 
 # Restart services
-sudo systemctl restart aicdn
+sudo systemctl restart alma
 ```
 
 ---
@@ -1174,8 +1170,8 @@ location /static {
 
 ```bash
 # Application
-sudo systemctl status aicdn
-sudo journalctl -u aicdn -f
+sudo systemctl status alma
+sudo journalctl -u alma -f
 
 # Database
 sudo systemctl status postgresql
@@ -1191,7 +1187,7 @@ sudo tail -f /var/log/nginx/error.log
 **Database connection errors:**
 ```bash
 # Check connections
-psql -U aicdn -c "SELECT count(*) FROM pg_stat_activity;"
+psql -U alma -c "SELECT count(*) FROM pg_stat_activity;"
 
 # Kill idle connections
 SELECT pg_terminate_backend(pid) FROM pg_stat_activity 
@@ -1204,13 +1200,13 @@ WHERE state = 'idle' AND state_change < now() - interval '1 hour';
 ps aux --sort=-%mem | head
 
 # Restart workers
-sudo systemctl restart aicdn
+sudo systemctl restart alma
 ```
 
 **Slow queries:**
 ```sql
 -- Enable query logging
-ALTER DATABASE aicdn SET log_min_duration_statement = 1000;
+ALTER DATABASE alma SET log_min_duration_statement = 1000;
 
 -- Find slow queries
 SELECT query, mean_exec_time 

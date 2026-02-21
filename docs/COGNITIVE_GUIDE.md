@@ -1,6 +1,6 @@
-# ALMA Cognitive Engine Guide 🧠
+# ALMA Cognitive Engine Guide
 
-The **Cognitive Engine** is what makes ALMA "sentient". Unlike standard CLI tools, it tracks your emotional state, understands context shifts, and protects you from risky operations.
+The **Cognitive Engine** provides context tracking, risk assessment, and dynamic persona selection to provide a safer and more intuitive conversational experience.
 
 ## How it Works
 
@@ -8,7 +8,7 @@ The engine sits in the request loop:
 `User Input` -> **`Cognitive Engine`** -> `LLM Orchestrator` -> `Execution`
 
 ### 1. Frustration Detection & Safety
-The system analyzes your input patterns (typing speed, caps lock usage, repetitive commands, error history).
+The system analyzes your input text for keywords that indicate frustration (e.g., "fail", "error", "broken", "wrong").
 
 | Frustration Level | System Response |
 |-------------------|-----------------|
@@ -17,19 +17,19 @@ The system analyzes your input patterns (typing speed, caps lock usage, repetiti
 | **High (0.8 - 1.0)** | **Safety Lock**. Destructive commands are blocked. Requires explicit "I confirm" syntax. |
 
 ### 2. Adaptive Personas
-The AI changes its "hat" based on the task.
+The AI changes its response style based on the task.
 
-#### 🏗️ The Architect
+#### The Architect
 *Activates when:* You ask to create blueprints or design systems.
 *Style:* Creative, suggests improvements, explains "why".
 > "I've designed a Redis Cluster. I suggest adding 3 sentinels for HA. Here is the blueprint..."
 
-#### ⚙️ The Operator
+#### The Operator
 *Activates when:* You deploy, rollback, or scale.
 *Style:* Military precision. Confirms actions. No chatty text.
 > "Deploying ID: 592. Status: PENDING. Engine: K8s."
 
-#### 🚑 The Medic
+#### The Medic
 *Activates when:* Things go wrong (errors, logs, troubleshooting).
 *Style:* Calm, step-by-step diagnosis.
 > "I see a 503 error. Let's check the ingress controller first. Logs show..."

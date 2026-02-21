@@ -21,16 +21,16 @@ hero:
 
 features:
   - title: Natural Language Interface
-    details: Describe your infrastructure needs in plain English and let ALMA's AI generate production-ready blueprints automatically.
+    details: Describe your infrastructure needs in plain English and let ALMA generate blueprints based on your input.
   
   - title: Multi-Provider Support
-    details: Deploy to Kubernetes, Proxmox, or any infrastructure provider through a unified, conversational interface.
+    details: Deploy to Kubernetes, Proxmox, or Docker through a unified interface.
   
   - title: Infrastructure Approval
     details: Review, approve, and track deployment requests with a built-in approval workflow.
   
-  - title: AI-Powered Orchestration
-    details: Leverage advanced LLM capabilities for intelligent resource sizing, cost optimization, and security auditing.
+  - title: LLM-Powered Orchestration
+    details: Leverage configurable LLM backends for intent parsing, resource suggestions, and security auditing.
   
   - title: Real-time Monitoring
     details: Track deployments, metrics, and system health with Prometheus integration and streaming updates.
@@ -58,24 +58,24 @@ docker compose up -d
 
 ## Core Features
  
-### ⚡ Quick Wins (v0.8.5 - v0.8.8)
-- **🐳 Docker Engine**: Native support for managing containers with robust logging.
-- **📊 Live Dashboard**: Visualize system resources (VMs, Containers) in real-time.
-- **🛡️ Resilience**: Implemented Circuit Breaker and Retry patterns for core system stability.
-- **🧪 Test Coverage**: Significantly improved unit test coverage (~30%) for Core, Engines, and API.
-- **🧙‍♂️ The Council**: Multi-Agent system where specialized AI agents (Architect, SecOps, FinOps) debate infrastructure decisions.
-- **🕸️ GraphQL API**: Flexible data querying (`/graphql`) powered by Strawberry.
+### Quick Wins (v0.8.5 - v0.8.8)
+- **Docker Engine**: Native support for managing containers with robust logging.
+- **Live Dashboard**: Visualize system resources (VMs, Containers) in real-time.
+- **Resilience**: Implemented Circuit Breaker and Retry patterns for core system stability.
+- **Test Coverage**: Significantly improved unit test coverage (~30%) for Core, Engines, and API.
+- **The Council**: Multi-Agent system where specialized AI agents (Architect, SecOps, FinOps) debate infrastructure decisions.
+- **GraphQL API**: Flexible data querying (`/graphql`) powered by Strawberry.
 
-### 🧠 LangGraph Orchestration
-ALMA uses a sophisticated state machine to handle complex deployment workflows, error recovery, and verification loops.
+### LangGraph Orchestration
+ALMA uses a state machine to handle complex deployment workflows, error recovery, and verification loops.
 
-### 🔌 MCP Native
-Built on the **Model Context Protocol**, allowing seamless integration with Claude Desktop, Cursor, and other AI agents.
+### MCP Native
+Built on the **Model Context Protocol**, allowing integration with Claude Desktop, Cursor, and other AI agents.
 
-### ⚡ Proxmox Intelligence
-Advanced engine with task-aware waiting (no more race conditions), dual SSH/API modes, and automatic template management.
+### Proxmox Engine
+Engine with task-aware waiting (no more race conditions), dual SSH/API modes, and automatic template management.
 
-### 🛡️ Security First
+### Security
 Built-in security auditing, compliance checking, and best practices enforcement for production deployments.
 
 ### Scalable Architecture
@@ -84,16 +84,16 @@ Horizontally scalable design with support for distributed deployments and high-t
 
 ## Roadmap
 
-### Q1 2025: Intelligent Orchestration (In Progress)
+### Intelligent Orchestration (In Progress)
 - **Multi-Agent Architecture**: Specialized agents for Architecture, Security, and Cost.
 - **Proactive Security**: Pre-deployment vulnerability scanning in IPRs.
 
-### Q2 2025: Predictive Operations
+### Predictive Operations (Planned)
 - **Anomaly Detection**: ML-based resource usage analysis.
 - **Capacity Forecasting**: Historical data-driven scaling predictions.
 - **Auto-Remediation**: Automated recovery runbooks.
 
-### Q3 2025: Universal Abstraction
+### Universal Abstraction (Planned)
 - **Cloud Portability**: Abstracted blueprints for AWS/Azure/GCP migration.
 - **Hybrid Deployment**: Unified management for On-Prem and Cloud.
 
@@ -101,7 +101,7 @@ Horizontally scalable design with support for distributed deployments and high-t
 
 <div class="vp-doc">
 
-1. **[Quick Start Guide](/QUICKSTART)** - Get up and running in 5 minutes
+1. **[Quick Start Guide](/QUICKSTART)** - Get up and running quickly
 2. **[Architecture Overview](/ARCHITECTURE)** - Understand ALMA's design
 3. **[API Reference](/API_REFERENCE)** - Complete API documentation
 4. **[Production Deployment](/PRODUCTION_DEPLOYMENT)** - Deploy to production

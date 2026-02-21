@@ -3,7 +3,7 @@
 > **ALMA** - Autonomous Language Model Architecture  
 > Infrastructure as Conversation Platform
 
-Complete API documentation for the ALMA platform, enabling natural language infrastructure management through advanced AI capabilities.
+Complete API documentation for the ALMA platform.
 
 ## Base URL
 

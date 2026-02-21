@@ -1,6 +1,6 @@
 # Enhanced Function Calling Tools API
 
-ALMA now includes a comprehensive set of **13 intelligent tools** that can be called by the LLM to perform infrastructure operations. This dramatically expands the capabilities beyond simple blueprint generation.
+ALMA includes a set of **13 tools** that can be called by the LLM to perform infrastructure operations, extending capabilities beyond simple blueprint generation.
 
 ## Overview
 
@@ -348,7 +348,7 @@ curl -X POST http://localhost:8000/api/v1/tools/execute-direct \
 
 ## Integration with LLM
 
-The tools are designed to work seamlessly with function calling:
+The tools are designed to work with function calling:
 
 1. **User makes request** in natural language
 2. **LLM analyzes** the request and available tools
