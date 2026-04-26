@@ -19,12 +19,12 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "ALMA"
-    app_version: str = "0.7.8"
+    app_version: str = "0.8.9"
     debug: bool = False
     environment: str = "development"
 
     # API
-    api_host: str = "0.0.0.0"
+    api_host: str = "0.0.0.0"  # nosec B104 - configurable bind address, default is for containerized deployments
     api_port: int = 8000
     api_prefix: str = "/api/v1"
     api_cors_origins: list[str] = Field(default_factory=lambda: ["*"])

@@ -4,16 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import subprocess
 from typing import Any, cast
 
 import httpx
 
+from alma.core.resilience import CircuitBreaker, CircuitBreakerOpenException
 from alma.core.state import Plan, ResourceState, diff_states
 from alma.engines.base import Engine
 from alma.schemas.blueprint import SystemBlueprint
-
-from alma.core.resilience import CircuitBreaker, CircuitBreakerOpenException
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +45,7 @@ class ProxmoxEngine(Engine):
         self.ticket: str | None = None
         self.csrf_token: str | None = None
         self.use_ssh: bool = False
-        
+
         # Resilience: Circuit Breaker for API calls
         self.circuit_breaker = CircuitBreaker(
             name="ProxmoxAPI",
@@ -67,11 +65,11 @@ class ProxmoxEngine(Engine):
                 data = response.json().get("data", {})
                 self.ticket = data.get("ticket")
                 self.csrf_token = data.get("CSRFPreventionToken")
-                
+
                 if not self.ticket or not self.csrf_token:
                     logger.error("Authentication failed: Missing ticket or CSRF token.")
                     return False
-                
+
                 self.use_ssh = False
                 logger.info("Successfully authenticated with Proxmox API.")
                 return True
@@ -89,13 +87,13 @@ class ProxmoxEngine(Engine):
     async def _run_ssh_command(self, command: list[str]) -> str:
         """
         Run a command on the Proxmox host via SSH using key-based auth.
-        
+
         Args:
             command: List of command parts to execute on the remote host.
         """
         host_ip = self._extract_ip(self.host)
         user = self.username.split("@")[0]
-        
+
         # Construct SSH command without password
         ssh_cmd = [
             "ssh",
@@ -103,7 +101,7 @@ class ProxmoxEngine(Engine):
             "-o", "ConnectTimeout=10",
             f"{user}@{host_ip}",
         ] + command
-        
+
         try:
             # Run in a thread to verify blocking I/O doesn't freeze the loop
             process = await asyncio.create_subprocess_exec(
@@ -112,12 +110,12 @@ class ProxmoxEngine(Engine):
                 stderr=asyncio.subprocess.PIPE
             )
             stdout, stderr = await process.communicate()
-            
+
             if process.returncode != 0:
                 error_msg = stderr.decode().strip()
                 logger.error(f"SSH Command failed: {error_msg}")
                 raise Exception(f"SSH Command failed: {error_msg}")
-                
+
             return stdout.decode().strip()
         except Exception as e:
             logger.error(f"SSH execution error: {e}")
@@ -129,17 +127,17 @@ class ProxmoxEngine(Engine):
         """Make an authenticated API request."""
         if self.use_ssh:
              raise NotImplementedError("Cannot use _api_request in SSH mode")
-            
+
         if not self.ticket:
             if not await self._authenticate():
                  raise ConnectionError("Authentication failed")
 
         headers = {"CSRFPreventionToken": self.csrf_token}
         cookies = {"PVEAuthCookie": self.ticket}
-        
+
         async with httpx.AsyncClient(verify=self.verify_ssl, timeout=30.0) as client:
             url = f"{self.host}/api2/json/{endpoint}"
-            
+
             async def _do_request():
                 response = await client.request(
                     method=method,
@@ -156,7 +154,7 @@ class ProxmoxEngine(Engine):
                 return await self.circuit_breaker.call(_do_request)
             except CircuitBreakerOpenException:
                 logger.error("Proxmox API Circuit Breaker is OPEN. Failing fast.")
-                raise ConnectionError("Proxmox API is temporarily unavailable (Circuit Broken).")
+                raise ConnectionError("Proxmox API is temporarily unavailable (Circuit Broken).") from None
             except httpx.HTTPStatusError as e:
                 logger.error(f"API Request failed: {e.response.text}")
                 raise
@@ -167,14 +165,14 @@ class ProxmoxEngine(Engine):
     async def _wait_for_task(self, upid: str, timeout: int = 300) -> bool:
         """
         Wait for a Proxmox task (UPID) to complete.
-        
+
         Args:
             upid: Task ID
             timeout: Maximum wait time in seconds
         """
         logger.info(f"Waiting for task {upid}...")
         start_time = asyncio.get_running_loop().time()
-        
+
         try:
             task_node = upid.split(":")[1]
         except IndexError:
@@ -193,9 +191,9 @@ class ProxmoxEngine(Engine):
                         return False
             except Exception as e:
                 logger.warning(f"Transient error checking task status: {e}")
-            
+
             await asyncio.sleep(2)  # Simple backoff buffer
-            
+
         logger.error(f"Timeout waiting for task {upid}")
         return False
 
@@ -205,7 +203,7 @@ class ProxmoxEngine(Engine):
             # We need to construct the command list for SSH
             out = await self._run_ssh_command(["pvesh", "get", "/cluster/nextid", "--output-format", "json"])
             return int(out)
-        
+
         data = await self._api_request("GET", "cluster/nextid")
         return int(data)
 
@@ -226,7 +224,7 @@ class ProxmoxEngine(Engine):
                     return cast(dict[str, Any], ct)
         except Exception as e:
             logger.error(f"Error fetching VM list: {e}")
-            
+
         return None
 
     async def list_resources(self) -> list[dict[str, Any]]:
@@ -246,8 +244,8 @@ class ProxmoxEngine(Engine):
                 ct["type"] = "lxc"
                 resources.append(ct)
         except Exception as e:
-            logger.warning(f"Failed to fetch LXC via API: {e}") 
-            
+            logger.warning(f"Failed to fetch LXC via API: {e}")
+
         return resources
 
     async def get_state(self, blueprint: SystemBlueprint) -> list[ResourceState]:
@@ -256,16 +254,16 @@ class ProxmoxEngine(Engine):
             vms = await self._api_request("GET", f"nodes/{self.node}/qemu")
         except Exception:
             vms = []
-            
+
         try:
             cts = await self._api_request("GET", f"nodes/{self.node}/lxc")
         except Exception:
             cts = []
-            
+
         all_resources = (vms or []) + (cts or [])
         blueprint_names = {r.name for r in blueprint.resources}
         resources = []
-        
+
         for res in all_resources:
             name = res.get("name")
             if name in blueprint_names:
@@ -274,14 +272,14 @@ class ProxmoxEngine(Engine):
                 memory_mb = res.get("maxmem", 0) // 1024 // 1024
                 # Proxmox returns 'maxcpu' or 'cpus' -> CPU cores
                 cpu_cores = res.get("maxcpu") or res.get("cpus", 1)
-                
+
                 normalized_config = {
                     "memory": memory_mb,
                     "cpu": cpu_cores,
                     # Add other specs as needed, e.g. status
                     "status": res.get("status")
                 }
-                
+
                 resources.append(ResourceState(id=name, type="compute", config=normalized_config))
         return resources
 
@@ -291,13 +289,13 @@ class ProxmoxEngine(Engine):
         Detects drift and automatically applies necessary changes.
         """
         logger.info("Starting reconciliation...")
-        
+
         # 1. Get Actual State
         current_state = await self.get_state(blueprint)
-        
+
         # 2. Diff against Blueprint
         plan = diff_states(blueprint, current_state)
-        
+
         if plan.is_empty:
              logger.info("Infrastructure is already consistent. No action needed.")
              return
@@ -328,11 +326,11 @@ class ProxmoxEngine(Engine):
             if not template_id and template_name:
                 # LXC Create
                 logger.info(f"Creating LXC {new_vmid} from {template_name}")
-                storage = "local-lvm" 
+                storage = "local-lvm"
                 ostemplate = f"local:vztmpl/{template_name}-3.18-x86_64.tar.zst"
                 if template_name == "alpine":
                      ostemplate = "local:vztmpl/alpine-3.22-default_20250617_amd64.tar.xz"
-                
+
                 data = {
                     "vmid": new_vmid,
                     "ostemplate": ostemplate,
@@ -344,26 +342,26 @@ class ProxmoxEngine(Engine):
                     "unprivileged": 1
                 }
                 upid = await self._api_request("POST", f"nodes/{self.node}/lxc", data=data)
-                
+
                 if isinstance(upid, str) and upid.startswith("UPID:"):
                     await self._wait_for_task(upid)
-                
+
                 await self._api_request("POST", f"nodes/{self.node}/lxc/{new_vmid}/status/start")
                 continue
 
             if template_id:
                 # VM Clone
                 logger.info(f"Cloning VM {template_id} -> {new_vmid}")
-                await self._api_request("POST", f"nodes/{self.node}/qemu/{template_id}/clone", 
+                await self._api_request("POST", f"nodes/{self.node}/qemu/{template_id}/clone",
                                      data={"newid": new_vmid, "name": resource_def.name, "full": 1})
-                
+
                 # Apply Specs config to cloned VM
                 update_data = {}
                 if "cpu" in resource_def.specs:
                     update_data["cores"] = resource_def.specs["cpu"]
                 if "memory" in resource_def.specs:
                     update_data["memory"] = resource_def.specs["memory"]
-                
+
                 if update_data:
                     await self._api_request("POST", f"nodes/{self.node}/qemu/{new_vmid}/config", data=update_data)
 
@@ -377,14 +375,14 @@ class ProxmoxEngine(Engine):
             if not vm:
                 logger.warning(f"Resource {old.id} not found for update.")
                 continue
-            
+
             vmid = vm.get("vmid")
             res_type = vm.get("type", "qemu")
-            
+
             update_data = {}
             if "cpu" in new_def.specs and new_def.specs["cpu"] != old.config.get("cores"):
                 update_data["cores"] = new_def.specs["cpu"]
-            
+
             if "memory" in new_def.specs: # Simplify comparison, just apply
                  update_data["memory"] = new_def.specs["memory"]
 
@@ -402,16 +400,16 @@ class ProxmoxEngine(Engine):
             if not vm:
                 continue
             vmid = vm.get("vmid")
-            
+
             logger.info(f"Destroying {resource_state.id} ({vmid})")
-            
+
             res_type = vm.get("type", "qemu")
             try:
                 await self._api_request("POST", f"nodes/{self.node}/{res_type}/{vmid}/status/stop")
-                await asyncio.sleep(2) 
+                await asyncio.sleep(2)
             except Exception as e:
                 logger.warning(f"Failed to stop {vmid}: {e}")
-                
+
             try:
                 await self._api_request("DELETE", f"nodes/{self.node}/{res_type}/{vmid}")
             except Exception as e:
@@ -432,7 +430,7 @@ class ProxmoxEngine(Engine):
         Warning: This uses API 'download-url' if available or tries SSH.
         """
         logger.info(f"Downloading template {template} to {storage}...")
-        
+
         # API Implementation for known templates
         url = None
         filename = None
@@ -440,7 +438,7 @@ class ProxmoxEngine(Engine):
             # TODO: Move this to a configuration or external source
             url = "http://download.proxmox.com/images/system/alpine-3.22-default_20250617_amd64.tar.xz"
             filename = "alpine-3.22-default_20250617_amd64.tar.xz"
-        
+
         if url:
             try:
                 upid = await self._api_request("POST", f"nodes/{self.node}/storage/{storage}/download-url", data={
@@ -448,7 +446,7 @@ class ProxmoxEngine(Engine):
                     "filename": filename,
                     "url": url
                 })
-            
+
                 if isinstance(upid, str) and upid.startswith("UPID:"):
                     success = await self._wait_for_task(upid)
                     if not success:
@@ -458,6 +456,6 @@ class ProxmoxEngine(Engine):
             except Exception as e:
                 logger.error(f"API Download failed: {e}")
                 return False
-        
+
         logger.warning(f"No API URL known for template {template}, and SSH fallback for pveam is restricted.")
         return False

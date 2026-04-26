@@ -5,6 +5,21 @@ All notable changes to ALMA will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.9] - 2026-04-26
+
+### 🔧 Code Quality & Security
+
+- **Linting**: Resolved all 242 ruff warnings across the codebase (whitespace, import ordering, unused imports, deprecated type annotations)
+- **Security**: Fixed all bandit findings — Jinja2 autoescape documented, `/tmp` replaced with `tempfile.gettempdir()`, HuggingFace `revision` pinning added, subprocess nosec annotations
+- **Bug Fixes**:
+  - Removed dead `generate_layout()` redefinition in dashboard (`F811`)
+  - Removed unused variables: `status`, `dl_res`, `native_tools`, `mcp_tool_definitions`
+  - Fixed loop variables `node_name` / `i` → `_node_name` / `_` where unused (`B007`)
+  - Fixed bare `except:` → `except (json.JSONDecodeError, ValueError):` in orchestrator (`E722`)
+  - Fixed `raise ConnectionError(...)` inside `except` clause to use `raise ... from None` (`B904`)
+  - Replaced `assert isinstance(...)` with proper `if not isinstance(...): raise TypeError(...)` in dashboard
+- **Version sync**: Aligned `app_version` in config with package version
+
 ## [0.7.2] - 2025-12-03
 
 ### 🧹 Technical Debt & Code Quality

@@ -10,9 +10,9 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from alma.core.exceptions import MissingResourceError
 from alma.core.llm_orchestrator import EnhancedOrchestrator
 from alma.core.llm_service import get_orchestrator
-from alma.core.exceptions import MissingResourceError
 
 router = APIRouter(prefix="/conversation", tags=["conversation"])
 
@@ -253,33 +253,34 @@ async def chat_stream(
 
         # --- RESILIENT EXECUTION: LangGraph ---
         if intent_result["intent"] == "deploy":
-            from alma.core.agent.graph import app
-            from langchain_core.messages import HumanMessage
-            
             from typing import cast
-            
+
+            from langchain_core.messages import HumanMessage
+
+            from alma.core.agent.graph import app
+
             yield f"data: {json.dumps({'type': 'status', 'data': 'Starting resilient deployment workflow...'})}\n\n"
-            
+
             inputs = {
                 "messages": [HumanMessage(content=request.message)],
-                "intent": "deploy", 
+                "intent": "deploy",
                 "vm_name": None,
                 "template": None,
                 "error": None,
                 "status": "Initializing",
                 "execution_result": None
             }
-            
+
             final_state = None
             async for event in app.astream(cast(Any, inputs)):
                 # event is a dict of the validation/execution steps
                 # e.g. {'parse_intent': {'intent': 'deploy', ...}}
-                for node_name, state_update in event.items():
+                for _node_name, state_update in event.items():
                     if "status" in state_update:
                         yield f"data: {json.dumps({'type': 'status', 'data': state_update['status']})}\n\n"
                     if "error" in state_update and state_update["error"]:
                         yield f"data: {json.dumps({'type': 'error', 'data': state_update['error']})}\n\n"
-                    
+
                     # Capture final state
                     final_state = state_update
 
@@ -287,7 +288,7 @@ async def chat_stream(
             # Note: 'final_state' in loop might be partial. Use invoke result if needed, but stream gives progress.
             # We can check the very last event or just reconstructing
             # Better: After loop, we assume workflow finished.
-            
+
             if final_state and final_state.get("execution_result"):
                 res_msg = f"Deployment Complete! \n\nResult: {final_state['execution_result']}"
                 yield f"data: {json.dumps({'type': 'text', 'data': res_msg})}\n\n"
@@ -298,21 +299,21 @@ async def chat_stream(
                  # Fallback
                  yield f"data: {json.dumps({'type': 'text', 'data': 'Workflow finished without clear result.'})}\n\n"
                  yield f"data: {json.dumps({'type': 'done', 'data': 'complete'})}\n\n"
-            
+
             return
 
         # Proactive Validation for Deploy/Blueprint (Classic Flow)
         if intent_result["intent"] in ["create_blueprint", "deploy"]:
             try:
                 yield f"data: {json.dumps({'type': 'status', 'data': 'Validating requirements...'})}\n\n"
-                
+
                 # 1. Generate tentative blueprint
                 blueprint = await orchestrator.natural_language_to_blueprint(request.message)
-                
+
                 # 2. Check for missing resources (Templates)
                 from alma.core.config import get_settings
                 from alma.engines.proxmox import ProxmoxEngine
-                
+
                 settings = get_settings()
                 engine = ProxmoxEngine({
                     "host": settings.proxmox_host,
@@ -321,7 +322,7 @@ async def chat_stream(
                     "verify_ssl": settings.proxmox_verify_ssl,
                     "node": settings.proxmox_node
                 })
-                
+
                 # Check templates logic...
                 for res in blueprint.get("resources", []):
                     specs = res.get("specs", {})
@@ -330,13 +331,13 @@ async def chat_stream(
                         vm = await engine._get_vm_by_name(tpl_name)
                         if not vm:
                             raise MissingResourceError("template", tpl_name, f"Template '{tpl_name}' not found.")
-                            
+
             except MissingResourceError as e:
                 # Ask CLARIFICATION directly
                 suggestion = ""
                 if e.resource_type == "template":
-                    suggestion = f" I can try to download it for you if you want."
-                
+                    suggestion = " I can try to download it for you if you want."
+
                 msg = f"I'd love to help run that, but I need a valid **template**. I couldn't find '{e.resource_name}' in Proxmox.{suggestion}\n\nWhich template should I clone (or shall I download '{e.resource_name}')?"
                 yield f"data: {json.dumps({'type': 'text', 'data': msg})}\n\n"
                 yield f"data: {json.dumps({'type': 'done', 'data': 'clarification_needed'})}\n\n"

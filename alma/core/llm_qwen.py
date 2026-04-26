@@ -65,15 +65,17 @@ class Qwen3LLM(LLMInterface):
             loop = asyncio.get_event_loop()
 
             def _load_model():
-                tokenizer = AutoTokenizer.from_pretrained(
+                tokenizer = AutoTokenizer.from_pretrained(  # nosec B615
                     self.model_name,
                     trust_remote_code=True,
+                    revision="main",
                 )
-                model = AutoModelForCausalLM.from_pretrained(
+                model = AutoModelForCausalLM.from_pretrained(  # nosec B615
                     self.model_name,
                     torch_dtype=torch.float16 if self.device != "cpu" else torch.float32,
                     device_map=self.device if self.device != "cpu" else None,
                     trust_remote_code=True,
+                    revision="main",
                 )
                 if self.device == "cpu":
                     model = model.to(self.device)

@@ -11,15 +11,11 @@ from typing import Any
 import httpx
 import typer
 from dotenv import find_dotenv, set_key
-from pyfiglet import Figlet
-from rich.align import Align
 from rich.console import Console
 from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
-from rich.progress import BarColumn, Progress, TextColumn
 from rich.prompt import Confirm, Prompt
-from rich.spinner import Spinner
 from rich.table import Table
 from rich.text import Text
 
@@ -59,21 +55,6 @@ class DashboardApp:
                 base_url=API_BASE_URL, timeout=5.0, headers=headers
             )
 
-    def generate_layout(self) -> Layout:
-        """Defines the visual layout of the dashboard."""
-        layout = Layout(name="root")
-        layout.split(
-            Layout(name="header", size=5),
-            Layout(ratio=1, name="main"),
-            Layout(size=7, name="footer"),
-        )
-        layout["main"].split_row(
-            Layout(name="brain"),
-            Layout(name="action", ratio=2),
-        )
-        layout["brain"].split(Layout(name="llm_status"), Layout(name="system_health"))
-        return layout
-
     async def update_data(self) -> None:
         """Fetches new data from the API or generates mock data."""
         if self.mock:
@@ -93,16 +74,18 @@ class DashboardApp:
             if isinstance(iprs_resp, Exception):
                 raise iprs_resp
             # infra_resp might fail if Proxmox down, handle gracefully
-            
-            assert isinstance(metrics_resp, httpx.Response)
-            assert isinstance(iprs_resp, httpx.Response)
+
+            if not isinstance(metrics_resp, httpx.Response):
+                raise TypeError("Expected httpx.Response for metrics")
+            if not isinstance(iprs_resp, httpx.Response):
+                raise TypeError("Expected httpx.Response for iprs")
 
             metrics_resp.raise_for_status()
             iprs_resp.raise_for_status()
 
             self.metrics = metrics_resp.json()
             self.iprs = iprs_resp.json()
-            
+
             if isinstance(infra_resp, httpx.Response) and infra_resp.status_code == 200:
                 self.infra = infra_resp.json()
             else:
@@ -175,30 +158,30 @@ class DashboardApp:
         table.add_column("Icon", width=3)
         table.add_column("Name", style="bold white")
         table.add_column("Type/Status", style="dim")
-        
+
         nodes = self.infra.get("nodes", [])
         # Filter out internet node
         nodes = [n for n in nodes if n.get("id") != "internet"]
-        
+
         if nodes:
             for node in nodes:
                 data = node.get("data", {})
                 label = data.get("label", "Unknown")
                 sub = data.get("subLabel", "")
                 icon = "📦" if data.get("icon") == "Database" else "🖥️"
-                
+
                 status_color = "green" if "running" in sub else "red"
-                
+
                 table.add_row(
-                    icon, 
-                    label, 
+                    icon,
+                    label,
                     f"[{status_color}]{sub}[/]"
                 )
         else:
              table.add_row("❓", "No resources found", "[dim]Check provider connection[/]")
-             
+
         return Panel(table, title="[bold]🏗️ Infrastructure[/]", border_style="blue")
-    
+
     # ... existing render methods ...
 
     def render(self) -> Layout:

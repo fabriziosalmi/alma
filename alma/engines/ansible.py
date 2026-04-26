@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 from typing import Any
 
 try:
@@ -32,7 +33,7 @@ class AnsibleEngine(Engine):
                 - inventory: Path to inventory file or inventory content
         """
         super().__init__(config)
-        self.data_dir = self.config.get("data_dir", "/tmp/alma-ansible")
+        self.data_dir = self.config.get("data_dir", os.path.join(tempfile.gettempdir(), "alma-ansible"))
         self.inventory = self.config.get("inventory", "localhost,")
 
     def _check_runner(self) -> None:

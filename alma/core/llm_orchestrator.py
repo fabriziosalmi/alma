@@ -8,11 +8,11 @@ from typing import Any, cast
 
 import yaml  # type: ignore[import]
 
+from alma.core.exceptions import MissingResourceError
 from alma.core.llm import ConversationalOrchestrator, LLMInterface
 from alma.core.prompts import InfrastructurePrompts
 from alma.core.tools import InfrastructureTools
 from alma.schemas.tools import ToolResponse
-from alma.core.exceptions import MissingResourceError
 
 
 class EnhancedOrchestrator(ConversationalOrchestrator):
@@ -51,39 +51,6 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
         if not self.use_llm or self.llm is None:
             return {"success": False, "error": "LLM not available for function calling"}
 
-        # Get available tools
-        # 1. Native InfrastructureTools
-        native_tools = self.tools.get_available_tools()
-        
-        # 2. Loading MCP Tools Dynamically
-        mcp_tool_definitions: list[dict[str, Any]] = []
-        try:
-            from alma.mcp_server import mcp
-            # FastMCP stores tools in _tool_manager.tool_registry usually, 
-            # but let's check the public API or internal structure.
-            # mcp.list_tools() is async.
-            # We can also access decorated functions directly if we know them, 
-            # OR we can replicate the schema generation.
-            
-            # For simplicity and robustness, let's use the list_tools() if possible, 
-            # but we are in async context here? Yes.
-            
-            # However, list_tools() returns a list of Tool objects with schema.
-            # We need to map that to OpenAI format.
-            
-            # Since mcp internal structure might vary, let's rely on `mcp._tool_manager.list_tools()` 
-            # if we can't await here easily (we can, we are in async def).
-            
-            # Wait, `get_available_tools` is SYNC in the original code below (def get_available_tools).
-            # But here we are in `execute_function_call` which IS async.
-            # The LLM needs the tools *before* calling this.
-            
-            # So we need to update `get_available_tools` to be robust or pre-load them.
-            # Let's handle this in `get_available_tools` (which is sync).
-            pass 
-        except ImportError:
-            pass
-
         available_tools = self.get_available_tools()
 
         try:
@@ -99,12 +66,9 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
 
             # Check if it's an MCP tool
             try:
-                from alma.mcp_server import mcp
-                # Check directly in the underlying registry if possible
-                # Accessing private members is risky but efficient for 'internalizing'
                 # FastMCP uses a dictionary for tools
                 tool_func = None
-                
+
                 # Check explicit MCP tools we know
                 if tool_name == "deploy_vm":
                     # We might have name collision with native tools.
@@ -134,9 +98,9 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
                     # Result is a JSON string usually (as per our MCP impl).
                     try:
                         return json.loads(result)
-                    except:
+                    except (json.JSONDecodeError, ValueError):
                         # If simple string
-                         return {"result": result}
+                        return {"result": result}
             except ImportError:
                 pass
 
@@ -165,11 +129,11 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
             List of tool definitions
         """
         tools = self.tools.get_available_tools()
-        
+
         # Add MCP tools
         # We manually define schemas for our known MCP tools for now
         # Ideally we'd convert FastMCP schemas
-        
+
         tools.append({
             "type": "function",
             "function": {
@@ -187,7 +151,7 @@ class EnhancedOrchestrator(ConversationalOrchestrator):
                 }
             }
         })
-        
+
         tools.append({
              "type": "function",
              "function": {

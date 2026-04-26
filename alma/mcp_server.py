@@ -4,11 +4,9 @@ ALMA MCP Server.
 Exposes Proxmox resources and tools via the Model Context Protocol.
 """
 
-import asyncio
 import json
-from typing import Any
 
-from mcp.server.fastmcp import FastMCP, Context
+from mcp.server.fastmcp import FastMCP
 
 from alma.core.config import get_settings
 from alma.engines.proxmox import ProxmoxEngine
@@ -36,14 +34,14 @@ def get_engine() -> ProxmoxEngine:
 async def list_vms(node: str) -> str:
     """List all VMs and Containers on a node as JSON."""
     engine = get_engine()
-    # Ensure engine uses the requested node if possible, 
-    # but ProxmoxEngine config is static per instance usually. 
+    # Ensure engine uses the requested node if possible,
+    # but ProxmoxEngine config is static per instance usually.
     # For now, we assume the configured node, but check if it matches.
     if engine.node != node:
-        # We could create a new engine or just warn. 
+        # We could create a new engine or just warn.
         # For simplicity in v1, we just list what the engine sees.
         pass
-        
+
     resources = await engine.list_resources()
     return json.dumps(resources, indent=2)
 
@@ -52,7 +50,7 @@ async def list_vms(node: str) -> str:
 async def list_resources() -> str:
     """
     List all available Proxmox resources (VMs and Containers).
-    
+
     Returns:
         JSON string of resources
     """
@@ -65,7 +63,7 @@ async def list_resources() -> str:
 async def get_resource_stats(vmid: str) -> str:
     """
     Get statistics for a specific resource.
-    
+
     Args:
         vmid: The VMID of the resource
     """
@@ -83,7 +81,7 @@ async def get_resource_stats(vmid: str) -> str:
 async def deploy_vm(name: str, template: str, cores: int = 2, memory: int = 2048) -> str:
     """
     Deploy a new VM from a template.
-    
+
     Args:
         name: Name of the new VM
         template: Name of the template to clone
@@ -93,7 +91,7 @@ async def deploy_vm(name: str, template: str, cores: int = 2, memory: int = 2048
     engine = get_engine()
     from alma.core.state import Plan
     from alma.schemas.blueprint import ResourceDefinition
-    
+
     # Construct a minimal plan for the engine
     plan = Plan(
         to_create=[
@@ -111,7 +109,7 @@ async def deploy_vm(name: str, template: str, cores: int = 2, memory: int = 2048
         to_update=[],
         to_delete=[]
     )
-    
+
     try:
         await engine.apply(plan)
         return f"Successfully deployed VM '{name}' from template '{template}'."
@@ -123,7 +121,7 @@ async def deploy_vm(name: str, template: str, cores: int = 2, memory: int = 2048
 async def control_vm(vmid: str, action: str) -> str:
     """
     Control a VM (start, stop, reboot).
-    
+
     Args:
         vmid: The VMID to control
         action: One of 'start', 'stop', 'reboot', 'shutdown'
@@ -137,25 +135,25 @@ async def control_vm(vmid: str, action: str) -> str:
     # Engine has _run_ssh_command.
     # Let's add a public control method to engine or use the private one here (naughty but works)
     # Better: Update engine to have `control_resource(vmid, action)`
-    
+
     # For now, I'll use the private method if I can't update engine easily.
     # But I CAN update engine easily.
-    
-    # Let's just implement the logic here using the engine's primitive (private) methods for now 
+
+    # Let's just implement the logic here using the engine's primitive (private) methods for now
     # to avoid touching core logic too much, OR better: use `engine._authenticate()` then run command.
-    
+
     if not await engine._authenticate():
         return "Authentication failed"
-        
+
     cmd_map = {
         "start": "start",
         "stop": "stop",
-        "shutdown": "shutdown", 
+        "shutdown": "shutdown",
         "reboot": "reboot"
     }
-    
+
     qm_cmd = cmd_map[action]
-    
+
     try:
         if engine.use_ssh:
              await engine._run_ssh_command(f"qm {qm_cmd} {vmid}")
@@ -170,9 +168,9 @@ async def control_vm(vmid: str, action: str) -> str:
                  if str(r.get("vmid")) == str(vmid):
                      res_type = r.get("type", "qemu")
                      break
-            
+
              await engine._api_request("POST", f"nodes/{engine.node}/{res_type}/{vmid}/status/{qm_cmd}")
-             
+
         return f"Successfully executed '{action}' on VM {vmid}"
     except Exception as e:
         return f"Action failed: {str(e)}"
@@ -181,7 +179,7 @@ async def control_vm(vmid: str, action: str) -> str:
 async def download_template(storage: str, template: str) -> str:
     """
     Download a template to storage (e.g., 'local').
-    
+
     Args:
         storage: Storage ID (e.g., 'local', 'local-lvm')
         template: Template name (e.g., 'ubuntu-22.04-standard_22.04-1_amd64.tar.zst')
