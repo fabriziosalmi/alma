@@ -4,19 +4,18 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import dataclass, field
-from typing import Any, Type, TypeVar
+from dataclasses import dataclass
+from typing import Any, TypeVar
 
-from rich.console import Console
 from pydantic import BaseModel
 
 from alma.core.llm import LLMInterface
 from alma.core.llm_service import get_llm
 from alma.schemas.council import (
-    InfrastructureDraft,
-    SecurityCritique,
     CostAnalysis,
     FinalDecree,
+    InfrastructureDraft,
+    SecurityCritique,
 )
 
 logger = logging.getLogger(__name__)
@@ -45,10 +44,10 @@ class Agent:
         self.color = color
 
     async def speak(
-        self, context: str, task: str, response_model: Type[T] | None = None
+        self, context: str, task: str, response_model: type[T] | None = None
     ) -> T | str:
         llm: LLMInterface = await get_llm()
-        
+
         prompt = f"""
         You are {self.name}, the {self.role}.
         Your Persona: {self.persona}
@@ -62,11 +61,11 @@ class Agent:
             # SOTA Pattern: Schema Enforcement
             schema = response_model.model_json_schema()
             prompt += f"\nOutput must strictly adhere to this JSON schema:\n{schema}"
-            
+
             try:
                 # We pass the schema to the LLM interface
                 response_text = await llm.generate(prompt, schema=schema)
-                
+
                 # SOTA Pattern: Robust parsing (even if LLM wraps in code blocks)
                 clean_text = response_text.replace("```json", "").replace("```", "").strip()
                 return response_model.model_validate_json(clean_text)
@@ -105,7 +104,7 @@ class Council:
             log_content = content.model_dump()
         else:
             log_content = str(content)
-            
+
         self.transcript.append(AgentMessage(agent_name=agent.name, content=log_content, role=role))
 
     async def convene(self, user_intent: str) -> CouncilResult:
@@ -116,12 +115,12 @@ class Council:
             # 1. Architect Drafts Blueprint
             draft_context = f"User Intent: '{user_intent}'"
             draft = await self.architect.speak(
-                context=draft_context, 
-                task="Create a preliminary infrastructure blueprint.", 
+                context=draft_context,
+                task="Create a preliminary infrastructure blueprint.",
                 response_model=InfrastructureDraft
             )
             self._log(self.architect, draft, "proposal")
-            
+
             # 2. Parallel Review (SecOps & FinOps) - SOTA Pattern: Async/Await Gather
             logger.info("Starting parallel review...")
             if isinstance(draft, InfrastructureDraft):
@@ -145,7 +144,7 @@ class Council:
 
             # Parallel execution
             sec_review, fin_review = await asyncio.gather(run_secops(), run_finops())
-            
+
             self._log(self.secops, sec_review, "critique")
             self._log(self.finops, fin_review, "analysis")
 
@@ -155,7 +154,7 @@ class Council:
             Security Feedback: {sec_review.model_dump_json()}
             Financial Feedback: {fin_review.model_dump_json()}
             """
-            
+
             final_decree = await self.architect.speak(
                 context=final_context,
                 task="Synthesize all feedback into a Final Decree and Blueprint.",
@@ -164,7 +163,7 @@ class Council:
             self._log(self.architect, final_decree, "finalization")
 
             return CouncilResult(
-                transcript=self.transcript, 
+                transcript=self.transcript,
                 final_blueprint=final_decree.blueprint.model_dump() if final_decree.approved else None
             )
 

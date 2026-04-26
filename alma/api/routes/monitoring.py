@@ -255,7 +255,7 @@ async def infrastructure_graph() -> dict[str, Any]:
 
     nodes = []
     edges = []
-    
+
     # 1. Add Cloud/Internet Node
     nodes.append({
         "id": "internet",
@@ -280,17 +280,17 @@ async def infrastructure_graph() -> dict[str, Any]:
     # 3. Create Nodes from Resources
     x_pos = 50
     y_pos = 150
-    
+
     for res in resources:
         vmid = str(res.get("vmid"))
         name = res.get("name", f"VM {vmid}")
         status = res.get("status", "unknown")
         type_ = res.get("type", "qemu")
-        
+
         # Color coding by status
         color_class = "bg-green-500/20" if status == "running" else "bg-slate-700/50"
         icon_class = "text-green-400" if status == "running" else "text-slate-400"
-        
+
         icon_name = "Database" if type_ == "lxc" else "Server"
 
         node = {
@@ -300,13 +300,13 @@ async def infrastructure_graph() -> dict[str, Any]:
             "data": {
                 "label": name,
                 "subLabel": f"{type_} • {status}",
-                "icon": icon_name, 
+                "icon": icon_name,
                 "colorClass": color_class,
                 "iconClass": icon_class
             }
         }
         nodes.append(node)
-        
+
         # Add edge from internet
         edges.append({
             "id": f"e-internet-{vmid}",
@@ -315,7 +315,7 @@ async def infrastructure_graph() -> dict[str, Any]:
             "animated": status == "running",
             "style": {"stroke": "#475569"}
         })
-        
+
         x_pos += 200
         if x_pos > 800:
             x_pos = 50

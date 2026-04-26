@@ -12,7 +12,7 @@ router = APIRouter(tags=["websockets"])
 async def websocket_endpoint(websocket: WebSocket) -> None:
     """
     WebSocket endpoint for real-time deployment updates.
-    
+
     Clients connect here to receive 'DeploymentStarted', 'DeploymentCompleted',
     and other infrastructure events.
     """

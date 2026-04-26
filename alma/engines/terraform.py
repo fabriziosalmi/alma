@@ -6,7 +6,8 @@ import json
 import logging
 import os
 import shutil
-import subprocess
+import subprocess  # nosec B404 - subprocess used for invoking terraform binary with controlled inputs
+import tempfile
 from typing import Any
 
 from alma.core.state import Plan, ResourceState
@@ -34,7 +35,7 @@ class TerraformEngine(Engine):
         """
         super().__init__(config)
         self.binary = self.config.get("binary", "terraform")
-        self.work_dir = self.config.get("work_dir", "/tmp/alma-terraform")
+        self.work_dir = self.config.get("work_dir", os.path.join(tempfile.gettempdir(), "alma-terraform"))
 
     def _check_binary(self) -> None:
         if not shutil.which(self.binary):
@@ -45,7 +46,7 @@ class TerraformEngine(Engine):
         cmd = [self.binary] + args
         logger.info(f"Running command: {' '.join(cmd)} in {cwd}")
 
-        process = subprocess.Popen(
+        process = subprocess.Popen(  # nosec B603 - command is built from config, not user input
             cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
         stdout, stderr = process.communicate()

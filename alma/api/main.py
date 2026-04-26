@@ -1,8 +1,8 @@
 """FastAPI application main module."""
 
+import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-import os
 
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -76,7 +76,8 @@ app.include_router(tools.router, prefix=settings.api_prefix)
 app.include_router(templates.router, prefix=settings.api_prefix)
 app.include_router(monitoring.router, prefix=settings.api_prefix)
 
-from alma.api.routes import websockets
+from alma.api.routes import websockets  # noqa: E402
+
 app.include_router(websockets.router) # WebSockets don't usually share the /api/v1 prefix conventions typically
 
 # Add middleware
@@ -86,8 +87,10 @@ app.add_middleware(ImmuneMiddleware)
 app.add_middleware(IdempotencyMiddleware)
 
 # GraphQL
-from strawberry.fastapi import GraphQLRouter
-from alma.api.graphql.schema import schema
+from strawberry.fastapi import GraphQLRouter  # noqa: E402
+
+from alma.api.graphql.schema import schema  # noqa: E402
+
 graphql_app = GraphQLRouter(schema)
 app.include_router(graphql_app, prefix="/graphql")
 

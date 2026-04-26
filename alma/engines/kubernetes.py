@@ -91,7 +91,7 @@ class KubernetesEngine(Engine):
     async def apply(self, plan: Plan) -> None:
         """Apply a plan to create or update Kubernetes resources."""
         await self._initialize_clients()
-        
+
         # 1. Smart Namespace: Ensure it exists
         await self._ensure_namespace(self.namespace)
 
@@ -157,7 +157,7 @@ class KubernetesEngine(Engine):
         """Create or patch a Deployment, with Auto-Service and Wait logic."""
         deployment_body = self._construct_deployment(resource)
         name = resource.name
-        
+
         # 1. Apply Deployment
         try:
             await self.apps_v1.read_namespaced_deployment(
@@ -175,7 +175,7 @@ class KubernetesEngine(Engine):
                 logger.info(f"Created Deployment: {name}")
             else:
                 raise
-        
+
         # 2. Auto-Service: If ports defined and not disabled
         specs = resource.specs
         if specs.get("ports") and specs.get("expose", True):
@@ -198,12 +198,12 @@ class KubernetesEngine(Engine):
             "ports": ports,   # List of ints
             "service_type": resource.specs.get("service_type", "ClusterIP")
         }
-        
+
         # We construct a V1Service manually here or reuse _construct_service logic?
         # _construct_service expects a ResourceDefinition. Let's make a temporary one.
         # But _construct_service logic is slightly different (expects single port, target_port).
         # Let's handle multi-port manually.
-        
+
         svc_ports = []
         for p in ports:
             # Handle int or struct
@@ -213,16 +213,16 @@ class KubernetesEngine(Engine):
                 ))
             elif isinstance(p, dict):
                  svc_ports.append(client.V1ServicePort(
-                    port=p["port"], 
+                    port=p["port"],
                     target_port=p.get("targetPort", p["port"]),
                     name=p.get("name", f"port-{p['port']}")
                 ))
-        
+
         svc_body = client.V1Service(
             api_version="v1",
             kind="Service",
             metadata=client.V1ObjectMeta(
-                name=name, 
+                name=name,
                 namespace=self.namespace,
                 labels={alma_BLUEPRINT_LABEL: resource.metadata.get("blueprint_name", "unknown"), "auto-generated": "true"}
             ),
@@ -232,10 +232,10 @@ class KubernetesEngine(Engine):
                 type=svc_specs["service_type"]
             )
         )
-        
+
         try:
             await self.core_v1.read_namespaced_service(name=name, namespace=self.namespace)
-            # Patch/Update? For now, we assume if it exists, it's fine. 
+            # Patch/Update? For now, we assume if it exists, it's fine.
             # Or we could patch it.
             logger.info(f"Auto-Service '{name}' already exists.")
         except ApiException as e:
@@ -249,23 +249,23 @@ class KubernetesEngine(Engine):
         """Wait for Deployment to be ready."""
         import asyncio
         import time
-        
+
         start = time.time()
         logger.info(f"Waiting for rollout of '{name}'...")
-        
+
         while time.time() - start < timeout:
             dep = await self.apps_v1.read_namespaced_deployment(name, self.namespace)
             # Check available replicas
             # status.available_replicas might be None initially
             available = dep.status.available_replicas or 0
             desired = dep.spec.replicas or 1
-            
+
             if available >= desired:
                 logger.info(f"Rollout '{name}' complete ({available}/{desired}).")
                 return
-            
+
             await asyncio.sleep(2)
-        
+
         logger.warning(f"Timeout waiting for rollout '{name}'")
 
     async def _apply_service(self, resource: ResourceDefinition) -> None:
@@ -382,7 +382,7 @@ class KubernetesEngine(Engine):
         # Try to get first port if exists
         if dep.spec.template.spec.containers[0].ports:
              config["port"] = dep.spec.template.spec.containers[0].ports[0].container_port
-             
+
         return ResourceState(
             id=dep.metadata.name,
             type="compute",
@@ -399,7 +399,7 @@ class KubernetesEngine(Engine):
         if svc.spec.ports:
              config["port"] = svc.spec.ports[0].port
              config["target_port"] = svc.spec.ports[0].target_port
-             
+
         return ResourceState(
             id=svc.metadata.name,
             type="network",

@@ -137,7 +137,7 @@ class Retrier:
 
                 delay = min(self.max_delay, self.base_delay * (2 ** (attempt - 1)))
                 if self.jitter:
-                    delay = delay * (0.5 + random.random())
+                    delay = delay * (0.5 + random.random())  # nosec B311 - jitter for retry backoff, not cryptographic
 
                 logger.info(
                     f"Retrying in {delay:.2f}s (Attempt {attempt}/{self.max_attempts}) due to: {e}"

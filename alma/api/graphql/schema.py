@@ -1,14 +1,15 @@
 
 """GraphQL Schema definition."""
 
+
 import strawberry
-from typing import Optional
+
 
 @strawberry.type
 class BlueprintType:
     id: strawberry.ID
     name: str
-    description: Optional[str]
+    description: str | None
     version: str
 
 @strawberry.type
@@ -29,7 +30,7 @@ class Query:
         collector = get_metrics_collector()
         summary = collector.get_summary()
         return SystemStatus(
-            status="operational", 
+            status="operational",
             uptime_seconds=summary["uptime_seconds"],
             active_connections=int(summary["custom_metrics"].get("active_connections", 0))
         )

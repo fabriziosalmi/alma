@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class PricingService:
     """
     Pricing service providing estimated costs.
-    
+
     Currently uses local fallback estimates.
     """
 
@@ -44,11 +44,11 @@ class PricingService:
     async def estimate_cost(self, resource_type: str, specs: dict[str, Any]) -> dict[str, Any]:
         """
         Estimate cost for a resource.
-        
+
         Args:
             resource_type: Type of resource (compute, storage, etc.)
             specs: Resource specifications
-            
+
         Returns:
             Dictionary containing cost estimates
         """

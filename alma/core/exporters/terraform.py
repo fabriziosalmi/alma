@@ -27,7 +27,10 @@ class TerraformExporter:
             raise ValueError("A valid SystemBlueprint must be provided.")
         self.blueprint = blueprint
         self.jinja_env = Environment(
-            loader=FileSystemLoader(str(TEMPLATE_DIR)), trim_blocks=True, lstrip_blocks=True
+            loader=FileSystemLoader(str(TEMPLATE_DIR)),
+            trim_blocks=True,
+            lstrip_blocks=True,
+            autoescape=False,  # nosec B701 - Terraform HCL templates, not HTML
         )
 
     def export(self) -> dict[str, str]:

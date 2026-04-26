@@ -236,7 +236,7 @@ def chat(message: str) -> None:
     """
     Talk to the ALMA Cognitive Engine.
     """
-    host = "127.0.0.1" if settings.api_host == "0.0.0.0" else settings.api_host
+    host = "127.0.0.1" if settings.api_host == "0.0.0.0" else settings.api_host  # nosec B104
     api_url = f"http://{host}:{settings.api_port}{settings.api_prefix}"
 
     # Prepare authentication headers
@@ -304,10 +304,12 @@ def chat(message: str) -> None:
         console.print(Markdown(data))
 
 
-from alma.cli.templates import templates_app
+from alma.cli.templates import templates_app  # noqa: E402
+
 app.add_typer(templates_app)
 
-from alma.cli.council import council_app
+from alma.cli.council import council_app  # noqa: E402
+
 app.add_typer(council_app)
 
 if __name__ == "__main__":

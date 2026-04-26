@@ -7,7 +7,7 @@ from typing import Any
 
 try:
     import docker
-    from docker.errors import DockerException, NotFound, APIError
+    from docker.errors import APIError, DockerException, NotFound
 except ImportError:
     docker = None  # type: ignore[assignment]
     DockerException = Exception  # type: ignore[misc, assignment]
@@ -107,10 +107,10 @@ class DockerEngine(Engine):
 
             try:
                 client.containers.run(
-                    image, 
-                    name=resource_def.name, 
-                    ports=ports, 
-                    environment=env, 
+                    image,
+                    name=resource_def.name,
+                    ports=ports,
+                    environment=env,
                     command=command,
                     detach=True
                 )
@@ -139,9 +139,9 @@ class DockerEngine(Engine):
                 command = resource_def.specs.get("command", None)
 
                 client.containers.run(
-                    image, 
-                    name=resource_def.name, 
-                    ports=ports, 
+                    image,
+                    name=resource_def.name,
+                    ports=ports,
                     environment=env,
                     command=command,
                     detach=True
